@@ -6269,8 +6269,7 @@ public final class Client extends RSApplet {
 	}
 
 	private void login(final String playerUsername, final String playerPassword, final boolean recoveredConnection) {
-		if (RSCConfig.rscProtocol)
-			System.out.println("rsc protocol enabled");
+		RSCConfig.Start();
 
 		signlink.errorname = playerUsername;
 		try {
