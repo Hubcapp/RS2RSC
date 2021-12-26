@@ -8,6 +8,7 @@ import java.net.*;
 import com.jagex.runescape.audio.Effect;
 import com.jagex.runescape.collection.*;
 import com.jagex.runescape.definition.*;
+import com.jagex.runescape.rs2rsc.Isaac;
 import com.jagex.runescape.rs2rsc.RSCConfig;
 import com.jagex.runescape.screen.game.Minimap;
 import com.jagex.runescape.screen.title.TitleScreen;
@@ -4471,7 +4472,7 @@ public final class Client extends RSApplet {
         }
 		try {
 			if (super.gameFrame != null) {
-                return new URL("http://127.0.0.1:" + (80 + portOffset));
+                return new URL("http://" + RSCConfig.ip + ":" + (80 + portOffset));
             }
 		} catch (final Exception _ex) {
 		}
@@ -4620,15 +4621,39 @@ public final class Client extends RSApplet {
 			if (availableBytes == 0) {
                 return false;
             }
-			if (this.packetOpcode == -1) {
-				this.socket.read(this.inStream.buffer, 1);
-				this.packetOpcode = this.inStream.buffer[0] & 0xFF;
-				if (this.encryption != null) {
-					this.packetOpcode = this.packetOpcode - this.encryption.value() & 0xFF;
-                }
-				this.packetSize = PacketInformation.PACKET_SIZES[this.packetOpcode];
-				availableBytes--;
+
+			if (RSCConfig.rscProtocol)
+			{
+				if (packetSize == 0)
+				{
+					if (availableBytes < 2)
+						return false;
+
+					this.socket.read(this.inStream.buffer, 1);
+					this.packetSize = this.inStream.buffer[0] & 0xFF;
+					availableBytes--;
+					if (this.packetSize >= 160) {
+						this.socket.read(this.inStream.buffer, 1);
+						this.packetSize = 256 * this.packetSize - ('\ua000' + -(this.inStream.buffer[0] & 0xFF));
+						availableBytes--;
+					}
+
+					packetOpcode = -1;
+				}
 			}
+			else
+			{
+				if (this.packetOpcode == -1) {
+					this.socket.read(this.inStream.buffer, 1);
+					this.packetOpcode = this.inStream.buffer[0];
+					if (this.encryption != null) {
+						this.packetOpcode = this.packetOpcode - this.encryption.value() & 0xFF;
+					}
+					this.packetSize = PacketInformation.PACKET_SIZES[this.packetOpcode];
+					availableBytes--;
+				}
+			}
+
 			if (this.packetSize == -1) {
                 if (availableBytes > 0) {
 					this.socket.read(this.inStream.buffer, 1);
@@ -4651,12 +4676,22 @@ public final class Client extends RSApplet {
 			if (availableBytes < this.packetSize) {
                 return false;
             }
+
 			this.inStream.position = 0;
 			this.socket.read(this.inStream.buffer, this.packetSize);
 			this.packetReadAnticheat = 0;
 			this.thirdMostRecentOpcode = this.secondMostRecentOpcode;
 			this.secondMostRecentOpcode = this.mostRecentOpcode;
+
+			this.packetOpcode = 255 & this.inStream.buffer[0] - RSCConfig.incomingIsaac.next();
+			this.packetOpcode = RSCConfig.RSC_Opcode(this.packetOpcode);
 			this.mostRecentOpcode = this.packetOpcode;
+
+			this.packetSize = 0;
+
+			if (this.packetOpcode == -1)
+				return false;
+
 			if (this.packetOpcode == 81) {
 				this.updatePlayers(this.packetSize, this.inStream);
 				this.loadingMap = false;
@@ -6279,62 +6314,118 @@ public final class Client extends RSApplet {
 				this.setupLoginScreen();
 				this.titleScreen.drawLoginScreen(super.gameGraphics, true, this.loginScreenState, this.onDemandFetcher.statusString, this.loginMessage1, this.loginMessage2, this.enteredUsername, this.enteredPassword, tick, this.loginScreenFocus);
 			}
-			this.socket = new RSSocket(this, this.openSocket(43594 + portOffset));
+			this.socket = new RSSocket(this, this.openSocket(RSCConfig.port + portOffset));
 			final long nameLong = TextClass.nameToLong(playerUsername);
 			final int nameHash = (int) (nameLong >> 16 & 31L);
-			this.stream.position = 0;
-			this.stream.put(14);
-			this.stream.put(nameHash);
-			this.socket.write(2, this.stream.buffer);
-			for (int ignoredByte = 0; ignoredByte < 8; ignoredByte++) {
-				this.socket.read();
-            }
 
-			int responseCode = this.socket.read();
-			final int initialResponseCode = responseCode;
-			if (responseCode == 0) {
-				this.socket.read(this.inStream.buffer, 8);
-				this.inStream.position = 0;
-				this.serverSessionKey = this.inStream.getLong();
+			int responseCode = 0;
+			int initialResponseCode = responseCode;
+			if (RSCConfig.rscProtocol)
+			{
+				String formatPass = RSCConfig.RSC_format(20, playerPassword, (byte) -127);
 				final int[] seed = new int[4];
-				seed[0] = (int) (Math.random() * 99999999D);
-				seed[1] = (int) (Math.random() * 99999999D);
-				seed[2] = (int) (this.serverSessionKey >> 32);
-				seed[3] = (int) this.serverSessionKey;
-				this.stream.position = 0;
-				this.stream.put(10);
-				this.stream.putInt(seed[0]);
-				this.stream.putInt(seed[1]);
-				this.stream.putInt(seed[2]);
-				this.stream.putInt(seed[3]);
-				this.stream.putInt(signlink.uid);
-				this.stream.putString(playerUsername);
-				this.stream.putString(playerPassword);
-				this.stream.generateKeys();
-				this.loginStream.position = 0;
-				if (recoveredConnection) {
-					this.loginStream.put(18);
-                } else {
-					this.loginStream.put(16);
-                }
-				this.loginStream.put(this.stream.position + 40);
-				this.loginStream.put(255);
-				this.loginStream.putShort(317);
-				this.loginStream.put(lowMemory ? 1 : 0);
-				for (int crc = 0; crc < 9; crc++) {
-					this.loginStream.putInt(this.expectedCRCs[crc]);
-                }
+				seed[0] = (int) (Math.random() * 9.9999999E7D);
+				seed[1] = (int) (Math.random() * 9.9999999E7D);
+				seed[2] = (int) (Math.random() * 9.9999999E7D);
+				seed[3] = (int) (Math.random() * 9.9999999E7D);
 
-				this.loginStream.putBytes(this.stream.buffer, this.stream.position, 0);
+				this.stream.RSC_newPacket(0);
+				this.stream.put(recoveredConnection ? 1 : 0);
+				this.stream.putInt(RSCConfig.rscVersion);
+
+				Buffer loginBlock = new Buffer(new byte[500]);
+				loginBlock.position = 0;
+				loginBlock.put(10);
+				loginBlock.putInt(seed[0]);
+				loginBlock.putInt(seed[1]);
+				loginBlock.putInt(seed[2]);
+				loginBlock.putInt(seed[3]);
+				loginBlock.RSC_putString(formatPass);
+				for (int i = 0; i < 5; i++)
+					loginBlock.putInt((int) (9.9999999E7D * Math.random()));
+				loginBlock.put24BitInt((int) (9.9999999E7D * Math.random()));
+				loginBlock.generateKeys();
+
+				this.stream.putBytes(loginBlock.buffer, loginBlock.position, 0);
+				this.stream.putShort(0); // xtea block offset
+				int xtea_start = this.stream.position;
+				this.stream.put(1); // limit30
+				for (int i = 0; i < 24; i++) // write 24 random bytes
+					this.stream.put(0);
+				this.stream.RSC_putString(playerUsername);
+				this.stream.xtea_encrypt(xtea_start, seed, this.stream.position);
+				this.stream.RSC_setLengthShort(2, this.stream.position - xtea_start);
+				this.stream.RSC_finalizePacket();
+
 				this.stream.encryptor = new ISAACRandomGenerator(seed);
-				for (int index = 0; index < 4; index++) {
-                    seed[index] += 50;
-                }
-
 				this.encryption = new ISAACRandomGenerator(seed);
-				this.socket.write(this.loginStream.position, this.loginStream.buffer);
+				RSCConfig.incomingIsaac = new Isaac(seed);
+
+				this.socket.write(this.stream.position, this.stream.buffer);
+
+				initialResponseCode = 0;
 				responseCode = this.socket.read();
 			}
+			else
+			{
+				this.stream.position = 0;
+				this.stream.put(14);
+				this.stream.put(nameHash);
+				this.socket.write(2, this.stream.buffer);
+				for (int ignoredByte = 0; ignoredByte < 8; ignoredByte++) {
+					this.socket.read();
+				}
+
+				responseCode = this.socket.read();
+				initialResponseCode = responseCode;
+				if (responseCode == 0) {
+					this.socket.read(this.inStream.buffer, 8);
+					this.inStream.position = 0;
+					this.serverSessionKey = this.inStream.getLong();
+					final int[] seed = new int[4];
+					seed[0] = (int) (Math.random() * 99999999D);
+					seed[1] = (int) (Math.random() * 99999999D);
+					seed[2] = (int) (this.serverSessionKey >> 32);
+					seed[3] = (int) this.serverSessionKey;
+					this.stream.position = 0;
+					this.stream.put(10);
+					this.stream.putInt(seed[0]);
+					this.stream.putInt(seed[1]);
+					this.stream.putInt(seed[2]);
+					this.stream.putInt(seed[3]);
+					this.stream.putInt(signlink.uid);
+					this.stream.putString(playerUsername);
+					this.stream.putString(playerPassword);
+					this.stream.generateKeys();
+					this.loginStream.position = 0;
+					if (recoveredConnection) {
+						this.loginStream.put(18);
+					} else {
+						this.loginStream.put(16);
+					}
+					this.loginStream.put(this.stream.position + 40);
+					this.loginStream.put(255);
+					this.loginStream.putShort(317);
+					this.loginStream.put(lowMemory ? 1 : 0);
+					for (int crc = 0; crc < 9; crc++) {
+						this.loginStream.putInt(this.expectedCRCs[crc]);
+					}
+
+					this.loginStream.putBytes(this.stream.buffer, this.stream.position, 0);
+					this.stream.encryptor = new ISAACRandomGenerator(seed);
+					for (int index = 0; index < 4; index++) {
+						seed[index] += 50;
+					}
+
+					this.encryption = new ISAACRandomGenerator(seed);
+					this.socket.write(this.loginStream.position, this.loginStream.buffer);
+					responseCode = this.socket.read();
+				}
+			}
+
+			int rscResponseCode = responseCode;
+			responseCode = RSCConfig.RSC_ResponseCode(responseCode);
+
 			if (responseCode == 1) {
 				try {
 					Thread.sleep(2000L);
@@ -6344,8 +6435,15 @@ public final class Client extends RSApplet {
 				return;
 			}
 			if (responseCode == 2) {
-				this.playerRights = this.socket.read();
-				flagged = this.socket.read() == 1;
+				if (RSCConfig.rscProtocol)
+				{
+					// TODO: Setup player rights
+				}
+				else
+				{
+					this.playerRights = this.socket.read();
+					flagged = this.socket.read() == 1;
+				}
 				this.lastClickTime = 0L;
 				this.sameClickPositionCounter = 0;
 				this.mouseDetection.coordsIndex = 0;
@@ -7227,7 +7325,7 @@ public final class Client extends RSApplet {
 			}
 			this.jaggrabSocket = null;
 		}
-		this.jaggrabSocket = this.openSocket(43595);
+		this.jaggrabSocket = this.openSocket(RSCConfig.jaggrabPort);
 		this.jaggrabSocket.setSoTimeout(10000);
 		final java.io.InputStream inputstream = this.jaggrabSocket.getInputStream();
 		final OutputStream outputstream = this.jaggrabSocket.getOutputStream();

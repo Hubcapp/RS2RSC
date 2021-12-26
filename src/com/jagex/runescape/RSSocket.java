@@ -143,6 +143,10 @@ final class RSSocket implements Runnable {
 	}
 
 	public void write(final int i, final byte[] abyte0) throws IOException {
+		FileOutputStream fout = new FileOutputStream(new File("out.bin"));
+		fout.write(abyte0, 0, i);
+		fout.close();
+
 		if (this.closed) {
             return;
         }

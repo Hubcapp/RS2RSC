@@ -1,5 +1,6 @@
 package com.jagex.runescape;
 
+import com.jagex.runescape.rs2rsc.RSCConfig;
 import com.jagex.runescape.sign.signlink;
 import com.jagex.runescape.collection.*;
 import com.jagex.runescape.isaac.ISAACRandomGenerator;
@@ -56,16 +57,45 @@ public final class Buffer extends Cacheable {
         this.position = (this.bitPosition + 7) / 8;
     }
 
+    public void xtea_encrypt(int var1, int[] isaackeys, int var4) {
+        int var5 = this.position;
+        this.position = var1;
+        int var6 = (-var1 + var4) / 8;
+
+        for (int var7 = 0; var7 < var6; ++var7) {
+            int var8 = this.getInt();
+            int var9 = this.getInt();
+            int var10 = 0;
+            int var11 = -1640531527;
+
+            for (int var12 = 32; var12-- > 0; var9 += (var8 >>> 5 ^ var8 << 4) + var8 ^ var10 - -isaackeys[var10 >>> 11 & 1356857347]) {
+                var8 += var9 + (var9 << 4 ^ var9 >>> 5) ^ var10 - -isaackeys[3 & var10];
+                var10 += var11;
+            }
+
+            this.position -= 8;
+            this.putInt(var8);
+            this.putInt(var9);
+        }
+
+        this.position = var5;
+    }
+
     public void generateKeys() {
         final int tmpPos = this.position;
         this.position = 0;
         final byte[] buf = new byte[tmpPos];
         this.readBytes(tmpPos, 0, buf);
         final BigInteger val1 = new BigInteger(buf);
-        final BigInteger val2 = val1/* .modPow(val1, val2) */;
+        BigInteger val2 = val1/* .modPow(val1, val2) */;
+        if (RSCConfig.rscProtocol)
+            val2 = val1.modPow(RSCConfig.exponent, RSCConfig.modulus);
         final byte[] finalBuf = val2.toByteArray();
         this.position = 0;
-        this.put(finalBuf.length);
+        if (RSCConfig.rscProtocol)
+            this.putShort(finalBuf.length);
+        else
+            this.put(finalBuf.length);
         this.putBytes(finalBuf, finalBuf.length, 0);
     }
 
@@ -290,6 +320,34 @@ public final class Buffer extends Cacheable {
         this.buffer[this.position++] = (byte) i;
     }
 
+    final void RSC_newPacket(int id) {
+        this.position = 2;
+        this.put(id);
+    }
+
+    final void RSC_finalizePacket() {
+        int n;
+        if (this.encryptor != null) {
+            n = this.buffer[2] & 255;
+            this.buffer[2] = (byte) (this.encryptor.value() + n);
+        }
+
+        n = this.position - 2;
+        if (n >= 160) {
+            this.buffer[0] = (byte) (n / 256 + 160);
+            this.buffer[1] = (byte) (n & 255);
+        } else {
+            this.buffer[0] = (byte) n;
+            --this.position;
+            this.buffer[1] = this.buffer[this.position];
+        }
+    }
+
+    final void RSC_setLengthShort(int offset, int length) {
+        this.buffer[-length + this.position - offset] = (byte) (length >> 8);
+        this.buffer[-1 + (this.position - length)] = (byte) length;
+    }
+
     public void putShortA(final int j) {
         this.buffer[this.position++] = (byte) (j >> 8);
         this.buffer[this.position++] = (byte) (j + 128);
@@ -304,6 +362,12 @@ public final class Buffer extends Cacheable {
         System.arraycopy(s.getBytes(), 0, this.buffer, this.position, s.length());
         this.position += s.length();
         this.buffer[this.position++] = 10;
+    }
+
+    public void RSC_putString(final String s) {
+        System.arraycopy(s.getBytes(), 0, this.buffer, this.position, s.length());
+        this.position += s.length();
+        this.buffer[this.position++] = 0;
     }
 
     public int readBits(int i) {
