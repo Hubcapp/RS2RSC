@@ -8,6 +8,7 @@ import java.net.*;
 import com.jagex.runescape.audio.Effect;
 import com.jagex.runescape.collection.*;
 import com.jagex.runescape.definition.*;
+import com.jagex.runescape.rs2rsc.RSCConfig;
 import com.jagex.runescape.screen.game.Minimap;
 import com.jagex.runescape.screen.title.TitleScreen;
 import com.jagex.runescape.sign.signlink;
@@ -6268,6 +6269,9 @@ public final class Client extends RSApplet {
 	}
 
 	private void login(final String playerUsername, final String playerPassword, final boolean recoveredConnection) {
+		if (RSCConfig.rscProtocol)
+			System.out.println("rsc protocol enabled");
+
 		signlink.errorname = playerUsername;
 		try {
 			if (!recoveredConnection) {
