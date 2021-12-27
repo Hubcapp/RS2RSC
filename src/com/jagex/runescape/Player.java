@@ -39,7 +39,7 @@ public final class Player extends Entity {
 	int playerTileWidth;
 	int skill;
 
-	Player() {
+	public Player() {
         this.aLong1697 = -1L;
         this.preventRotation = false;
         this.bodyPartColour = new int[5];

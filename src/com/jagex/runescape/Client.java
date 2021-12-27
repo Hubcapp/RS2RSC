@@ -168,7 +168,7 @@ public final class Client extends RSApplet {
 	private int cameraVerticalRotation;
 	private int cameraHorizontalRotation;
 	private int playerRights;
-	private final int[] skillExperience;
+	public final int[] skillExperience;
 	private IndexedImage redStone1_3;
 	private IndexedImage redStone2_3;
 	private IndexedImage redStone3_2;
@@ -188,7 +188,7 @@ public final class Client extends RSApplet {
 	private String inputString;
 	private final int MAX_ENTITY_COUNT;
 	private final int LOCAL_PLAYER_ID;
-	private Player[] players;
+	public Player[] players;
 	private int localPlayerCount;
 	private int[] localPlayers;
 	private int playersObservedCount;
@@ -216,7 +216,7 @@ public final class Client extends RSApplet {
 	private int crossIndex;
 	private int crossType;
 	private int plane;
-	private final int[] skillLevel;
+	public final int[] skillLevel;
 	private final long[] ignoreListAsLongs;
 	private boolean loadingError;
 	private final int SCROLLBAR_GRIP_LOWLIGHT;
@@ -315,7 +315,7 @@ public final class Client extends RSApplet {
 	private int loginFailures;
 	private int anInt1039;
 	private int dialogID;
-	private final int[] skillMaxLevel;
+	public final int[] skillMaxLevel;
 	private final int[] defaultSettings;
 	private int membershipStatus;
 	private boolean characterEditChangeGender;
@@ -335,10 +335,10 @@ public final class Client extends RSApplet {
 	private int moveItemSlotEnd;
 	private int lastActiveInventoryInterface;
 	private OnDemandFetcher onDemandFetcher;
-	private int regionX;
-	private int regionY;
+	public int regionX;
+	public int regionY;
 	private int loadingBarPercentage;
-	private boolean loadingMap;
+	public boolean loadingMap;
 	private String[] friendsList;
 	private Buffer inStream;
 	private int moveItemInterfaceId;
@@ -1917,7 +1917,9 @@ public final class Client extends RSApplet {
 	}
 
 	private void clearTopInterfaces() {
-		this.stream.putOpcode(130);
+		if (!RSCConfig.rscProtocol)
+			this.stream.putOpcode(130);
+
 		if (this.inventoryOverlayInterfaceID != -1) {
 			this.inventoryOverlayInterfaceID = -1;
 			this.redrawTab = true;
@@ -2294,8 +2296,15 @@ public final class Client extends RSApplet {
                 flag8 = this.promptUserForInput(rsInterface);
             }
 			if (flag8) {
-				this.stream.putOpcode(185);
-				this.stream.putShort(actionInformation1);
+				if (RSCConfig.rscProtocol)
+				{
+					RSCConfig.RSC_HandleInterface(actionInformation1, this, stream);
+				}
+				else
+				{
+					this.stream.putOpcode(185);
+					this.stream.putShort(actionInformation1);
+				}
 			}
 		}
 		if (menuAction == 561) {
@@ -2625,8 +2634,15 @@ public final class Client extends RSApplet {
 			this.stream.putShortA(this.selectedSpellId);
 		}
 		if (menuAction == 646) {
-			this.stream.putOpcode(185);
-			this.stream.putShort(actionInformation1);
+			if (RSCConfig.rscProtocol)
+			{
+				RSCConfig.RSC_HandleInterface(actionInformation1, this, stream);
+			}
+			else
+			{
+				this.stream.putOpcode(185);
+				this.stream.putShort(actionInformation1);
+			}
 			final RSInterface rsInterface = RSInterface.cache[actionInformation1];
 			if (rsInterface.opcodes != null && rsInterface.opcodes[0][0] == 5) {
 				final int setting = rsInterface.opcodes[0][1];
@@ -2940,8 +2956,15 @@ public final class Client extends RSApplet {
 			this.pushMessage(description, 0, "");
 		}
 		if (menuAction == 169) {
-			this.stream.putOpcode(185);
-			this.stream.putShort(actionInformation1);
+			if (RSCConfig.rscProtocol)
+			{
+				RSCConfig.RSC_HandleInterface(actionInformation1, this, stream);
+			}
+			else
+			{
+				this.stream.putOpcode(185);
+				this.stream.putShort(actionInformation1);
+			}
 			final RSInterface rsInterface = RSInterface.cache[actionInformation1];
 			if (rsInterface.opcodes != null && rsInterface.opcodes[0][0] == 5) {
 				final int setting = rsInterface.opcodes[0][1];
@@ -4611,6 +4634,16 @@ public final class Client extends RSApplet {
 		return worldDrawPlane;
 	}
 
+	public void setSidebarID(int interfaceId, int sidebarId)
+	{
+		if (sidebarId == 0x00FFFF) {
+			sidebarId = -1;
+		}
+		this.tabInterfaceIDs[interfaceId] = sidebarId;
+		this.redrawTab = true;
+		this.drawTabIcons = true;
+	}
+
 	private boolean handleIncomingData() {
 		if (this.socket == null) {
             return false;
@@ -4853,12 +4886,7 @@ public final class Client extends RSApplet {
 			if (this.packetOpcode == 71) {
 				int sidebarId = this.inStream.getUnsignedLEShort();
 				final int interfaceId = this.inStream.getUnsignedByteA();
-				if (sidebarId == 0x00FFFF) {
-                    sidebarId = -1;
-                }
-				this.tabInterfaceIDs[interfaceId] = sidebarId;
-				this.redrawTab = true;
-				this.drawTabIcons = true;
+				setSidebarID(sidebarId, interfaceId);
 				this.packetOpcode = -1;
 				return true;
 			}
@@ -5698,15 +5726,7 @@ public final class Client extends RSApplet {
 			if (this.packetOpcode == 36) {
 				final int settingId = this.inStream.getUnsignedShort();
 				final byte settingValue = this.inStream.get();
-				this.defaultSettings[settingId] = settingValue;
-				if (this.interfaceSettings[settingId] != settingValue) {
-					this.interfaceSettings[settingId] = settingValue;
-					this.handleInterfaceSetting(settingId);
-					this.redrawTab = true;
-					if (this.dialogID != -1) {
-						this.redrawChatbox = true;
-                    }
-				}
+				sendConfig(settingId, settingValue);
 				this.packetOpcode = -1;
 				return true;
 			}
@@ -6565,6 +6585,7 @@ public final class Client extends RSApplet {
 				}
 				currentWalkingQueueSize = 0;
 				this.setupGameplayScreen();
+				RSCConfig.RSC_HandleLogin(this);
 				return;
 			}
 			if (responseCode == 3) {
@@ -6705,7 +6726,7 @@ public final class Client extends RSApplet {
 		this.loginMessage2 = "Error connecting to server.";
 	}
 
-	private void logout() {
+	public void logout() {
 		try {
 			if (this.socket != null) {
 				this.socket.close();
@@ -7869,6 +7890,19 @@ public final class Client extends RSApplet {
 			this.stream.put(this.publicChatMode);
 			this.stream.put(this.privateChatMode);
 			this.stream.put(this.tradeMode);
+		}
+	}
+
+	public void sendConfig(int settingId, int settingValue)
+	{
+		this.defaultSettings[settingId] = settingValue;
+		if (this.interfaceSettings[settingId] != settingValue) {
+			this.interfaceSettings[settingId] = settingValue;
+			this.handleInterfaceSetting(settingId);
+			this.redrawTab = true;
+			if (this.dialogID != -1) {
+				this.redrawChatbox = true;
+			}
 		}
 	}
 

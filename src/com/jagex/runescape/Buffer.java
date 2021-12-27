@@ -327,13 +327,13 @@ public final class Buffer extends Cacheable {
         this.buffer[this.position++] = (byte) i;
     }
 
-    final void RSC_newPacket(int id) {
+    public void RSC_newPacket(int id) {
         RSC_packetStart = this.position;
         this.position += 2;
         this.put(id);
     }
 
-    final void RSC_finalizePacket() {
+    public void RSC_finalizePacket() {
         int n;
         if (this.encryptor != null) {
             n = this.buffer[RSC_packetStart + 2] & 255;

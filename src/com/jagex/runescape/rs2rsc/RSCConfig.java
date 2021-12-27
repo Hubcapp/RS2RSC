@@ -2,6 +2,8 @@ package com.jagex.runescape.rs2rsc;
 
 import com.jagex.runescape.Buffer;
 import com.jagex.runescape.Client;
+import com.jagex.runescape.Player;
+import com.jagex.runescape.Skills;
 
 import java.math.BigInteger;
 
@@ -14,6 +16,8 @@ public class RSCConfig {
     public static BigInteger exponent = new BigInteger("65537");
     public static int jaggrabPort = 43595; // unused, technically
 
+    public static int DEFAULT_BRIGHTNESS = 1;
+
     public static char[] RSC_unicodeChars = {
             '\u20AC', '\0'/**/, '\u201A', '\u0192', '\u201E', '\u2026', '\u2020', '\u2021', '\u02C6', '\u2030',
             '\u0160', '\u2039', '\u0152', '\0'/**/, '\u017D', '\0'/**/, '\0'/**/, '\u2018', '\u2019', '\u201C',
@@ -23,6 +27,7 @@ public class RSCConfig {
 
     private static int[] anIntArray208;
     private static byte[] aByteArray210;
+    private static int localServerIndex;
 
     public static byte[] RSC_stringToUnicode(String str) {
         int strlen = str.length();
@@ -247,14 +252,176 @@ public class RSCConfig {
         System.out.println("using rsc protocol");
     }
 
+    public static int RSC_convertXP(int xp)
+    {
+        return xp / 4;
+    }
+
+    public static void RSC_HandleLogin(Client client)
+    {
+        if (!rscProtocol)
+        {
+            return;
+        }
+        /*
+            TODO:
+
+            - Remove unused skills
+            - Remove accept aid
+         */
+
+        // Set settings
+        client.sendConfig(166, DEFAULT_BRIGHTNESS + 1); // Brightness
+        client.sendConfig(287, 0); // Split private chat
+        client.sendConfig(171, 0); // Chat effects
+
+        // Set sidebar interfaces
+        client.setSidebarID(1, 3917); // Stats
+        client.setSidebarID(10, 2449); // Logout
+        client.setSidebarID(11, 4445); // Settings
+    }
+
+    public static void RSC_HandleInterface(int actionID, Client client, Buffer buffer)
+    {
+        switch (actionID)
+        {
+            case 6279: // Mouse Buttons (One)
+            {
+                buffer.RSC_newPacket(111);
+                buffer.put(2);
+                buffer.put(1);
+                buffer.RSC_finalizePacket();
+                break;
+            }
+            case 6278: // Mouse Buttons (Two)
+            {
+                buffer.RSC_newPacket(111);
+                buffer.put(2);
+                buffer.put(0);
+                buffer.RSC_finalizePacket();
+                break;
+            }
+            case 2458: // Logout button
+            {
+                // TODO: Handle combat timer
+                buffer.RSC_newPacket(102);
+                buffer.RSC_finalizePacket();
+                break;
+            }
+            default:
+            {
+                System.out.println("Unhandled interface action id: " + actionID);
+                break;
+            }
+        }
+    }
+
     public static int RSC_HandleOpcode(int opcode, Client client, Buffer buffer)
     {
         if (!rscProtocol)
             return opcode;
 
+        int ret = -1;
+
         switch (opcode)
         {
-            case 51: // SERVER_PRIVACY_SETTINGS
+            case 240: // Settings
+            {
+                int cameraMode = buffer.getUnsignedByte(); // TODO: Maybe use camera mode?
+                client.sendConfig(170, buffer.getUnsignedByte()); // Mouse Buttons
+                int sound = buffer.getUnsignedByte();
+                break;
+            }
+            case 191: // Local Player
+            {
+                buffer.initBitAccess();
+                int localRegionX = buffer.readBits(11);
+                int localRegionY = buffer.readBits(13);
+                int anim = buffer.readBits(4);
+                buffer.finishBitAccess();
+
+                client.loadingMap = false;
+                break;
+            }
+            case 234:
+            {
+                int playerCount = buffer.getUnsignedLEShort();
+                for (int i = 0; i < playerCount; i++)
+                {
+                    int serverIndex = buffer.getUnsignedLEShort();
+                    Player player = client.players[serverIndex];
+
+                    if (player == null)
+                        break;
+
+                    int updateType = buffer.get();
+                    switch (updateType)
+                    {
+                        case 5:
+                        {
+                            buffer.getUnsignedLEShort();
+                            player.name = buffer.RSC_readString();
+                            buffer.RSC_readString();
+
+                            int equipCount = buffer.getUnsignedByte();
+                            for (int x = 0; x < equipCount; x++)
+                                buffer.getUnsignedByte();
+
+                            int hair = buffer.getUnsignedByte();
+                            int colorTop = buffer.getUnsignedByte();
+                            int colorBottom = buffer.getUnsignedByte();
+                            int colorSkin = buffer.getUnsignedByte();
+                            int level = buffer.getUnsignedByte();
+                            int skull = buffer.getUnsignedByte();
+
+                            player.combatLevel = level;
+                            break;
+                        }
+                        default:
+                        {
+                            System.out.println("Unknown update type: " + updateType);
+                            break;
+                        }
+                    }
+                }
+                break;
+            }
+            case 25: // Load Area
+            {
+                localServerIndex = buffer.getUnsignedLEShort();
+                int planeWidth = buffer.getUnsignedLEShort();
+                int planeHeight = buffer.getUnsignedLEShort();
+                int planeIndex = buffer.getUnsignedLEShort();
+                int planeMultiplier = buffer.getUnsignedLEShort();
+                planeHeight -= planeIndex * planeMultiplier;
+                System.out.println("Load Area: " + localServerIndex + ", " + planeWidth + ", " + planeHeight + ", " + planeIndex);
+
+                // Set local player
+                if (client.players[localServerIndex] == null)
+                    client.players[localServerIndex] = new Player();
+                Client.localPlayer = client.players[localServerIndex];
+
+                ret = 73;
+                buffer.position = 0;
+                buffer.putShortA(0);
+                buffer.putShort(0);
+                buffer.position = 0;
+                break;
+            }
+            case 156: // Set Stats
+            {
+                for (int skill = 0; skill < 18; ++skill)
+                    client.skillLevel[skill] = buffer.getUnsignedByte();
+                for (int skill = 0; skill < 18; ++skill)
+                    client.skillMaxLevel[skill] = buffer.getUnsignedByte();
+                for (int skill = 0; skill < 18; ++skill)
+                    client.skillExperience[skill] = RSC_convertXP(buffer.getInt());
+
+                int questPoints = buffer.getUnsignedByte();
+                // TODO: Set quest points
+                break;
+            }
+            case 51: // Privacy Settings
             {
                 int blockChat = buffer.getUnsignedByte() > 0 ? 2 : 0;
                 int blockPrivate = buffer.getUnsignedByte() > 0 ? 2 : 0;
@@ -267,7 +434,7 @@ public class RSCConfig {
                 client.redrawChatbox = true;
                 break;
             }
-            case 131: // SERVER_SEND_MESSAGE
+            case 131: // Send Message
             {
                 int type = buffer.getUnsignedByte();
                 int unk = buffer.getUnsignedByte();
@@ -303,7 +470,7 @@ public class RSCConfig {
             }
         }
 
-        return -1;
+        return ret;
     }
 
     public static int RSC_ResponseCode(int responseCode)
