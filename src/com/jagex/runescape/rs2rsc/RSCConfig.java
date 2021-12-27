@@ -339,6 +339,40 @@ public class RSCConfig {
                 int localRegionX = buffer.readBits(11);
                 int localRegionY = buffer.readBits(13);
                 int anim = buffer.readBits(4);
+
+                int playerCount = buffer.readBits(8);
+                for (int i = 0; i < playerCount; i++)
+                {
+                    // TODO: CONTINUE HERE
+                    int reqUpdate = buffer.readBits(1);
+                    if (reqUpdate != 0) {
+                        buffer.readBits(3);
+                    } else {
+                        buffer.readBits(3);
+                    }
+                }
+
+                while (client.packetSize * 8 > buffer.bitPosition + 24)
+                {
+                    int serverIndex = buffer.readBits(11);
+                    int areaX = buffer.readBits(5);
+                    if (areaX > 15)
+                        areaX -= 32;
+                    int areaY = buffer.readBits(5);
+                    if (areaY > 15)
+                        areaY -= 32;
+                    int otherAnim = buffer.readBits(4);
+
+                    System.out.println(serverIndex + ": " + areaX + ", " + areaY);
+
+                    if (client.players[serverIndex] == null)
+                    {
+                        Player player = new Player();
+                        player.id = serverIndex;
+                        client.players[serverIndex] = player;
+                    }
+                }
+
                 buffer.finishBitAccess();
 
                 client.loadingMap = false;
@@ -351,6 +385,8 @@ public class RSCConfig {
                 {
                     int serverIndex = buffer.getUnsignedLEShort();
                     Player player = client.players[serverIndex];
+
+                    System.out.println(serverIndex + ": " + " spook");
 
                     if (player == null)
                         break;
@@ -420,6 +456,7 @@ public class RSCConfig {
                             player.name = username;
                             player.npcAppearance = null;
                             player.combatLevel = level;
+                            player.id = serverIndex;
                             player.visible = true;
                             break;
                         }

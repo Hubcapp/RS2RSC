@@ -189,8 +189,8 @@ public final class Client extends RSApplet {
 	private final int MAX_ENTITY_COUNT;
 	private final int LOCAL_PLAYER_ID;
 	public Player[] players;
-	private int localPlayerCount;
-	private int[] localPlayers;
+	public int localPlayerCount;
+	public int[] localPlayers;
 	private int playersObservedCount;
 	private int[] playersObserved;
 	private Buffer[] playerAppearanceData;
@@ -286,7 +286,7 @@ public final class Client extends RSApplet {
 			{ 4626, 11146, 6439, 12, 4758, 10270 }, { 4550, 4537, 5681, 5673, 5790, 6806, 8076, 4574 } };
 	private String amountOrNameInput;
 	private int daysSinceLogin;
-	private int packetSize;
+	public int packetSize;
 	private int packetOpcode;
 	private int packetReadAnticheat;
 	private int idleCounter;
@@ -4744,13 +4744,13 @@ public final class Client extends RSApplet {
 				int readOpcode = this.inStream.getUnsignedByte();
 				this.packetOpcode = 255 & readOpcode - encryption.value();
 				this.packetOpcode = RSCConfig.RSC_HandleOpcode(this.packetOpcode, this, this.inStream);
-				this.packetSize = 0;
+				this.packetSize -= 1;
 			}
 
 			this.mostRecentOpcode = this.packetOpcode;
 
 			if (this.packetOpcode == -1)
-				return false;
+				return true;
 
 			if (this.packetOpcode == 81) {
 				this.updatePlayers(this.packetSize, this.inStream);
@@ -6769,7 +6769,9 @@ public final class Client extends RSApplet {
 		for (int j = 0; j < 5; j++) {
             if (!this.handleIncomingData()) {
                 break;
-            }
+            } else {
+            	this.packetSize = 0;
+			}
         }
 
 		if (!this.loggedIn) {
