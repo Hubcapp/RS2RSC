@@ -33,6 +33,8 @@ public final class Buffer extends Cacheable {
 
     public int position;
 
+    public int RSC_packetStart;
+
     public int bitPosition;
 
     private static final int[] BIT_MASKS = { 0, 1, 3, 7, 15, 31, 63, 127, 255, 511, 1023, 2047, 4095, 8191, 16383,
@@ -312,6 +314,11 @@ public final class Buffer extends Cacheable {
     }
 
     public void putOpcode(final int i) {
+        if (RSCConfig.rscProtocol)
+        {
+            System.out.println("Sending invalid opcode: " + i);
+            return;
+        }
         this.buffer[this.position++] = (byte) (i + this.encryptor.value());
     }
 
@@ -321,31 +328,74 @@ public final class Buffer extends Cacheable {
     }
 
     final void RSC_newPacket(int id) {
-        this.position = 2;
+        RSC_packetStart = this.position;
+        this.position += 2;
         this.put(id);
     }
 
     final void RSC_finalizePacket() {
         int n;
         if (this.encryptor != null) {
-            n = this.buffer[2] & 255;
-            this.buffer[2] = (byte) (this.encryptor.value() + n);
+            n = this.buffer[RSC_packetStart + 2] & 255;
+            this.buffer[RSC_packetStart + 2] = (byte) (this.encryptor.value() + n);
         }
 
         n = this.position - 2;
         if (n >= 160) {
-            this.buffer[0] = (byte) (n / 256 + 160);
-            this.buffer[1] = (byte) (n & 255);
+            this.buffer[RSC_packetStart + 0] = (byte) (n / 256 + 160);
+            this.buffer[RSC_packetStart + 1] = (byte) (n & 255);
         } else {
-            this.buffer[0] = (byte) n;
+            this.buffer[RSC_packetStart + 0] = (byte) n;
             --this.position;
-            this.buffer[1] = this.buffer[this.position];
+            this.buffer[RSC_packetStart + 1] = this.buffer[this.position];
         }
     }
 
     final void RSC_setLengthShort(int offset, int length) {
         this.buffer[-length + this.position - offset] = (byte) (length >> 8);
         this.buffer[-1 + (this.position - length)] = (byte) length;
+    }
+
+    static String readUnicodeString(byte[] buf, int bufoff, int len) {
+        char[] chars = new char[len];
+        int off = 0;
+        for (int j = 0; j < len; j++) {
+            int uchar = buf[bufoff + j] & 0xff;
+            if (uchar == 0) {
+                continue;
+            }
+            if (uchar >= 128 && uchar < 160) {
+                char c = RSCConfig.RSC_unicodeChars[uchar - 128];
+                if (c == '\0') {
+                    c = '?';
+                }
+                uchar = c;
+            }
+            chars[off++] = (char) uchar;
+        }
+        return new String(chars, 0, off);
+    }
+
+    public String RSC_readString() {
+        byte nul = this.buffer[this.position++];
+        if (nul != 0) {
+            throw new IllegalStateException("Bad version number in gjstr2");
+        } else {
+            int off = this.position;
+            while (this.buffer[this.position++] != 0) ;
+            int len = this.position - off - 1;
+            return len == 0 ? "" : readUnicodeString(this.buffer, off, len);
+        }
+    }
+
+    public void RSC_putShort2(int var2) {
+        if (var2 >= 0 && var2 < 128) {
+            this.put(var2);
+        } else if (var2 >= 0 && var2 < '\u8000') {
+            this.putShort(var2 + '\u8000');
+        } else {
+            throw new IllegalArgumentException();
+        }
     }
 
     public void putShortA(final int j) {

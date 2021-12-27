@@ -8,7 +8,6 @@ import java.net.*;
 import com.jagex.runescape.audio.Effect;
 import com.jagex.runescape.collection.*;
 import com.jagex.runescape.definition.*;
-import com.jagex.runescape.rs2rsc.Isaac;
 import com.jagex.runescape.rs2rsc.RSCConfig;
 import com.jagex.runescape.screen.game.Minimap;
 import com.jagex.runescape.screen.title.TitleScreen;
@@ -158,7 +157,7 @@ public final class Client extends RSApplet {
 	private int secondMostRecentOpcode;
 	private int thirdMostRecentOpcode;
 	private String clickToContinueString;
-	private int privateChatMode;
+	public int privateChatMode;
 	private Buffer loginStream;
 	private boolean effectsEnabled;
 	private int hintIconType;
@@ -444,13 +443,13 @@ public final class Client extends RSApplet {
 	private long lastClickTime;
 	private int currentTabId;
 	private int hintIconNpcId;
-	private boolean redrawChatbox;
+	public boolean redrawChatbox;
 	private int inputDialogState;
 	private int nextSong;
 	private boolean songChanging;
 	private CollisionMap[] currentCollisionMap;
 	public static final int[] BITFIELD_MAX_VALUE;
-	private boolean updateChatSettings;
+	public boolean updateChatSettings;
 	private int[] mapCoordinates;
 	private int[] terrainDataIds;
 	private int[] objectDataIds;
@@ -464,7 +463,7 @@ public final class Client extends RSApplet {
 	private int atInventoryIndex;
 	private int atInventoryInterfaceType;
 	private byte[][] objectData;
-	private int tradeMode;
+	public int tradeMode;
 	private int chatEffectsDisabled;
 	private final int[] trackDelay;
 	private int inTutorial;
@@ -496,7 +495,7 @@ public final class Client extends RSApplet {
 	private int lastItemSelectedInterface;
 	private int useItemId;
 	private String selectedItemName;
-	private int publicChatMode;
+	public int publicChatMode;
 	private static int currentWalkingQueueSize;
 	private int currentTrackLoop;
 
@@ -4634,7 +4633,8 @@ public final class Client extends RSApplet {
 					availableBytes--;
 					if (this.packetSize >= 160) {
 						this.socket.read(this.inStream.buffer, 1);
-						this.packetSize = 256 * this.packetSize - ('\ua000' + -(this.inStream.buffer[0] & 0xFF));
+						int length = this.inStream.buffer[0] & 0xFF;
+						this.packetSize = 256 * this.packetSize - ('\ua000' + -length);
 						availableBytes--;
 					}
 
@@ -4652,42 +4652,65 @@ public final class Client extends RSApplet {
 					this.packetSize = PacketInformation.PACKET_SIZES[this.packetOpcode];
 					availableBytes--;
 				}
+
+				if (this.packetSize == -1) {
+					if (availableBytes > 0) {
+						this.socket.read(this.inStream.buffer, 1);
+						this.packetSize = this.inStream.buffer[0] & 0xFF;
+						availableBytes--;
+					} else {
+						return false;
+					}
+				}
+
+				if (this.packetSize == -2) {
+					if (availableBytes > 1) {
+						this.socket.read(this.inStream.buffer, 2);
+						this.inStream.position = 0;
+						this.packetSize = this.inStream.getUnsignedLEShort();
+						availableBytes -= 2;
+					} else {
+						return false;
+					}
+				}
 			}
 
-			if (this.packetSize == -1) {
-                if (availableBytes > 0) {
-					this.socket.read(this.inStream.buffer, 1);
-					this.packetSize = this.inStream.buffer[0] & 0xFF;
-                    availableBytes--;
-                } else {
-                    return false;
-                }
-            }
-			if (this.packetSize == -2) {
-                if (availableBytes > 1) {
-					this.socket.read(this.inStream.buffer, 2);
-					this.inStream.position = 0;
-					this.packetSize = this.inStream.getUnsignedLEShort();
-                    availableBytes -= 2;
-                } else {
-                    return false;
-                }
-            }
 			if (availableBytes < this.packetSize) {
                 return false;
             }
 
 			this.inStream.position = 0;
-			this.socket.read(this.inStream.buffer, this.packetSize);
+			if (RSCConfig.rscProtocol)
+			{
+				if (this.packetSize < 160)
+				{
+					this.socket.read(this.inStream.buffer, 1);
+					byte ending = this.inStream.buffer[0];
+					this.socket.read(this.inStream.buffer, this.packetSize - 1);
+					this.inStream.buffer[this.packetSize] = ending;
+				}
+				else
+				{
+					this.socket.read(this.inStream.buffer, this.packetSize);
+				}
+			}
+			else
+			{
+				this.socket.read(this.inStream.buffer, this.packetSize);
+			}
 			this.packetReadAnticheat = 0;
 			this.thirdMostRecentOpcode = this.secondMostRecentOpcode;
 			this.secondMostRecentOpcode = this.mostRecentOpcode;
 
-			this.packetOpcode = 255 & this.inStream.buffer[0] - RSCConfig.incomingIsaac.next();
-			this.packetOpcode = RSCConfig.RSC_Opcode(this.packetOpcode);
-			this.mostRecentOpcode = this.packetOpcode;
+			if (RSCConfig.rscProtocol)
+			{
+				int readOpcode = this.inStream.getUnsignedByte();
+				this.packetOpcode = 255 & readOpcode - encryption.value();
+				this.packetOpcode = RSCConfig.RSC_HandleOpcode(this.packetOpcode, this, this.inStream);
+				this.packetSize = 0;
+			}
 
-			this.packetSize = 0;
+			this.mostRecentOpcode = this.packetOpcode;
 
 			if (this.packetOpcode == -1)
 				return false;
@@ -6120,7 +6143,8 @@ public final class Client extends RSApplet {
 
 			final Region objectManager = new Region(this.tileFlags, this.intGroundArray);
 			final int dataLength = this.terrainData.length;
-			this.stream.putOpcode(0);
+			if (RSCConfig.rscProtocol)
+				this.stream.putOpcode(0);
 			if (!this.loadGeneratedMap) {
 				for (int pointer = 0; pointer < dataLength; pointer++) {
 					final int offsetX = (this.mapCoordinates[pointer] >> 8) * 64 - this.baseX;
@@ -6140,7 +6164,9 @@ public final class Client extends RSApplet {
                         objectManager.initiateVertexHeights(offsetY, 64, 64, offsetX);
                     }
 				}
-				this.stream.putOpcode(0);
+
+				if (RSCConfig.rscProtocol)
+					this.stream.putOpcode(0);
 				for (int region = 0; region < dataLength; region++) {
 					final byte[] data = this.objectData[region];
 					if (data != null) {
@@ -6188,7 +6214,8 @@ public final class Client extends RSApplet {
 
 				}
 
-				this.stream.putOpcode(0);
+				if (RSCConfig.rscProtocol)
+					this.stream.putOpcode(0);
 				for (int z = 0; z < 4; z++) {
 					for (int x = 0; x < 13; x++) {
 						for (int y = 0; y < 13; y++) {
@@ -6217,10 +6244,12 @@ public final class Client extends RSApplet {
 				}
 
 			}
-			this.stream.putOpcode(0);
+			if (RSCConfig.rscProtocol)
+				this.stream.putOpcode(0);
 			objectManager.createRegion(this.currentCollisionMap, this.worldController);
 			this.gameScreenImageProducer.initDrawingArea();
-			this.stream.putOpcode(0);
+			if (RSCConfig.rscProtocol)
+				this.stream.putOpcode(0);
 			int z = Region.lowestPlane;
 			if (z > this.plane) {
                 z = this.plane;
@@ -6243,13 +6272,14 @@ public final class Client extends RSApplet {
 			loadedRegions++;
 			if (loadedRegions > 98) {
 				loadedRegions = 0;
-				this.stream.putOpcode(150);
+				if (RSCConfig.rscProtocol)
+					this.stream.putOpcode(150);
 			}
 			this.clearObjectSpawnRequests();
 		} catch (final Exception exception) {
 		}
 		GameObjectDefinition.modelCache.clear();
-		if (super.gameFrame != null) {
+		if (super.gameFrame != null && !RSCConfig.rscProtocol) {
 			this.stream.putOpcode(210);
 			this.stream.putInt(0x3F008EDD);
 		}
@@ -6357,14 +6387,13 @@ public final class Client extends RSApplet {
 				this.stream.RSC_setLengthShort(2, this.stream.position - xtea_start);
 				this.stream.RSC_finalizePacket();
 
-				this.stream.encryptor = new ISAACRandomGenerator(seed);
-				this.encryption = new ISAACRandomGenerator(seed);
-				RSCConfig.incomingIsaac = new Isaac(seed);
-
 				this.socket.write(this.stream.position, this.stream.buffer);
 
 				initialResponseCode = 0;
 				responseCode = this.socket.read();
+
+				this.stream.encryptor = new ISAACRandomGenerator(seed);
+				this.encryption = new ISAACRandomGenerator(seed);
 			}
 			else
 			{
@@ -6438,6 +6467,8 @@ public final class Client extends RSApplet {
 				if (RSCConfig.rscProtocol)
 				{
 					// TODO: Setup player rights
+					this.playerRights = 0;
+					flagged = false;
 				}
 				else
 				{
@@ -6813,8 +6844,12 @@ public final class Client extends RSApplet {
                 rightClick = 1;
             }
 			final int timeDifference = (int) timeBetweenClicks;
-			this.stream.putOpcode(241);
-			this.stream.putInt((timeDifference << 20) + (rightClick << 19) + pixelOffset);
+
+			if (!RSCConfig.rscProtocol)
+			{
+				this.stream.putOpcode(241);
+				this.stream.putInt((timeDifference << 20) + (rightClick << 19) + pixelOffset);
+			}
 		}
 		if (this.cameraMovedWriteDelay > 0) {
 			this.cameraMovedWriteDelay--;
@@ -6825,19 +6860,28 @@ public final class Client extends RSApplet {
 		if (this.cameraMovedWrite && this.cameraMovedWriteDelay <= 0) {
 			this.cameraMovedWriteDelay = 20;
 			this.cameraMovedWrite = false;
-			this.stream.putOpcode(86);
-			this.stream.putShort(cameraVertical);
-			this.stream.putShortA(cameraHorizontal);
+			if (!RSCConfig.rscProtocol)
+			{
+				this.stream.putOpcode(86);
+				this.stream.putShort(cameraVertical);
+				this.stream.putShortA(cameraHorizontal);
+			}
 		}
 		if (super.awtFocus && !this.windowFocused) {
 			this.windowFocused = true;
-			this.stream.putOpcode(3);
-			this.stream.put(1);
+			if (!RSCConfig.rscProtocol)
+			{
+				this.stream.putOpcode(3);
+				this.stream.put(1);
+			}
 		}
 		if (!super.awtFocus && this.windowFocused) {
 			this.windowFocused = false;
-			this.stream.putOpcode(3);
-			this.stream.put(0);
+			if (!RSCConfig.rscProtocol)
+			{
+				this.stream.putOpcode(3);
+				this.stream.put(0);
+			}
 		}
 		this.loadingStages();
 		this.spawnGameObjects();
@@ -7030,7 +7074,16 @@ public final class Client extends RSApplet {
         }
 		this.idleCounter++;
 		if (this.idleCounter > 50) {
-			this.stream.putOpcode(0);
+			// Heartbeat
+			if (RSCConfig.rscProtocol)
+			{
+				this.stream.RSC_newPacket(67);
+				this.stream.RSC_finalizePacket();
+			}
+			else
+			{
+				this.stream.putOpcode(0);
+			}
         }
 		try {
 			if (this.socket != null && this.stream.position > 0) {
@@ -7252,15 +7305,28 @@ public final class Client extends RSApplet {
 							effect = 5;
 							this.inputString = this.inputString.substring(6);
 						}
-						this.stream.putOpcode(4);
-						this.stream.put(0);
-						final int originalOffset = this.stream.position;
-						this.stream.putByteS(effect);
-						this.stream.putByteS(colour);
-						this.textStream.position = 0;
-						TextInput.writeToStream(this.inputString, this.textStream);
-						this.stream.putBytesA(0, this.textStream.buffer, this.textStream.position);
-						this.stream.putSizeByte(this.stream.position - originalOffset);
+
+						if (RSCConfig.rscProtocol)
+						{
+							byte[] inputBuffer = RSCConfig.RSC_stringToUnicode(this.inputString);
+
+							this.stream.RSC_newPacket(216);
+							this.stream.RSC_putShort2(inputBuffer.length);
+							this.stream.position += RSCConfig.method241(0, inputBuffer.length, this.stream.buffer, inputBuffer, 18695, this.stream.position);
+							this.stream.RSC_finalizePacket();
+						}
+						else
+						{
+							this.stream.putOpcode(4);
+							this.stream.put(0);
+							final int originalOffset = this.stream.position;
+							this.stream.putByteS(effect);
+							this.stream.putByteS(colour);
+							this.textStream.position = 0;
+							TextInput.writeToStream(this.inputString, this.textStream);
+							this.stream.putBytesA(0, this.textStream.buffer, this.textStream.position);
+							this.stream.putSizeByte(this.stream.position - originalOffset);
+						}
 						this.inputString = TextInput.processText(this.inputString);
 						this.inputString = Censor.censor(this.inputString);
 						localPlayer.overheadTextMessage = this.inputString;
@@ -7277,10 +7343,7 @@ public final class Client extends RSApplet {
 						if (this.publicChatMode == 2) {
 							this.publicChatMode = 3;
 							this.updateChatSettings = true;
-							this.stream.putOpcode(95);
-							this.stream.put(this.publicChatMode);
-							this.stream.put(this.privateChatMode);
-							this.stream.put(this.tradeMode);
+							sendPrivacySettings();
 						}
 					}
 					this.inputString = "";
@@ -7789,34 +7852,78 @@ public final class Client extends RSApplet {
 		super.debugRequested = true;
 	}
 
+	public void sendPrivacySettings()
+	{
+		if (RSCConfig.rscProtocol)
+		{
+			this.stream.RSC_newPacket(64);
+			this.stream.put(this.publicChatMode > 0 ? 1 : 0);
+			this.stream.put(this.privateChatMode > 0 ? 1 : 0);
+			this.stream.put(this.tradeMode > 0 ? 1 : 0);
+			this.stream.put(this.tradeMode > 0 ? 1 : 0);
+			this.stream.RSC_finalizePacket();
+		}
+		else
+		{
+			this.stream.putOpcode(95);
+			this.stream.put(this.publicChatMode);
+			this.stream.put(this.privateChatMode);
+			this.stream.put(this.tradeMode);
+		}
+	}
+
 	private void processChatModeClick() {
 		if (super.clickType == 1) {
 			if (super.clickX >= 6 && super.clickX <= 106 && super.clickY >= 467 && super.clickY <= 499) {
-				this.publicChatMode = (this.publicChatMode + 1) % 4;
+				if (RSCConfig.rscProtocol)
+				{
+					if (this.publicChatMode == 0)
+						this.publicChatMode = 2;
+					else
+						this.publicChatMode = 0;
+				}
+				else
+				{
+					this.publicChatMode = (this.publicChatMode + 1) % 4;
+				}
+
 				this.updateChatSettings = true;
 				this.redrawChatbox = true;
-				this.stream.putOpcode(95);
-				this.stream.put(this.publicChatMode);
-				this.stream.put(this.privateChatMode);
-				this.stream.put(this.tradeMode);
+				sendPrivacySettings();
 			}
 			if (super.clickX >= 135 && super.clickX <= 235 && super.clickY >= 467 && super.clickY <= 499) {
-				this.privateChatMode = (this.privateChatMode + 1) % 3;
+				if (RSCConfig.rscProtocol)
+				{
+					if (this.privateChatMode == 0)
+						this.privateChatMode = 2;
+					else
+						this.privateChatMode = 0;
+				}
+				else
+				{
+					this.privateChatMode = (this.privateChatMode + 1) % 3;
+				}
+
 				this.updateChatSettings = true;
 				this.redrawChatbox = true;
-				this.stream.putOpcode(95);
-				this.stream.put(this.publicChatMode);
-				this.stream.put(this.privateChatMode);
-				this.stream.put(this.tradeMode);
+				sendPrivacySettings();
 			}
 			if (super.clickX >= 273 && super.clickX <= 373 && super.clickY >= 467 && super.clickY <= 499) {
-				this.tradeMode = (this.tradeMode + 1) % 3;
+				if (RSCConfig.rscProtocol)
+				{
+					if (this.tradeMode == 0)
+						this.tradeMode = 2;
+					else
+						this.tradeMode = 0;
+				}
+				else
+				{
+					this.tradeMode = (this.tradeMode + 1) % 3;
+				}
+
 				this.updateChatSettings = true;
 				this.redrawChatbox = true;
-				this.stream.putOpcode(95);
-				this.stream.put(this.publicChatMode);
-				this.stream.put(this.privateChatMode);
-				this.stream.put(this.tradeMode);
+				sendPrivacySettings();
 			}
 			if (super.clickX >= 412 && super.clickX <= 512 && super.clickY >= 467 && super.clickY <= 499) {
 				if (this.openInterfaceId == -1) {
@@ -8652,7 +8759,7 @@ public final class Client extends RSApplet {
 		return false;
 	}
 
-	private void pushMessage(final String message, final int type, final String name) {
+	public void pushMessage(final String message, final int type, final String name) {
 		if (type == 0 && this.dialogID != -1) {
 			this.clickToContinueString = message;
 			super.clickType = 0;
