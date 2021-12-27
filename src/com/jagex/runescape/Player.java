@@ -13,11 +13,11 @@ public final class Player extends Entity {
 
 	boolean preventRotation;
 
-	final int[] bodyPartColour;
+	public int[] bodyPartColour;
 
 	public int team;
 
-	private int gender;
+	public int gender;
 
 	public String name;
 	static Cache mruNodes = new Cache(260);
@@ -26,13 +26,13 @@ public final class Player extends Entity {
 	public int modifiedAppearanceStartTime;
 	int modifiedAppearanceEndTime;
 	int drawHeight2;
-	boolean visible;
+	public boolean visible;
 	int anInt1711;
 	int drawHeight;
 	int anInt1713;
 	Model playerModel;
 	public final int[] appearance;
-	private long appearanceOffset;
+	public long appearanceOffset;
 	int localX;
 	int localY;
 	int playerTileHeight;

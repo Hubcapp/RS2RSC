@@ -912,6 +912,8 @@ public final class Client extends RSApplet {
 			int targetPlayerId = entity.interactingEntity - 32768;
 			if (targetPlayerId == this.playerListId) {
                 targetPlayerId = this.LOCAL_PLAYER_ID;
+                if (RSCConfig.rscProtocol)
+                	targetPlayerId = RSCConfig.localServerIndex;
             }
 			final Player player = this.players[targetPlayerId];
 			if (player != null) {
@@ -2056,9 +2058,11 @@ public final class Client extends RSApplet {
 
 	private void cycleEntitySpokenText() {
 		for (int p = -1; p < this.localPlayerCount; p++) {
-			final int pId;
+			int pId;
 			if (p == -1) {
                 pId = this.LOCAL_PLAYER_ID;
+                if (RSCConfig.rscProtocol)
+                	pId = RSCConfig.localServerIndex;
             } else {
                 pId = this.localPlayers[p];
             }
@@ -6544,7 +6548,9 @@ public final class Client extends RSApplet {
 					this.npcs[n] = null;
                 }
 
-				localPlayer = this.players[this.LOCAL_PLAYER_ID] = new Player();
+				if (!RSCConfig.rscProtocol)
+					localPlayer = this.players[this.LOCAL_PLAYER_ID] = new Player();
+
 				this.projectileQueue.clear();
 				this.stationaryGraphicQueue.clear();
 				for (int l2 = 0; l2 < 4; l2++) {
@@ -8956,7 +8962,10 @@ public final class Client extends RSApplet {
 			final int hash;
 			if (localPlayerOnly) {
 				player = localPlayer;
-				hash = this.LOCAL_PLAYER_ID << 14;
+				int pId = this.LOCAL_PLAYER_ID;
+				if (RSCConfig.rscProtocol)
+					pId = RSCConfig.localServerIndex;
+				hash = pId << 14;
 			} else {
 				player = this.players[this.localPlayers[p]];
 				hash = this.localPlayers[p] << 14;
@@ -10717,9 +10726,11 @@ public final class Client extends RSApplet {
 
 	private void updatePlayerInstances() {
 		for (int p = -1; p < this.localPlayerCount; p++) {
-			final int id;
+			int id;
 			if (p == -1) {
                 id = this.LOCAL_PLAYER_ID;
+                if (RSCConfig.rscProtocol)
+                	id = RSCConfig.localServerIndex;
             } else {
                 id = this.localPlayers[p];
             }

@@ -23,8 +23,8 @@ public class Entity extends Animable {
 	public String overheadTextMessage;
 	public int height;
 	public int turnDirection;
-	int standAnimationId;
-	int standTurnAnimationId;
+	public int standAnimationId;
+	public int standTurnAnimationId;
 	int chatColour;
 	final int[] hitArray;
 	final int[] hitMarkTypes;
@@ -65,10 +65,10 @@ public class Entity extends Animable {
 	public int y;
 	int currentRotation;
 	final boolean[] waypointRan;
-	int walkAnimationId;
-	int turnAboutAnimationId;
-	int turnRightAnimationId;
-	int turnLeftAnimationId;
+	public int walkAnimationId;
+	public int turnAboutAnimationId;
+	public int turnRightAnimationId;
+	public int turnLeftAnimationId;
 
 	Entity() {
         this.waypointX = new int[10];

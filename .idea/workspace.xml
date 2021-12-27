@@ -6,10 +6,9 @@
   <component name="ChangeListManager">
     <list default="true" id="21491aa0-0eb7-4d56-9c39-3c7d87baa446" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/com/jagex/runescape/Buffer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/jagex/runescape/Buffer.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/com/jagex/runescape/Client.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/jagex/runescape/Client.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/com/jagex/runescape/Entity.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/jagex/runescape/Entity.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/com/jagex/runescape/Player.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/jagex/runescape/Player.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/com/jagex/runescape/Skills.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/jagex/runescape/Skills.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/com/jagex/runescape/rs2rsc/RSCConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/jagex/runescape/rs2rsc/RSCConfig.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />

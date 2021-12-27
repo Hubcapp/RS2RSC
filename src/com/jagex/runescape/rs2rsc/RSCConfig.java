@@ -4,6 +4,7 @@ import com.jagex.runescape.Buffer;
 import com.jagex.runescape.Client;
 import com.jagex.runescape.Player;
 import com.jagex.runescape.Skills;
+import com.jagex.runescape.definition.EntityDefinition;
 
 import java.math.BigInteger;
 
@@ -27,7 +28,7 @@ public class RSCConfig {
 
     private static int[] anIntArray208;
     private static byte[] aByteArray210;
-    private static int localServerIndex;
+    public static int localServerIndex;
 
     public static byte[] RSC_stringToUnicode(String str) {
         int strlen = str.length();
@@ -360,7 +361,7 @@ public class RSCConfig {
                         case 5:
                         {
                             buffer.getUnsignedLEShort();
-                            player.name = buffer.RSC_readString();
+                            String username = buffer.RSC_readString();
                             buffer.RSC_readString();
 
                             int equipCount = buffer.getUnsignedByte();
@@ -374,7 +375,52 @@ public class RSCConfig {
                             int level = buffer.getUnsignedByte();
                             int skull = buffer.getUnsignedByte();
 
+                            // Set animations
+                            player.standAnimationId = 0x328;
+                            player.standTurnAnimationId = 0x337;
+                            player.walkAnimationId = 0x333;
+                            player.turnAboutAnimationId = 0x334;
+                            player.turnRightAnimationId = 0x335;
+                            player.turnLeftAnimationId = 0x336;
+
+                            // Set appearance
+                            player.gender = 0;
+                            player.appearance[0] = 0; // Hat
+                            player.appearance[1] = 0; // Cape
+                            player.appearance[2] = 0; // Amulet
+                            player.appearance[3] = 0; // Weapon
+                            player.appearance[4] = 0x100 + 18; // Chest
+                            player.appearance[5] = 0; // Shield
+                            player.appearance[6] = 0x100 + 26; // Arms
+                            player.appearance[7] = 0x100 + 36; // Legs
+                            player.appearance[8] = 0x100 + 7; // Head
+                            player.appearance[9] = 0x100 + 33; // Hands
+                            player.appearance[10] = 0x100 + 42; // Feet
+                            player.appearance[11] = 0x100 + 14; // Beard
+                            for (int slot = 0; slot < 12; slot++)
+                            {
+                                player.appearanceOffset <<= 4;
+                                if (player.appearance[slot] >= 256) {
+                                    player.appearanceOffset += player.appearance[slot] - 256;
+                                }
+                            }
+                            player.appearanceOffset = 0L;
+                            if (player.appearance[0] >= 256)
+                                player.appearanceOffset += player.appearance[0] - 256 >> 4;
+                            if (player.appearance[1] >= 256)
+                                player.appearanceOffset += player.appearance[1] - 256 >> 8;
+                            for (int bodyPart = 0; bodyPart < 5; bodyPart++)
+                            {
+                                player.appearanceOffset <<= 3;
+                                player.appearanceOffset += player.bodyPartColour[bodyPart];
+                            }
+                            player.appearanceOffset <<= 1;
+                            player.appearanceOffset += player.gender;
+
+                            player.name = username;
+                            player.npcAppearance = null;
                             player.combatLevel = level;
+                            player.visible = true;
                             break;
                         }
                         default:
