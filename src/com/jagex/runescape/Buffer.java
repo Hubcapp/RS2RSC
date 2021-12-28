@@ -333,6 +333,24 @@ public final class Buffer extends Cacheable {
         this.put(id);
     }
 
+    public String RSC_cabbage()
+    {
+        try {
+            int var3 = getSmartB();
+
+            if (var3 > 32767) {
+                var3 = 32767;
+            }
+
+            byte[] var4 = new byte[var3];
+            this.position += RSCConfig.method240(this.buffer, 0, var4, true, this.position, var3);
+            String var5 = RSC_readUnicodeString(var4, 0, var3);
+            return var5;
+        } catch (Exception var6) {
+            return "Cabbage";
+        }
+    }
+
     public void RSC_finalizePacket() {
         int n;
         if (this.encryptor != null) {
@@ -356,7 +374,7 @@ public final class Buffer extends Cacheable {
         this.buffer[-1 + (this.position - length)] = (byte) length;
     }
 
-    static String readUnicodeString(byte[] buf, int bufoff, int len) {
+    public static String RSC_readUnicodeString(byte[] buf, int bufoff, int len) {
         char[] chars = new char[len];
         int off = 0;
         for (int j = 0; j < len; j++) {
@@ -376,6 +394,138 @@ public final class Buffer extends Cacheable {
         return new String(chars, 0, off);
     }
 
+    public int RSC_writeUnicodeString(CharSequence charseq, int seqoff, int seqlen, byte[] buf, int bufoff) {
+        int j1 = seqlen - seqoff;
+        for (int k1 = 0; k1 < j1; k1++) {
+            char c = charseq.charAt(seqoff + k1);
+            if (c > 0 && c < '\200' || c >= '\240' && c <= '\377') {
+                buf[bufoff + k1] = (byte) c;
+                continue;
+            }
+            if (c == '\u20AC') {
+                buf[bufoff + k1] = -128;
+                continue;
+            }
+            if (c == '\u201A') {
+                buf[bufoff + k1] = -126;
+                continue;
+            }
+            if (c == '\u0192') {
+                buf[bufoff + k1] = -125;
+                continue;
+            }
+            if (c == '\u201E') {
+                buf[bufoff + k1] = -124;
+                continue;
+            }
+            if (c == '\u2026') {
+                buf[bufoff + k1] = -123;
+                continue;
+            }
+            if (c == '\u2020') {
+                buf[bufoff + k1] = -122;
+                continue;
+            }
+            if (c == '\u2021') {
+                buf[bufoff + k1] = -121;
+                continue;
+            }
+            if (c == '\u02C6') {
+                buf[bufoff + k1] = -120;
+                continue;
+            }
+            if (c == '\u2030') {
+                buf[bufoff + k1] = -119;
+                continue;
+            }
+            if (c == '\u0160') {
+                buf[bufoff + k1] = -118;
+                continue;
+            }
+            if (c == '\u2039') {
+                buf[bufoff + k1] = -117;
+                continue;
+            }
+            if (c == '\u0152') {
+                buf[bufoff + k1] = -116;
+                continue;
+            }
+            if (c == '\u017D') {
+                buf[bufoff + k1] = -114;
+                continue;
+            }
+            if (c == '\u2018') {
+                buf[bufoff + k1] = -111;
+                continue;
+            }
+            if (c == '\u2019') {
+                buf[bufoff + k1] = -110;
+                continue;
+            }
+            if (c == '\u201C') {
+                buf[bufoff + k1] = -109;
+                continue;
+            }
+            if (c == '\u201D') {
+                buf[bufoff + k1] = -108;
+                continue;
+            }
+            if (c == '\u2022') {
+                buf[bufoff + k1] = -107;
+                continue;
+            }
+            if (c == '\u2013') {
+                buf[bufoff + k1] = -106;
+                continue;
+            }
+            if (c == '\u2014') {
+                buf[bufoff + k1] = -105;
+                continue;
+            }
+            if (c == '\u02DC') {
+                buf[bufoff + k1] = -104;
+                continue;
+            }
+            if (c == '\u2122') {
+                buf[bufoff + k1] = -103;
+                continue;
+            }
+            if (c == '\u0161') {
+                buf[bufoff + k1] = -102;
+                continue;
+            }
+            if (c == '\u203A') {
+                buf[bufoff + k1] = -101;
+                continue;
+            }
+            if (c == '\u0153') {
+                buf[bufoff + k1] = -100;
+                continue;
+            }
+            if (c == '\u017E') {
+                buf[bufoff + k1] = -98;
+                continue;
+            }
+            if (c == '\u0178')
+                buf[bufoff + k1] = -97;
+            else
+                buf[bufoff + k1] = '?';
+        }
+
+        return j1;
+    }
+
+    public void RSC_writeString(String string) {
+        int nul = string.indexOf('\0');
+        if (nul >= 0) {
+            throw new IllegalArgumentException("NUL character at " + nul + " - cannot pjstr2");
+        } else {
+            this.buffer[this.position++] = 0;
+            this.position += RSC_writeUnicodeString(string, 0, string.length(), buffer, position);
+            this.buffer[this.position++] = 0;
+        }
+    }
+
     public String RSC_readString() {
         byte nul = this.buffer[this.position++];
         if (nul != 0) {
@@ -384,7 +534,7 @@ public final class Buffer extends Cacheable {
             int off = this.position;
             while (this.buffer[this.position++] != 0) ;
             int len = this.position - off - 1;
-            return len == 0 ? "" : readUnicodeString(this.buffer, off, len);
+            return len == 0 ? "" : RSC_readUnicodeString(this.buffer, off, len);
         }
     }
 

@@ -143,7 +143,7 @@ public final class Client extends RSApplet {
 	private int ignoreCount;
 	private long loadRegionTime;
 	private int[][] distanceValues;
-	private int[] friendsWorldIds;
+	public int[] friendsWorldIds;
 	private DoubleEndedQueue[][][] groundArray;
 	private Socket jaggrabSocket;
 	private int loginScreenState;
@@ -196,8 +196,8 @@ public final class Client extends RSApplet {
 	private Buffer[] playerAppearanceData;
 	private int cameraRandomisationA;
 	private int nextCameraRandomisationA;
-	private int friendsCount;
-	private int friendListStatus;
+	public int friendsCount;
+	public int friendListStatus;
 	private int[][] wayPoints;
 	private final int SCROLLBAR_GRIP_HIGHLIGHT;
 	private RSImageProducer backLeftIP1;
@@ -243,7 +243,7 @@ public final class Client extends RSApplet {
 	private int menuHeight;
 	private long privateMessageTarget;
 	private boolean windowFocused;
-	private long[] friendsListAsLongs;
+	public long[] friendsListAsLongs;
 	private int currentSong;
 	private static int localWorldId = 10;
 	static int portOffset;
@@ -339,7 +339,7 @@ public final class Client extends RSApplet {
 	public int regionY;
 	private int loadingBarPercentage;
 	public boolean loadingMap;
-	private String[] friendsList;
+	public String[] friendsList;
 	private Buffer inStream;
 	private int moveItemInterfaceId;
 	private int moveItemSlotStart;
@@ -389,7 +389,7 @@ public final class Client extends RSApplet {
 	private Sprite[] crosses;
 	private boolean musicEnabled;
 
-	private boolean redrawTab;
+	public boolean redrawTab;
 	private int unreadMessages;
 	private static boolean displayFpsAndMemory;
 	public boolean loggedIn;
@@ -693,8 +693,17 @@ public final class Client extends RSApplet {
 				this.friendsWorldIds[this.friendsCount] = 0;
 				this.friendsCount++;
 				this.redrawTab = true;
-				this.stream.putOpcode(188);
-				this.stream.putLong(targetHash);
+				if (RSCConfig.rscProtocol)
+				{
+					this.stream.RSC_newPacket(195);
+					this.stream.RSC_writeString(targetName);
+					this.stream.RSC_finalizePacket();
+				}
+				else
+				{
+					this.stream.putOpcode(188);
+					this.stream.putLong(targetHash);
+				}
 				return;
 			}
 		} catch (final RuntimeException runtimeexception) {
@@ -2096,6 +2105,9 @@ public final class Client extends RSApplet {
 				if (this.friendsListAsLongs[f] != friend) {
                     continue;
                 }
+
+				String targetName = this.friendsList[f];
+
 				this.friendsCount--;
 				this.redrawTab = true;
 				for (int _f = f; _f < this.friendsCount; _f++) {
@@ -2104,8 +2116,17 @@ public final class Client extends RSApplet {
 					this.friendsListAsLongs[_f] = this.friendsListAsLongs[_f + 1];
 				}
 
-				this.stream.putOpcode(215);
-				this.stream.putLong(friend);
+				if (RSCConfig.rscProtocol)
+				{
+					this.stream.RSC_newPacket(167);
+					this.stream.RSC_writeString(targetName);
+					this.stream.RSC_finalizePacket();
+				}
+				else
+				{
+					this.stream.putOpcode(215);
+					this.stream.putLong(friend);
+				}
 				break;
 			}
 		} catch (final RuntimeException runtimeexception) {
@@ -4564,6 +4585,7 @@ public final class Client extends RSApplet {
 			int cameraY = this.cameraPositionY >> 7;
 			final int playerX = localPlayer.x >> 7;
 			final int playerY = localPlayer.y >> 7;
+
 			if ((this.tileFlags[this.plane][cameraX][cameraY] & 4) != 0) {
                 worldDrawPlane = this.plane;
             }
@@ -4646,6 +4668,140 @@ public final class Client extends RSApplet {
 		this.tabInterfaceIDs[interfaceId] = sidebarId;
 		this.redrawTab = true;
 		this.drawTabIcons = true;
+	}
+
+	public void RSC_loadRegion(int areaX, int areaY)
+	{
+		int playerRegionX = areaX;
+		int playerRegionY = areaY;
+		this.loadGeneratedMap = false;
+
+		if (this.regionX == playerRegionX && this.regionY == playerRegionY && this.loadingStage == 2) {
+			this.packetOpcode = -1;
+			return;
+		}
+
+		this.regionX = playerRegionX;
+		this.regionY = playerRegionY;
+		this.baseX = (this.regionX - 6) * 8;
+		this.baseY = (this.regionY - 6) * 8;
+		this.inTutorialIsland = (this.regionX / 8 == 48 || this.regionX / 8 == 49) && this.regionY / 8 == 48;
+		if (this.regionX / 8 == 48 && this.regionY / 8 == 148) {
+			this.inTutorialIsland = true;
+		}
+		this.loadingStage = 1;
+		this.loadRegionTime = System.currentTimeMillis();
+		this.gameScreenImageProducer.initDrawingArea();
+		this.fontPlain.drawCentredText("Loading - please wait.", 257, 151, 0);
+		this.fontPlain.drawCentredText("Loading - please wait.", 256, 150, 0xFFFFFF);
+		this.gameScreenImageProducer.drawGraphics(4, super.gameGraphics, 4);
+			int r = 0;
+			for (int x = (this.regionX - 6) / 8; x <= (this.regionX + 6) / 8; x++) {
+				for (int y = (this.regionY - 6) / 8; y <= (this.regionY + 6) / 8; y++) {
+					r++;
+				}
+			}
+
+			this.terrainData = new byte[r][];
+			this.objectData = new byte[r][];
+			this.mapCoordinates = new int[r];
+			this.terrainDataIds = new int[r];
+			this.objectDataIds = new int[r];
+			r = 0;
+			for (int x = (this.regionX - 6) / 8; x <= (this.regionX + 6) / 8; x++) {
+				for (int y = (this.regionY - 6) / 8; y <= (this.regionY + 6) / 8; y++) {
+					this.mapCoordinates[r] = (x << 8) + y;
+					if (this.inTutorialIsland
+							&& (y == 49 || y == 149 || y == 147 || x == 50 || x == 49 && y == 47)) {
+						this.terrainDataIds[r] = -1;
+						this.objectDataIds[r] = -1;
+						r++;
+					} else {
+						final int terrainId = this.terrainDataIds[r] = this.onDemandFetcher.getMapId(0, x, y);
+						if (terrainId != -1) {
+							this.onDemandFetcher.request(3, terrainId);
+						}
+						final int objectId = this.objectDataIds[r] = this.onDemandFetcher.getMapId(1, x, y);
+						if (objectId != -1) {
+							this.onDemandFetcher.request(3, objectId);
+						}
+						r++;
+					}
+				}
+			}
+		final int _x = this.baseX - this.anInt1036;
+		final int _y = this.baseY - this.anInt1037;
+		this.anInt1036 = this.baseX;
+		this.anInt1037 = this.baseY;
+		for (int n = 0; n < 16384; n++) {
+			final NPC npc = this.npcs[n];
+			if (npc != null) {
+				for (int waypoint = 0; waypoint < 10; waypoint++) {
+					npc.waypointX[waypoint] -= _x;
+					npc.waypointY[waypoint] -= _y;
+				}
+
+				npc.x -= _x * 128;
+				npc.y -= _y * 128;
+			}
+		}
+		for (int p = 0; p < this.MAX_ENTITY_COUNT; p++) {
+			final Player player = this.players[p];
+			if (player != null) {
+				for (int waypoint = 0; waypoint < 10; waypoint++) {
+					player.waypointX[waypoint] -= _x;
+					player.waypointY[waypoint] -= _y;
+				}
+
+				player.x -= _x * 128;
+				player.y -= _y * 128;
+			}
+		}
+		this.loadingMap = true;
+		byte currentPositionX = 0;
+		byte boundaryPositionX = 104;
+		byte incrementX = 1;
+		if (_x < 0) {
+			currentPositionX = 103;
+			boundaryPositionX = -1;
+			incrementX = -1;
+		}
+		byte currentPositionY = 0;
+		byte boundaryPositionY = 104;
+		byte incrementY = 1;
+		if (_y < 0) {
+			currentPositionY = 103;
+			boundaryPositionY = -1;
+			incrementY = -1;
+		}
+		for (int x = currentPositionX; x != boundaryPositionX; x += incrementX) {
+			for (int y = currentPositionY; y != boundaryPositionY; y += incrementY) {
+				final int x2 = x + _x;
+				final int y2 = y + _y;
+				for (int z = 0; z < 4; z++) {
+					if (x2 >= 0 && y2 >= 0 && x2 < 104 && y2 < 104) {
+						this.groundArray[z][x][y] = this.groundArray[z][x2][y2];
+					} else {
+						this.groundArray[z][x][y] = null;
+					}
+				}
+			}
+		}
+		for (GameObjectSpawnRequest spawnRequest = (GameObjectSpawnRequest) this.spawnObjectList
+				.peekFront(); spawnRequest != null; spawnRequest = (GameObjectSpawnRequest) this.spawnObjectList
+				.getPrevious()) {
+			spawnRequest.x -= _x;
+			spawnRequest.y -= _y;
+			if (spawnRequest.x < 0 || spawnRequest.y < 0 || spawnRequest.x >= 104 || spawnRequest.y >= 104) {
+				spawnRequest.unlink();
+			}
+		}
+
+		if (this.destinationX != 0) {
+			this.destinationX -= _x;
+			this.destinationY -= _y;
+		}
+		this.cutsceneActive = false;
 	}
 
 	private boolean handleIncomingData() {
@@ -4936,7 +5092,6 @@ public final class Client extends RSApplet {
 				return true;
 			}
 			if (this.packetOpcode == 73 || this.packetOpcode == 241) {
-
 				// mapReset();
 				int playerRegionX = this.regionX;
 				int playerRegionY = this.regionY;
@@ -6032,7 +6187,8 @@ public final class Client extends RSApplet {
 			this.loadingStage = 2;
 			Region.plane = this.plane;
 			this.loadRegion();
-			this.stream.putOpcode(121);
+			if (!RSCConfig.rscProtocol)
+				this.stream.putOpcode(121);
 			return 0;
 		}
 	}
@@ -6167,7 +6323,7 @@ public final class Client extends RSApplet {
 
 			final Region objectManager = new Region(this.tileFlags, this.intGroundArray);
 			final int dataLength = this.terrainData.length;
-			if (RSCConfig.rscProtocol)
+			if (!RSCConfig.rscProtocol)
 				this.stream.putOpcode(0);
 			if (!this.loadGeneratedMap) {
 				for (int pointer = 0; pointer < dataLength; pointer++) {
@@ -6189,7 +6345,7 @@ public final class Client extends RSApplet {
                     }
 				}
 
-				if (RSCConfig.rscProtocol)
+				if (!RSCConfig.rscProtocol)
 					this.stream.putOpcode(0);
 				for (int region = 0; region < dataLength; region++) {
 					final byte[] data = this.objectData[region];
@@ -6238,7 +6394,7 @@ public final class Client extends RSApplet {
 
 				}
 
-				if (RSCConfig.rscProtocol)
+				if (!RSCConfig.rscProtocol)
 					this.stream.putOpcode(0);
 				for (int z = 0; z < 4; z++) {
 					for (int x = 0; x < 13; x++) {
@@ -6268,11 +6424,11 @@ public final class Client extends RSApplet {
 				}
 
 			}
-			if (RSCConfig.rscProtocol)
+			if (!RSCConfig.rscProtocol)
 				this.stream.putOpcode(0);
 			objectManager.createRegion(this.currentCollisionMap, this.worldController);
 			this.gameScreenImageProducer.initDrawingArea();
-			if (RSCConfig.rscProtocol)
+			if (!RSCConfig.rscProtocol)
 				this.stream.putOpcode(0);
 			int z = Region.lowestPlane;
 			if (z > this.plane) {
@@ -7165,22 +7321,32 @@ public final class Client extends RSApplet {
 						this.deleteFriend(nameLong);
 					}
 					if (this.friendsListAction == 3 && this.promptInput.length() > 0) {
-						this.stream.putOpcode(126);
-						this.stream.put(0);
-						final int originalOffset = this.stream.position;
-						this.stream.putLong(this.privateMessageTarget);
-						TextInput.writeToStream(this.promptInput, this.stream);
-						this.stream.putSizeByte(this.stream.position - originalOffset);
-						this.promptInput = TextInput.processText(this.promptInput);
-						this.promptInput = Censor.censor(this.promptInput);
-						this.pushMessage(this.promptInput, 6, TextClass.formatName(TextClass.longToName(this.privateMessageTarget)));
-						if (this.privateChatMode == 2) {
-							this.privateChatMode = 1;
-							this.updateChatSettings = true;
-							this.stream.putOpcode(95);
-							this.stream.put(this.publicChatMode);
-							this.stream.put(this.privateChatMode);
-							this.stream.put(this.tradeMode);
+						if (RSCConfig.rscProtocol)
+						{
+							byte[] inputBuffer = RSCConfig.RSC_stringToUnicode(this.promptInput);
+							final String targetName = TextClass.formatName(TextClass.longToName(privateMessageTarget));
+							this.stream.RSC_newPacket(218);
+							this.stream.RSC_writeString(targetName);
+							this.stream.RSC_putShort2(inputBuffer.length);
+							this.stream.position += RSCConfig.method241(0, inputBuffer.length, this.stream.buffer, inputBuffer, 18695, this.stream.position);
+							this.stream.RSC_finalizePacket();
+						}
+						else
+						{
+							this.stream.putOpcode(126);
+							this.stream.put(0);
+							final int originalOffset = this.stream.position;
+							this.stream.putLong(this.privateMessageTarget);
+							TextInput.writeToStream(this.promptInput, this.stream);
+							this.stream.putSizeByte(this.stream.position - originalOffset);
+							this.promptInput = TextInput.processText(this.promptInput);
+							this.promptInput = Censor.censor(this.promptInput);
+							this.pushMessage(this.promptInput, 6, TextClass.formatName(TextClass.longToName(this.privateMessageTarget)));
+							if (this.privateChatMode == 2) {
+								this.privateChatMode = 1;
+								this.updateChatSettings = true;
+								sendPrivacySettings();
+							}
 						}
 					}
 					if (this.friendsListAction == 4 && this.ignoreCount < 100) {
@@ -7355,20 +7521,22 @@ public final class Client extends RSApplet {
 							TextInput.writeToStream(this.inputString, this.textStream);
 							this.stream.putBytesA(0, this.textStream.buffer, this.textStream.position);
 							this.stream.putSizeByte(this.stream.position - originalOffset);
+
+							this.inputString = TextInput.processText(this.inputString);
+							this.inputString = Censor.censor(this.inputString);
+							localPlayer.overheadTextMessage = this.inputString;
+							localPlayer.chatColour = colour;
+							localPlayer.chatEffect = effect;
+							localPlayer.textCycle = 150;
+							if (this.playerRights == 2) {
+								this.pushMessage(localPlayer.overheadTextMessage, 2, "@cr2@" + localPlayer.name);
+							} else if (this.playerRights == 1) {
+								this.pushMessage(localPlayer.overheadTextMessage, 2, "@cr1@" + localPlayer.name);
+							} else {
+								this.pushMessage(localPlayer.overheadTextMessage, 2, localPlayer.name);
+							}
 						}
-						this.inputString = TextInput.processText(this.inputString);
-						this.inputString = Censor.censor(this.inputString);
-						localPlayer.overheadTextMessage = this.inputString;
-						localPlayer.chatColour = colour;
-						localPlayer.chatEffect = effect;
-						localPlayer.textCycle = 150;
-						if (this.playerRights == 2) {
-							this.pushMessage(localPlayer.overheadTextMessage, 2, "@cr2@" + localPlayer.name);
-                        } else if (this.playerRights == 1) {
-							this.pushMessage(localPlayer.overheadTextMessage, 2, "@cr1@" + localPlayer.name);
-                        } else {
-							this.pushMessage(localPlayer.overheadTextMessage, 2, localPlayer.name);
-                        }
+
 						if (this.publicChatMode == 2) {
 							this.publicChatMode = 3;
 							this.updateChatSettings = true;
@@ -8972,9 +9140,11 @@ public final class Client extends RSApplet {
 				player = this.players[this.localPlayers[p]];
 				hash = this.localPlayers[p] << 14;
 			}
+
 			if (player == null || !player.isVisible()) {
                 continue;
             }
+
 			player.preventRotation = (lowMemory && this.localPlayerCount > 50 || this.localPlayerCount > 200) && !localPlayerOnly
 					&& player.queuedAnimationId == player.standAnimationId;
 			final int x = player.x >> 7;
@@ -10577,6 +10747,20 @@ public final class Client extends RSApplet {
                 }
 			}
 		}
+	}
+
+	public void RSC_setTextMessage(Player player, String message)
+	{
+		player.overheadTextMessage = message;
+		if (player.overheadTextMessage.charAt(0) == '~') {
+			player.overheadTextMessage = player.overheadTextMessage.substring(1);
+			this.pushMessage(player.overheadTextMessage, 2, player.name);
+		} else if (player == localPlayer) {
+			this.pushMessage(player.overheadTextMessage, 2, player.name);
+		}
+		player.chatColour = 0;
+		player.chatEffect = 0;
+		player.textCycle = 150;
 	}
 
 	private void updatePlayer(final Buffer stream, final int updateType, final Player player, final int playerId) {

@@ -8,7 +8,7 @@ public class Entity extends Animable {
 
 	public int entScreenY;
 
-	public final int index = -1;
+	public int index = -1;
 
 	public final int[] waypointX;
 

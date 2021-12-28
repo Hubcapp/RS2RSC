@@ -3,7 +3,7 @@ package com.jagex.runescape.rs2rsc;
 import com.jagex.runescape.Buffer;
 import com.jagex.runescape.Client;
 import com.jagex.runescape.Player;
-import com.jagex.runescape.Skills;
+import com.jagex.runescape.TextClass;
 import com.jagex.runescape.definition.EntityDefinition;
 
 import java.math.BigInteger;
@@ -27,8 +27,15 @@ public class RSCConfig {
     };
 
     private static int[] anIntArray208;
+    private static int[] anIntArray209;
     private static byte[] aByteArray210;
     public static int localServerIndex;
+
+    private static int magicLoc = 128;
+    private static int localRegionX;
+    private static int localRegionY;
+    private static int regionX;
+    private static int regionY;
 
     public static byte[] RSC_stringToUnicode(String str) {
         int strlen = str.length();
@@ -152,6 +159,149 @@ public class RSCConfig {
         return buf;
     }
 
+    public static int method240(byte[] var1, int var2, byte[] var3, boolean var4, int var5, int var6) {
+        if (var6 == 0) {
+            return 0;
+        } else {
+            var6 += var2;
+            int var7 = 0;
+            if (!var4) {
+                method240((byte[]) null, -4, (byte[]) null, false, -81, -40);
+            }
+
+            int var8 = var5;
+
+            while (true) {
+                byte var9 = var1[var8];
+                if (var9 >= 0) {
+                    ++var7;
+                } else {
+                    var7 = anIntArray209[var7];
+                }
+
+                int var10;
+                if ((var10 = anIntArray209[var7]) < 0) {
+                    var3[var2++] = (byte) (~var10);
+                    if (var6 <= var2) {
+                        break;
+                    }
+
+                    var7 = 0;
+                }
+
+                if ((64 & var9) == 0) {
+                    ++var7;
+                } else {
+                    var7 = anIntArray209[var7];
+                }
+
+                if ((var10 = anIntArray209[var7]) < 0) {
+                    var3[var2++] = (byte) (~var10);
+                    if (var2 >= var6) {
+                        break;
+                    }
+
+                    var7 = 0;
+                }
+
+                if ((var9 & 32) != 0) {
+                    var7 = anIntArray209[var7];
+                } else {
+                    ++var7;
+                }
+
+                if ((var10 = anIntArray209[var7]) < 0) {
+                    var3[var2++] = (byte) (~var10);
+                    if (var2 >= var6) {
+                        break;
+                    }
+
+                    var7 = 0;
+                }
+
+                if ((var9 & 16) == 0) {
+                    ++var7;
+                } else {
+                    var7 = anIntArray209[var7];
+                }
+
+                if ((var10 = anIntArray209[var7]) < 0) {
+                    var3[var2++] = (byte) (~var10);
+                    if (var2 >= var6) {
+                        break;
+                    }
+
+                    var7 = 0;
+                }
+
+                if ((var9 & 8) == 0) {
+                    ++var7;
+                } else {
+                    var7 = anIntArray209[var7];
+                }
+
+                if ((var10 = anIntArray209[var7]) < 0) {
+                    var3[var2++] = (byte) (~var10);
+                    if (var6 <= var2) {
+                        break;
+                    }
+
+                    var7 = 0;
+                }
+
+                if ((4 & var9) == 0) {
+                    ++var7;
+                } else {
+                    var7 = anIntArray209[var7];
+                }
+
+                if ((var10 = anIntArray209[var7]) < 0) {
+                    var3[var2++] = (byte) (~var10);
+                    if (var2 >= var6) {
+                        break;
+                    }
+
+                    var7 = 0;
+                }
+
+                if ((2 & var9) != 0) {
+                    var7 = anIntArray209[var7];
+                } else {
+                    ++var7;
+                }
+
+                if ((var10 = anIntArray209[var7]) < 0) {
+                    var3[var2++] = (byte) (~var10);
+                    if (var2 >= var6) {
+                        break;
+                    }
+
+                    var7 = 0;
+                }
+
+                if ((var9 & 1) == 0) {
+                    ++var7;
+                } else {
+                    var7 = anIntArray209[var7];
+                }
+
+                if ((var10 = anIntArray209[var7]) < 0) {
+                    var3[var2++] = (byte) (~var10);
+                    if (var6 <= var2) {
+                        break;
+                    }
+
+                    var7 = 0;
+                }
+
+                ++var8;
+            }
+
+            return -var5 + var8 - -1;
+        }
+    }
+
+
     public static int method241(int var1, int var2, byte[] var3, byte[] var4, int var5, int var6) {
         int var7 = 0;
         var2 += var1;
@@ -204,7 +354,9 @@ public class RSCConfig {
 
         aByteArray210 = new byte[]{(byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 21, (byte) 22, (byte) 22, (byte) 20, (byte) 22, (byte) 22, (byte) 22, (byte) 21, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 3, (byte) 8, (byte) 22, (byte) 16, (byte) 22, (byte) 16, (byte) 17, (byte) 7, (byte) 13, (byte) 13, (byte) 13, (byte) 16, (byte) 7, (byte) 10, (byte) 6, (byte) 16, (byte) 10, (byte) 11, (byte) 12, (byte) 12, (byte) 12, (byte) 12, (byte) 13, (byte) 13, (byte) 14, (byte) 14, (byte) 11, (byte) 14, (byte) 19, (byte) 15, (byte) 17, (byte) 8, (byte) 11, (byte) 9, (byte) 10, (byte) 10, (byte) 10, (byte) 10, (byte) 11, (byte) 10, (byte) 9, (byte) 7, (byte) 12, (byte) 11, (byte) 10, (byte) 10, (byte) 9, (byte) 10, (byte) 10, (byte) 12, (byte) 10, (byte) 9, (byte) 8, (byte) 12, (byte) 12, (byte) 9, (byte) 14, (byte) 8, (byte) 12, (byte) 17, (byte) 16, (byte) 17, (byte) 22, (byte) 13, (byte) 21, (byte) 4, (byte) 7, (byte) 6, (byte) 5, (byte) 3, (byte) 6, (byte) 6, (byte) 5, (byte) 4, (byte) 10, (byte) 7, (byte) 5, (byte) 6, (byte) 4, (byte) 4, (byte) 6, (byte) 10, (byte) 5, (byte) 4, (byte) 4, (byte) 5, (byte) 7, (byte) 6, (byte) 10, (byte) 6, (byte) 10, (byte) 22, (byte) 19, (byte) 22, (byte) 14, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 22, (byte) 21, (byte) 22, (byte) 21, (byte) 22, (byte) 22, (byte) 22, (byte) 21, (byte) 22, (byte) 22};
         anIntArray208 = new int[aByteArray210.length];
+        anIntArray209 = new int[8];
         int[] var3 = new int[33];
+        int var4 = 0;
 
         for (int var5 = 0; var5 < aByteArray210.length; ++var5) {
             byte var6 = aByteArray210[var5];
@@ -247,6 +399,37 @@ public class RSCConfig {
                         var3[var10] = var9;
                     }
                 }
+
+                var11 = 0;
+
+                for (var12 = 0; var12 < var6; ++var12) {
+                    int var13 = Integer.MIN_VALUE >>> var12;
+                    if ((var8 & var13) != 0) {
+                        if (anIntArray209[var11] == 0) {
+                            anIntArray209[var11] = var4;
+                        }
+
+                        var11 = anIntArray209[var11];
+                    } else {
+                        ++var11;
+                    }
+
+                    var13 >>>= 1;
+                    if (var11 >= anIntArray209.length) {
+                        int[] var14 = new int[2 * anIntArray209.length];
+
+                        for (int var15 = 0; var15 < anIntArray209.length; ++var15) {
+                            var14[var15] = anIntArray209[var15];
+                        }
+
+                        anIntArray209 = var14;
+                    }
+                }
+
+                if (var11 >= var4)
+                    var4 = var11 - -1;
+
+                anIntArray209[var11] = ~var5;
             }
         }
 
@@ -278,8 +461,12 @@ public class RSCConfig {
 
         // Set sidebar interfaces
         client.setSidebarID(1, 3917); // Stats
+        client.setSidebarID(8, 5065); // Friends
         client.setSidebarID(10, 2449); // Logout
         client.setSidebarID(11, 4445); // Settings
+
+        // Setup friends list
+        client.friendListStatus = 2;
     }
 
     public static void RSC_HandleInterface(int actionID, Client client, Buffer buffer)
@@ -317,6 +504,121 @@ public class RSCConfig {
         }
     }
 
+    public static Player RSC_getPlayer(Client client, int serverIndex, int areaX, int areaY)
+    {
+        // Add player if it doesn't exist
+        if (client.players[serverIndex] == null || client.players[serverIndex].index != serverIndex)
+        {
+            client.players[serverIndex] = new Player();
+            client.players[serverIndex].index = serverIndex;
+        }
+
+        Player player = client.players[serverIndex];
+        boolean isLocal = false;
+
+        if (serverIndex == localServerIndex)
+        {
+            isLocal = true;
+            Client.localPlayer = player;
+        }
+
+        player.x = areaX;
+        player.y = areaY;
+
+        // Do we already know about this player?
+        if (!isLocal) {
+            for (int otherServerIndex : client.localPlayers) {
+                if (otherServerIndex == serverIndex) {
+                    isLocal = true;
+                    break;
+                }
+            }
+        }
+
+        if (!isLocal)
+        {
+            client.localPlayers[client.localPlayerCount++] = serverIndex;
+            System.out.println("Registering " + serverIndex);
+        }
+
+        return player;
+    }
+
+    public static int RSC_TranslateItem(int itemID)
+    {
+        switch (itemID)
+        {
+            case 87: // bronze Axe
+                return 1351;
+        }
+
+        return 0;
+    }
+
+    public static int RSC_TranslateEquipment(int equipID)
+    {
+        switch (equipID)
+        {
+            case 109: // bronze Axe
+                return RSC_TranslateItem(87);
+        }
+
+        return -1;
+    }
+
+    public static boolean RSC_isWeapon(int itemID)
+    {
+        switch (itemID)
+        {
+            case 1351: // bronze Axe
+                return true;
+        }
+
+        return false;
+    }
+
+    public static int RSC_TranslateTopColor(int color)
+    {
+        switch (color)
+        {
+            case 8: // Blue
+                return 7;
+            default:
+                System.out.println("Unhandled top color: " + color);
+                break;
+        }
+
+        return color;
+    }
+
+    public static int RSC_TranslateBottomColor(int color)
+    {
+        switch (color)
+        {
+            case 14: // White
+                return 6;
+            default:
+                System.out.println("Unhandled bottom color: " + color);
+                break;
+        }
+
+        return color;
+    }
+
+    public static int RSC_TranslateSkinColor(int color)
+    {
+        switch (color)
+        {
+            case 0:
+                return 0;
+            default:
+                System.out.println("Unhandled skin color: " + color);
+                break;
+        }
+
+        return color;
+    }
+
     public static int RSC_HandleOpcode(int opcode, Client client, Buffer buffer)
     {
         if (!rscProtocol)
@@ -326,6 +628,63 @@ public class RSCConfig {
 
         switch (opcode)
         {
+            case 149:
+            {
+                String name = buffer.RSC_readString();
+                String oldName = buffer.RSC_readString();
+                int onlineStatus = buffer.getUnsignedByte();
+
+                boolean loggedIn = (4 & onlineStatus) != 0;
+                int index = -1;
+
+                if (loggedIn)
+                {
+                    String server = buffer.RSC_readString();
+                }
+
+                for (int i = 0; i < client.friendsCount; i++)
+                {
+                    if (client.friendsList[i].equals(name))
+                    {
+                        index = i;
+                        break;
+                    }
+                }
+
+                if (index == -1)
+                {
+                    index = client.friendsCount++;
+
+                    client.friendsList[index] = name;
+                    client.friendsListAsLongs[index] = TextClass.nameToLong(name.trim());
+
+                    System.out.println("Registering friend " + name);
+                }
+
+                System.out.println("Updating friend '" + name + "' '" + oldName + "': " + loggedIn + " " + onlineStatus);
+
+                client.friendsWorldIds[index] = loggedIn ? 10 : 0;
+                client.redrawTab = true;
+
+                break;
+            }
+            case 87:
+            {
+                String sender = buffer.RSC_readString();
+                String message = buffer.RSC_cabbage();
+                client.pushMessage(message, 6, sender);
+                break;
+            }
+            case 120:
+            {
+                String sender = buffer.RSC_readString();
+                String senderClan = buffer.RSC_readString();
+                int modStatus = buffer.getUnsignedByte();
+                long unk = buffer.getLong();
+                String message = buffer.RSC_cabbage();
+                client.pushMessage(message, 7, sender);
+                break;
+            }
             case 240: // Settings
             {
                 int cameraMode = buffer.getUnsignedByte(); // TODO: Maybe use camera mode?
@@ -336,9 +695,20 @@ public class RSCConfig {
             case 191: // Local Player
             {
                 buffer.initBitAccess();
-                int localRegionX = buffer.readBits(11);
-                int localRegionY = buffer.readBits(13);
+                localRegionX = buffer.readBits(11);
+                localRegionY = buffer.readBits(13);
                 int anim = buffer.readBits(4);
+
+                System.out.println(localRegionX + ", " + localRegionY + " SPAWN");
+
+                int localX = 0;
+                int localY = 0;
+
+                // Set local player
+                Player localPlayer = RSC_getPlayer(client, localServerIndex, localX, localY);
+
+                // Load region
+                client.RSC_loadRegion(5, 5);
 
                 int playerCount = buffer.readBits(8);
                 for (int i = 0; i < playerCount; i++)
@@ -346,9 +716,18 @@ public class RSCConfig {
                     // TODO: CONTINUE HERE
                     int reqUpdate = buffer.readBits(1);
                     if (reqUpdate != 0) {
-                        buffer.readBits(3);
-                    } else {
-                        buffer.readBits(3);
+                        int updateType = buffer.readBits(1);
+                        if (updateType != 0)
+                        {
+                            int unk = buffer.readBits(2);
+                            if (unk == 3)
+                                continue;
+                            int nextAnim = buffer.readBits(2);
+                        }
+                        else
+                        {
+                            int nextAnim = buffer.readBits(3);
+                        }
                     }
                 }
 
@@ -363,19 +742,22 @@ public class RSCConfig {
                         areaY -= 32;
                     int otherAnim = buffer.readBits(4);
 
-                    System.out.println(serverIndex + ": " + areaX + ", " + areaY);
+                    int playerX = areaX;
+                    int playerY = areaY;
 
-                    if (client.players[serverIndex] == null)
-                    {
-                        Player player = new Player();
-                        player.id = serverIndex;
-                        client.players[serverIndex] = player;
-                    }
+                    System.out.println("Load player " + serverIndex + " " + playerX + ", " + playerY);
+
+                    RSC_getPlayer(client, serverIndex, playerX, playerY);
                 }
 
                 buffer.finishBitAccess();
 
                 client.loadingMap = false;
+                break;
+            }
+            case 4:
+            {
+                client.logout();
                 break;
             }
             case 234:
@@ -386,23 +768,39 @@ public class RSCConfig {
                     int serverIndex = buffer.getUnsignedLEShort();
                     Player player = client.players[serverIndex];
 
-                    System.out.println(serverIndex + ": " + " spook");
-
-                    if (player == null)
-                        break;
-
-                    int updateType = buffer.get();
+                    int updateType = buffer.getUnsignedByte();
                     switch (updateType)
                     {
+                        case 1:
+                        {
+                            int mod = buffer.getUnsignedByte();
+                            String message = buffer.RSC_cabbage();
+                            client.RSC_setTextMessage(player, message);
+                            break;
+                        }
                         case 5:
                         {
                             buffer.getUnsignedLEShort();
                             String username = buffer.RSC_readString();
                             buffer.RSC_readString();
 
+                            // Handle equipment
+                            int weaponID = -1;
                             int equipCount = buffer.getUnsignedByte();
                             for (int x = 0; x < equipCount; x++)
-                                buffer.getUnsignedByte();
+                            {
+                                int id = buffer.getUnsignedByte();
+                                if (id == 0)
+                                    continue;
+                                id = RSC_TranslateEquipment(id);
+                                if (id == -1)
+                                    continue;
+
+                                System.out.println(username + " (" + serverIndex + ") equipped " + id);
+
+                                if (RSC_isWeapon(id))
+                                    weaponID = id;
+                            }
 
                             int hair = buffer.getUnsignedByte();
                             int colorTop = buffer.getUnsignedByte();
@@ -410,6 +808,21 @@ public class RSCConfig {
                             int colorSkin = buffer.getUnsignedByte();
                             int level = buffer.getUnsignedByte();
                             int skull = buffer.getUnsignedByte();
+
+                            System.out.println(username + ": " + serverIndex);
+
+                            // Set colors
+                            // 0 - hair
+                            // 1 - top
+                            // 2 - bottom
+                            // 3 - feet
+                            // 4 - skin
+                            colorTop = RSC_TranslateTopColor(colorTop);
+                            colorBottom = RSC_TranslateBottomColor(colorBottom);
+                            colorSkin = RSC_TranslateSkinColor(colorSkin);
+                            player.bodyPartColour[1] = colorTop;
+                            player.bodyPartColour[2] = colorBottom;
+                            player.bodyPartColour[4] = colorSkin;
 
                             // Set animations
                             player.standAnimationId = 0x328;
@@ -419,18 +832,23 @@ public class RSCConfig {
                             player.turnRightAnimationId = 0x335;
                             player.turnLeftAnimationId = 0x336;
 
+                            if (weaponID == -1)
+                                weaponID = 0;
+                            else
+                                weaponID = 0x200 + weaponID;
+
                             // Set appearance
-                            player.gender = 0;
+                            player.gender = 0; // 0 - Male
                             player.appearance[0] = 0; // Hat
                             player.appearance[1] = 0; // Cape
                             player.appearance[2] = 0; // Amulet
-                            player.appearance[3] = 0; // Weapon
-                            player.appearance[4] = 0x100 + 18; // Chest
+                            player.appearance[3] = weaponID; // Weapon
+                            player.appearance[4] = 0x100 + 19; // Chest
                             player.appearance[5] = 0; // Shield
                             player.appearance[6] = 0x100 + 26; // Arms
                             player.appearance[7] = 0x100 + 36; // Legs
-                            player.appearance[8] = 0x100 + 7; // Head
-                            player.appearance[9] = 0x100 + 33; // Hands
+                            player.appearance[8] = 0x100 + 5; // Head
+                            player.appearance[9] = 0x100 + 34; // Hands
                             player.appearance[10] = 0x100 + 42; // Feet
                             player.appearance[11] = 0x100 + 14; // Beard
                             for (int slot = 0; slot < 12; slot++)
@@ -455,8 +873,8 @@ public class RSCConfig {
 
                             player.name = username;
                             player.npcAppearance = null;
+                            //player.npcAppearance = EntityDefinition.getDefinition(100);
                             player.combatLevel = level;
-                            player.id = serverIndex;
                             player.visible = true;
                             break;
                         }
@@ -478,17 +896,6 @@ public class RSCConfig {
                 int planeMultiplier = buffer.getUnsignedLEShort();
                 planeHeight -= planeIndex * planeMultiplier;
                 System.out.println("Load Area: " + localServerIndex + ", " + planeWidth + ", " + planeHeight + ", " + planeIndex);
-
-                // Set local player
-                if (client.players[localServerIndex] == null)
-                    client.players[localServerIndex] = new Player();
-                Client.localPlayer = client.players[localServerIndex];
-
-                ret = 73;
-                buffer.position = 0;
-                buffer.putShortA(0);
-                buffer.putShort(0);
-                buffer.position = 0;
                 break;
             }
             case 156: // Set Stats
