@@ -522,8 +522,7 @@ public class RSCConfig {
             Client.localPlayer = player;
         }
 
-        player.x = areaX;
-        player.y = areaY;
+        player.setPos(areaX, areaY, true);
 
         // Do we already know about this player?
         if (!isLocal) {
@@ -550,6 +549,12 @@ public class RSCConfig {
         {
             case 87: // bronze Axe
                 return 1351;
+            case 405: // rune Axe
+                return 1359;
+            case 971: // Santa's hat
+                return 1050;
+            case 1288: // Cape of legends
+                return 1052;
         }
 
         return 0;
@@ -559,8 +564,34 @@ public class RSCConfig {
     {
         switch (equipID)
         {
+            case 1: // Head, without beard
+                return -2;
+            case 2:
+            case 3: // Legs, but they're always the same
+                return -1;
+            case 4:
+                return -6;
+            case 5:
+                return -5;
+            case 7: // Head, with beard
+                return -3;
+            case 8: // Head, without beard and bald
+                return -4;
+
+
             case 109: // bronze Axe
                 return RSC_TranslateItem(87);
+            case 114: // rune Axe
+                return RSC_TranslateItem(405);
+            case 209: // Santa's hat
+                return RSC_TranslateItem(971);
+            case 226: // Cape of legends
+                return RSC_TranslateItem(1288);
+
+
+            default:
+                System.out.println("Unhandled equipment id: " + equipID);
+                break;
         }
 
         return -1;
@@ -571,6 +602,29 @@ public class RSCConfig {
         switch (itemID)
         {
             case 1351: // bronze Axe
+            case 1359: // rune Axe
+                return true;
+        }
+
+        return false;
+    }
+
+    public static boolean RSC_isHat(int itemID)
+    {
+        switch (itemID)
+        {
+            case 1050: // Santa's hat
+                return true;
+        }
+
+        return false;
+    }
+
+    public static boolean RSC_isCape(int itemID)
+    {
+        switch (itemID)
+        {
+            case 1052: // Cape of legends
                 return true;
         }
 
@@ -579,10 +633,19 @@ public class RSCConfig {
 
     public static int RSC_TranslateTopColor(int color)
     {
+        // 1 - Black
+        // 3 - Dark Blue
+        // 4 - Yellow
         switch (color)
         {
+            case 0: // Red
+                return 6;
+            case 11: // Black
+                return 1;
             case 8: // Blue
                 return 7;
+            case 14: // White
+                return 5;
             default:
                 System.out.println("Unhandled top color: " + color);
                 break;
@@ -593,8 +656,15 @@ public class RSCConfig {
 
     public static int RSC_TranslateBottomColor(int color)
     {
+        // 15 - Light blue
         switch (color)
         {
+            case 5: // Dark Green
+                return 0;
+            case 9: // Blue
+                return 8;
+            case 11: // Black
+                return 2;
             case 14: // White
                 return 6;
             default:
@@ -607,12 +677,26 @@ public class RSCConfig {
 
     public static int RSC_TranslateSkinColor(int color)
     {
+        // Skin colors seem to remain the same
+        // TODO: Double check, until this TODO is gone, it hasn't been checked!
+        return color;
+    }
+
+    public static int RSC_TranslateHairColor(int color)
+    {
+        // 5 - Blonde
+        // 8 - Blue
+        // 9 - Green
         switch (color)
         {
-            case 0:
+            case 2: // Brown
                 return 0;
+            case 6: // Orange
+                return 10;
+            case 7: // White
+                return 1;
             default:
-                System.out.println("Unhandled skin color: " + color);
+                System.out.println("Unhandled hair color: " + color);
                 break;
         }
 
@@ -701,14 +785,14 @@ public class RSCConfig {
 
                 System.out.println(localRegionX + ", " + localRegionY + " SPAWN");
 
-                int localX = 0;
-                int localY = 0;
+                int localX = 50;
+                int localY = 50;
 
                 // Set local player
                 Player localPlayer = RSC_getPlayer(client, localServerIndex, localX, localY);
 
                 // Load region
-                client.RSC_loadRegion(5, 5);
+                client.RSC_loadRegion(384, 384);
 
                 int playerCount = buffer.readBits(8);
                 for (int i = 0; i < playerCount; i++)
@@ -742,8 +826,8 @@ public class RSCConfig {
                         areaY -= 32;
                     int otherAnim = buffer.readBits(4);
 
-                    int playerX = areaX;
-                    int playerY = areaY;
+                    int playerX = localX + areaX;
+                    int playerY = localY + areaY;
 
                     System.out.println("Load player " + serverIndex + " " + playerX + ", " + playerY);
 
@@ -751,8 +835,6 @@ public class RSCConfig {
                 }
 
                 buffer.finishBitAccess();
-
-                client.loadingMap = false;
                 break;
             }
             case 4:
@@ -786,28 +868,100 @@ public class RSCConfig {
 
                             // Handle equipment
                             int weaponID = -1;
+                            int hairID = -1;
+                            int beardID = -1;
+                            int legID = -1;
+                            int feetID = -1;
+                            int chestID = -1;
+                            int armID = -1;
+                            int genderID = 0;
+
+                            int hatID = -1;
+                            int capeID = -1;
+
                             int equipCount = buffer.getUnsignedByte();
-                            for (int x = 0; x < equipCount; x++)
-                            {
+                            for (int x = 0; x < equipCount; x++) {
                                 int id = buffer.getUnsignedByte();
                                 if (id == 0)
                                     continue;
+                                System.out.println("Equip: " + id);
                                 id = RSC_TranslateEquipment(id);
                                 if (id == -1)
                                     continue;
 
-                                System.out.println(username + " (" + serverIndex + ") equipped " + id);
+                                if (id == -3) // Hair with beard
+                                {
+                                    hairID = 3;
+                                    beardID = 11;
+                                }
+                                if (id == -4) // No hair
+                                {
+                                    hairID = 0;
+                                    beardID = 14;
+                                }
+                                if (id == -6) // Long Hair
+                                {
+                                    hairID = 2;
+                                    beardID = 14;
+                                }
+                                if (id == -2) // Short hair, no beard
+                                {
+                                    hairID = 5;
+                                    beardID = 14;
+                                }
+
+                                // Female
+                                if (id == -5)
+                                {
+                                    genderID = 1;
+                                    legID = 70;
+                                    feetID = 79;
+                                    chestID = 56;
+                                    armID = 61;
+                                }
 
                                 if (RSC_isWeapon(id))
                                     weaponID = id;
+                                if (RSC_isHat(id))
+                                    hatID = id;
+                                if (RSC_isCape(id))
+                                    capeID = id;
                             }
 
-                            int hair = buffer.getUnsignedByte();
+                            if (genderID > 0)
+                            {
+                                if (beardID != 11)
+                                    beardID = -1;
+
+                                switch (hairID)
+                                {
+                                    case 0:
+                                        hairID = 45;
+                                        break;
+                                    case 2:
+                                        hairID = 48;
+                                        break;
+                                    case 3:
+                                        // Bearded lady, do nothing
+                                        break;
+                                    case 5:
+                                        hairID = 51;
+                                    default:
+                                        System.out.println("Unhandled female hair conversion: " + hairID);
+                                        break;
+                                }
+                            }
+
+                            int colorHair = buffer.getUnsignedByte();
                             int colorTop = buffer.getUnsignedByte();
                             int colorBottom = buffer.getUnsignedByte();
                             int colorSkin = buffer.getUnsignedByte();
                             int level = buffer.getUnsignedByte();
                             int skull = buffer.getUnsignedByte();
+
+                            player.name = username;
+                            player.npcAppearance = null;
+                            player.combatLevel = level;
 
                             System.out.println(username + ": " + serverIndex);
 
@@ -817,9 +971,11 @@ public class RSCConfig {
                             // 2 - bottom
                             // 3 - feet
                             // 4 - skin
+                            colorHair = RSC_TranslateHairColor(colorHair);
                             colorTop = RSC_TranslateTopColor(colorTop);
                             colorBottom = RSC_TranslateBottomColor(colorBottom);
                             colorSkin = RSC_TranslateSkinColor(colorSkin);
+                            player.bodyPartColour[0] = colorHair;
                             player.bodyPartColour[1] = colorTop;
                             player.bodyPartColour[2] = colorBottom;
                             player.bodyPartColour[4] = colorSkin;
@@ -837,20 +993,63 @@ public class RSCConfig {
                             else
                                 weaponID = 0x200 + weaponID;
 
+                            if (legID == -1)
+                                legID = 0x100 + 36;
+                            else
+                                legID = 0x100 + legID;
+
+                            if (chestID == -1)
+                                chestID = 0x100 + 19;
+                            else
+                                chestID = 0x100 + chestID;
+
+                            if (feetID == -1)
+                                feetID = 0x100 + 42;
+                            else
+                                feetID = 0x100 + feetID;
+
+                            if (hairID > -1)
+                                hairID = 0x100 + hairID;
+                            else
+                                hairID = 0;
+
+                            if (armID == -1)
+                                armID = 0x100 + 26;
+                            else
+                                armID = 0x100 + armID;
+
+                            if (beardID > -1)
+                                beardID = 0x100 + beardID;
+                            else
+                                beardID = 0;
+
+                            if (hatID > -1)
+                                hatID = 0x200 + hatID;
+                            else
+                                hatID = 0;
+
+                            if (capeID > -1)
+                                capeID = 0x200 + capeID;
+                            else
+                                capeID = 0;
+
+                            System.out.println(genderID + " GENDER");
+
                             // Set appearance
-                            player.gender = 0; // 0 - Male
-                            player.appearance[0] = 0; // Hat
-                            player.appearance[1] = 0; // Cape
+                            player.gender = genderID; // 0 - Male
+                            player.appearance[0] = hatID; // Hat
+                            player.appearance[1] = capeID; // Cape
                             player.appearance[2] = 0; // Amulet
                             player.appearance[3] = weaponID; // Weapon
-                            player.appearance[4] = 0x100 + 19; // Chest
+                            player.appearance[4] = chestID; // Chest
                             player.appearance[5] = 0; // Shield
-                            player.appearance[6] = 0x100 + 26; // Arms
-                            player.appearance[7] = 0x100 + 36; // Legs
-                            player.appearance[8] = 0x100 + 5; // Head
+                            player.appearance[6] = armID; // Arms
+                            player.appearance[7] = legID; // Legs
+                            player.appearance[8] = hairID; // Head
                             player.appearance[9] = 0x100 + 34; // Hands
-                            player.appearance[10] = 0x100 + 42; // Feet
-                            player.appearance[11] = 0x100 + 14; // Beard
+                            player.appearance[10] = feetID; // Feet
+                            player.appearance[11] = beardID; // Beard
+                            player.appearanceOffset = 0L;
                             for (int slot = 0; slot < 12; slot++)
                             {
                                 player.appearanceOffset <<= 4;
@@ -858,7 +1057,6 @@ public class RSCConfig {
                                     player.appearanceOffset += player.appearance[slot] - 256;
                                 }
                             }
-                            player.appearanceOffset = 0L;
                             if (player.appearance[0] >= 256)
                                 player.appearanceOffset += player.appearance[0] - 256 >> 4;
                             if (player.appearance[1] >= 256)
@@ -871,11 +1069,9 @@ public class RSCConfig {
                             player.appearanceOffset <<= 1;
                             player.appearanceOffset += player.gender;
 
-                            player.name = username;
-                            player.npcAppearance = null;
-                            //player.npcAppearance = EntityDefinition.getDefinition(100);
-                            player.combatLevel = level;
                             player.visible = true;
+
+                            client.loadingMap = false;
                             break;
                         }
                         default:
