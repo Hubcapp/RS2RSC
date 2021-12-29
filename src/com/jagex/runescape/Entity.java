@@ -39,10 +39,10 @@ public class Entity extends Animable {
 	int graphicHeight;
 	int waypointCount;
 	public int animation;
-	int currentAnimationFrame;
-	int currentAnimationDuration;
-	int animationDelay;
-	int currentAnimationLoopCount;
+	public int currentAnimationFrame;
+	public int currentAnimationDuration;
+	public int animationDelay;
+	public int currentAnimationLoopCount;
 	int chatEffect;
 	public int loopCycleStatus;
 	public int currentHealth;
@@ -63,7 +63,7 @@ public class Entity extends Animable {
 	int direction;
 	public int x;
 	public int y;
-	int currentRotation;
+	public int currentRotation;
 	final boolean[] waypointRan;
 	public int walkAnimationId;
 	public int turnAboutAnimationId;

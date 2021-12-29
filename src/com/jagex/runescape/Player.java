@@ -33,8 +33,8 @@ public final class Player extends Entity {
 	Model playerModel;
 	public final int[] appearance;
 	public long appearanceOffset;
-	int localX;
-	int localY;
+	public int localX;
+	public int localY;
 	int playerTileHeight;
 	int playerTileWidth;
 	int skill;

@@ -34,8 +34,9 @@ public class RSCConfig {
     private static int magicLoc = 128;
     private static int localRegionX;
     private static int localRegionY;
-    private static int regionX;
-    private static int regionY;
+    public static int planeWidth;
+    public static int planeHeight;
+    public static int planeIndex;
 
     public static byte[] RSC_stringToUnicode(String str) {
         int strlen = str.length();
@@ -347,7 +348,7 @@ public class RSCConfig {
         return (7 + var8 >> 3) - var6;
     }
 
-    public static void Start()
+    public static void Start(Client client)
     {
         if (!rscProtocol)
             return;
@@ -467,6 +468,16 @@ public class RSCConfig {
 
         // Setup friends list
         client.friendListStatus = 2;
+
+        // Setup player actions
+        client.playerActionText[0] = "Duel with";
+        client.playerActionText[1] = "Trade with";
+        client.playerActionText[2] = "Follow";
+        client.playerActionText[3] = "Report abuse";
+        client.playerActionUnpinned[0] = true;
+        client.playerActionUnpinned[1] = true;
+        client.playerActionUnpinned[2] = true;
+        client.playerActionUnpinned[3] = true;
     }
 
     public static void RSC_HandleInterface(int actionID, Client client, Buffer buffer)
@@ -504,25 +515,29 @@ public class RSCConfig {
         }
     }
 
-    public static Player RSC_getPlayer(Client client, int serverIndex, int areaX, int areaY)
+    public static Player RSC_getPlayer(Client client, int serverIndex, int areaX, int areaY, int direction)
     {
         // Add player if it doesn't exist
         if (client.players[serverIndex] == null || client.players[serverIndex].index != serverIndex)
         {
             client.players[serverIndex] = new Player();
             client.players[serverIndex].index = serverIndex;
+            client.players[serverIndex].setPos(areaX, areaY, true);
+            client.players[serverIndex].turnDirection = RSC_ConvertDirection(direction);
+            client.players[serverIndex].currentRotation = client.players[serverIndex].turnDirection;
         }
 
         Player player = client.players[serverIndex];
         boolean isLocal = false;
+
+        if (player.waypointX[0] != areaX || player.waypointY[0] != areaY)
+            player.setPos(areaX, areaY, false);
 
         if (serverIndex == localServerIndex)
         {
             isLocal = true;
             Client.localPlayer = player;
         }
-
-        player.setPos(areaX, areaY, true);
 
         // Do we already know about this player?
         if (!isLocal) {
@@ -547,14 +562,44 @@ public class RSCConfig {
     {
         switch (itemID)
         {
+            case 16: // Leather Gloves
+                return 1059;
+            case 17: // Boots
+                return 1061;
             case 87: // bronze Axe
                 return 1351;
+            case 104: // Medium Bronze Helmet
+                return 1139;
+            case 108: // Large Bronze Helmet
+                return 1155;
+            case 194: // skirt (pink)
+                return 1013;
+            case 206: // Bronze Plate Mail Legs
+                return 1075;
             case 405: // rune Axe
                 return 1359;
             case 971: // Santa's hat
                 return 1050;
             case 1288: // Cape of legends
                 return 1052;
+            case 205: // bronze battle Axe
+                return 1375;
+            case 117: // Bronze Plate Mail Body
+                return 1117;
+            case 113: // Bronze Chain Mail Body
+                return 1103;
+            case 183: // Cape (red)
+                return 1007;
+            case 296: // Gold Amulet
+                return 1692;
+            case 288: // Gold necklace
+                return 1654;
+            case 124: // Bronze Square Shield
+                return 1173;
+            case 420: // Anti dragon breath Shield
+                return 1540;
+            case 4: // Wooden Shield
+                return 1171;
         }
 
         return 0;
@@ -578,11 +623,40 @@ public class RSCConfig {
             case 8: // Head, without beard and bald
                 return -4;
 
-
+            case 12: // Boots
+                return RSC_TranslateItem(17);
+            case 13: // Large Bronze Helmet
+                return RSC_TranslateItem(108);
+            case 21: // Bronze Chain Mail Body
+                return RSC_TranslateItem(113);
+            case 28: // Bronze Plate Mail Body
+                return RSC_TranslateItem(117);
+            case 37: // Bronze Plate Mail Legs
+                return RSC_TranslateItem(206);
+            case 47: // Leather Gloves
+                return RSC_TranslateItem(16);
+            case 63: // Cape (red)
+                return RSC_TranslateItem(183);
+            case 70: // Medium Bronze Helmet
+                return RSC_TranslateItem(104);
+            case 80: // Silver amulet
+                return 1796;
+            case 81: // Gold amulet
+                return RSC_TranslateItem(288);
+            case 90: // skirt (pink)
+                return RSC_TranslateItem(194);
+            case 98: // Bronze Square Shield
+                return RSC_TranslateItem(124);
+            case 105: // Anti dragon breath Shield
+                return RSC_TranslateItem(420);
+            case 106: // Wooden Shield
+                return RSC_TranslateItem(4);
             case 109: // bronze Axe
-                return RSC_TranslateItem(87);
+                return RSC_TranslateItem(205);
             case 114: // rune Axe
                 return RSC_TranslateItem(405);
+            case 172: // Black amulet
+                return 4677;
             case 209: // Santa's hat
                 return RSC_TranslateItem(971);
             case 226: // Cape of legends
@@ -603,6 +677,79 @@ public class RSCConfig {
         {
             case 1351: // bronze Axe
             case 1359: // rune Axe
+            case 1375: // bronze battle Axe
+                return true;
+        }
+
+        return false;
+    }
+
+    public static boolean RSC_isGlove(int itemID)
+    {
+        switch (itemID)
+        {
+            case 1059: // Leather Gloves
+                return true;
+        }
+
+        return false;
+    }
+
+    public static boolean RSC_isAmulet(int itemID)
+    {
+        switch (itemID)
+        {
+            case 1692: // Gold Amulet
+            case 1654: // Gold necklace
+            case 1796: // (RS2) Silver necklace
+            case 4677: // (RS2) Crystal pendant
+                return true;
+        }
+
+        return false;
+    }
+
+    public static boolean RSC_isFullHelmet(int itemID)
+    {
+        switch (itemID)
+        {
+            case 1155: // bronze Axe
+                return true;
+        }
+
+        return false;
+    }
+
+    public static boolean RSC_isShield(int itemID)
+    {
+        switch (itemID)
+        {
+            case 1173: // Bronze Square Shield
+            case 1540: // Anti dragon breath Shield
+            case 1171: // Wooden Shield
+                return true;
+        }
+
+        return false;
+    }
+
+    public static boolean RSC_isMediumHelmet(int itemID)
+    {
+        switch (itemID)
+        {
+            case 1139: // Medium Bronze Helmet
+                return true;
+        }
+
+        return false;
+    }
+
+    public static boolean RSC_isLeg(int itemID)
+    {
+        switch (itemID)
+        {
+            case 1013: // skirt (pink)
+            case 1075: // Bronze Plate Mail Legs
                 return true;
         }
 
@@ -620,11 +767,45 @@ public class RSCConfig {
         return false;
     }
 
+    public static boolean RSC_isPlatebody(int itemID)
+    {
+        switch (itemID)
+        {
+            case 1117: // Bronze Plate Mail Body
+                return true;
+        }
+
+        return false;
+    }
+
+    public static boolean RSC_isChainmail(int itemID)
+    {
+        switch (itemID)
+        {
+            case 1103: // Bronze Chain Mail Body
+                return true;
+        }
+
+        return false;
+    }
+
     public static boolean RSC_isCape(int itemID)
     {
         switch (itemID)
         {
+            case 1007: // Cape (red)
             case 1052: // Cape of legends
+                return true;
+        }
+
+        return false;
+    }
+
+    public static boolean RSC_isBoot(int itemID)
+    {
+        switch (itemID)
+        {
+            case 1061: // Boots
                 return true;
         }
 
@@ -701,6 +882,40 @@ public class RSCConfig {
         }
 
         return color;
+    }
+
+    public static int RSC_ConvertDirection(int direction)
+    {
+        switch (direction)
+        {
+            default:
+                System.out.println("Unhandled rsc direction: " + direction);
+                break;
+        }
+
+        return direction;
+    }
+
+    public static void RSC_PlayAnimation(Player player, int itemID)
+    {
+        //itemID = RSC_TranslateItem(itemID);
+        switch (itemID)
+        {
+            //case 64:
+            //    player.animation = 875;
+            //    break;
+            default:
+                player.animation = -1;
+                System.out.println("Unhandled bubble animation: " + itemID);
+                break;
+        }
+
+        if (player.animation != -1)
+        {
+            player.currentAnimationFrame = 0;
+            player.currentAnimationLoopCount = 0;
+            player.animationDelay = 0;
+        }
     }
 
     public static int RSC_HandleOpcode(int opcode, Client client, Buffer buffer)
@@ -789,21 +1004,26 @@ public class RSCConfig {
                 localRegionY = buffer.readBits(13);
                 int anim = buffer.readBits(4);
 
-                System.out.println(localRegionX + ", " + localRegionY + " SPAWN");
-
-                int localX = 50;
-                int localY = 50;
-
-                // Set local player
-                Player localPlayer = RSC_getPlayer(client, localServerIndex, localX, localY);
+                System.out.println("Local Coords: " + localRegionX + ", " + localRegionY);
 
                 // Load region
-                client.RSC_loadRegion(384, 384);
+                localRegionX = 446;
+                localRegionY = 484;
+                client.RSC_loadRegion(localRegionX, localRegionY);
+                localRegionX -= client.regionX;
+                localRegionY -= client.regionY;
+
+                int localX = localRegionX;//64 + magicLoc * localRegionX;
+                int localY = localRegionY;//64 + magicLoc * localRegionY;
+
+                System.out.println(localX + ", " + localY + " SPAWN");
+
+                // Set local player
+                Player localPlayer = RSC_getPlayer(client, localServerIndex, localX, localY, anim);
 
                 int playerCount = buffer.readBits(8);
                 for (int i = 0; i < playerCount; i++)
                 {
-                    // TODO: CONTINUE HERE
                     int reqUpdate = buffer.readBits(1);
                     if (reqUpdate != 0) {
                         int updateType = buffer.readBits(1);
@@ -812,7 +1032,7 @@ public class RSCConfig {
                             int unk = buffer.readBits(2);
                             if (unk == 3)
                                 continue;
-                            int nextAnim = buffer.readBits(2);
+                            int nextAnim = buffer.readBits(2) + (unk << 2);
                         }
                         else
                         {
@@ -837,7 +1057,7 @@ public class RSCConfig {
 
                     System.out.println("Load player " + serverIndex + " " + playerX + ", " + playerY);
 
-                    RSC_getPlayer(client, serverIndex, playerX, playerY);
+                    Player otherPlayer = RSC_getPlayer(client, serverIndex, playerX, playerY, otherAnim);
                 }
 
                 buffer.finishBitAccess();
@@ -859,10 +1079,17 @@ public class RSCConfig {
                     int updateType = buffer.getUnsignedByte();
                     switch (updateType)
                     {
+                        case 0:
+                        {
+                            int itemID = buffer.getUnsignedLEShort();
+                            RSC_PlayAnimation(player, itemID);
+                            break;
+                        }
                         case 1:
                         {
                             int mod = buffer.getUnsignedByte();
                             String message = buffer.RSC_cabbage();
+
                             client.RSC_setTextMessage(player, message);
                             break;
                         }
@@ -880,10 +1107,20 @@ public class RSCConfig {
                             int feetID = -1;
                             int chestID = -1;
                             int armID = -1;
+                            int handID = -1;
+                            int amuletID = -1;
+                            int shieldID = -1;
                             int genderID = 0;
 
                             int hatID = -1;
                             int capeID = -1;
+                            int helmetID = -1;
+                            int medHelmetID = -1;
+                            int legArmorID = -1;
+                            int chestArmorID = -1;
+                            int armArmorID = -1;
+                            int handArmorID = -1;
+                            int feetArmorID = -1;
 
                             int equipCount = buffer.getUnsignedByte();
                             for (int x = 0; x < equipCount; x++) {
@@ -923,6 +1160,7 @@ public class RSCConfig {
                                     legID = 70;
                                     feetID = 79;
                                     chestID = 56;
+                                    handID = 68;
                                     armID = 61;
                                 }
 
@@ -932,6 +1170,30 @@ public class RSCConfig {
                                     hatID = id;
                                 if (RSC_isCape(id))
                                     capeID = id;
+                                if (RSC_isFullHelmet(id))
+                                    helmetID = id;
+                                if (RSC_isLeg(id))
+                                    legArmorID = id;
+                                if (RSC_isPlatebody(id))
+                                {
+                                    chestArmorID = id;
+                                    armArmorID = id;
+                                }
+                                if (RSC_isChainmail(id))
+                                {
+                                    chestArmorID = id;
+                                    armArmorID = -1;
+                                }
+                                if (RSC_isMediumHelmet(id))
+                                    medHelmetID = id;
+                                if (RSC_isGlove(id))
+                                    handArmorID = id;
+                                if (RSC_isBoot(id))
+                                    feetArmorID = id;
+                                if (RSC_isAmulet(id))
+                                    amuletID = id;
+                                if (RSC_isShield(id))
+                                    shieldID = id;
                             }
 
                             if (genderID > 0)
@@ -1029,6 +1291,21 @@ public class RSCConfig {
                             else
                                 beardID = 0;
 
+                            if (handID == -1)
+                                handID = 0x100 + 34;
+                            else
+                                handID = 0x100 + handID;
+
+                            if (amuletID == -1)
+                                amuletID = 0;
+                            else
+                                amuletID = 0x200 + amuletID;
+
+                            if (shieldID == -1)
+                                shieldID = 0;
+                            else
+                                shieldID = 0x200 + shieldID;
+
                             if (hatID > -1)
                                 hatID = 0x200 + hatID;
                             else
@@ -1039,20 +1316,69 @@ public class RSCConfig {
                             else
                                 capeID = 0;
 
+                            if (helmetID > -1)
+                                helmetID = 0x200 + helmetID;
+
+                            if (legArmorID > -1)
+                                legArmorID = 0x200 + legArmorID;
+
+                            if (chestArmorID > -1)
+                                chestArmorID = 0x200 + chestArmorID;
+
+                            if (medHelmetID > -1)
+                                medHelmetID = 0x200 + medHelmetID;
+
+                            if (handArmorID > -1)
+                                handArmorID = 0x200 + handArmorID;
+
+                            if (feetArmorID > -1)
+                                feetArmorID = 0x200 + feetArmorID;
+
                             System.out.println(genderID + " GENDER");
+
+                            // Full helmet
+                            if (helmetID != -1)
+                            {
+                                beardID = 0; // Remove beard
+                                hairID = helmetID;
+                            }
+
+                            // Leg armor
+                            if (legArmorID != -1)
+                                legID = legArmorID;
+
+                            // Chest armor
+                            if (chestArmorID != -1)
+                                chestID = chestArmorID;
+
+                            // Arm armor
+                            if (armArmorID != -1)
+                                armID = armArmorID;
+
+                            // Medium helmets
+                            if (medHelmetID != -1)
+                                hatID = medHelmetID;
+
+                            // Hand armor
+                            if (handArmorID != -1)
+                                handID = handArmorID;
+
+                            // Feet armor
+                            if (feetArmorID != -1)
+                                feetID = feetArmorID;
 
                             // Set appearance
                             player.gender = genderID; // 0 - Male
                             player.appearance[0] = hatID; // Hat
                             player.appearance[1] = capeID; // Cape
-                            player.appearance[2] = 0; // Amulet
+                            player.appearance[2] = amuletID; // Amulet
                             player.appearance[3] = weaponID; // Weapon
                             player.appearance[4] = chestID; // Chest
-                            player.appearance[5] = 0; // Shield
+                            player.appearance[5] = shieldID; // Shield
                             player.appearance[6] = armID; // Arms
                             player.appearance[7] = legID; // Legs
                             player.appearance[8] = hairID; // Head
-                            player.appearance[9] = 0x100 + 34; // Hands
+                            player.appearance[9] = handID; // Hands
                             player.appearance[10] = feetID; // Feet
                             player.appearance[11] = beardID; // Beard
                             player.appearanceOffset = 0L;
@@ -1092,9 +1418,9 @@ public class RSCConfig {
             case 25: // Load Area
             {
                 localServerIndex = buffer.getUnsignedLEShort();
-                int planeWidth = buffer.getUnsignedLEShort();
-                int planeHeight = buffer.getUnsignedLEShort();
-                int planeIndex = buffer.getUnsignedLEShort();
+                planeWidth = buffer.getUnsignedLEShort();
+                planeHeight = buffer.getUnsignedLEShort();
+                planeIndex = buffer.getUnsignedLEShort();
                 int planeMultiplier = buffer.getUnsignedLEShort();
                 planeHeight -= planeIndex * planeMultiplier;
                 System.out.println("Load Area: " + localServerIndex + ", " + planeWidth + ", " + planeHeight + ", " + planeIndex);
@@ -1178,7 +1504,11 @@ public class RSCConfig {
 
         switch (responseCode)
         {
-            case 47:
+            case 4:
+                responseCode = 5;
+                break;
+            case 7:
+                responseCode = 9;
                 break;
         }
 

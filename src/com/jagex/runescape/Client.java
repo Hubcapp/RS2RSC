@@ -308,8 +308,8 @@ public final class Client extends RSApplet {
 	private IndexedImage backHmid1Image;
 	private final int[] unknownCameraVariable;
 	private boolean characterModelChanged;
-	private int baseX;
-	private int baseY;
+	public int baseX;
+	public int baseY;
 	private int anInt1036;
 	private int anInt1037;
 	private int loginFailures;
@@ -367,8 +367,8 @@ public final class Client extends RSApplet {
 	private RSImageProducer bottomSideIconImageProducer;
 	private RSImageProducer topSideIconImageProducer;
 	public static Player localPlayer;
-	private final String[] playerActionText;
-	private final boolean[] playerActionUnpinned;
+	public final String[] playerActionText;
+	public final boolean[] playerActionUnpinned;
 	private final int[][][] constructMapTiles;
 	private final int[] tabInterfaceIDs = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
 	private int cameraRandomisationV;
@@ -2341,8 +2341,11 @@ public final class Client extends RSApplet {
 				this.crossY = super.clickY;
 				this.crossType = 2;
 				this.crossIndex = 0;
-				this.stream.putOpcode(128);
-				this.stream.putShort(actionTarget);
+				if (!RSCConfig.rscProtocol) {
+					// TODO: Implement this, walking
+					this.stream.putOpcode(128);
+					this.stream.putShort(actionTarget);
+				}
 			}
 		}
 		if (menuAction == 20) {
@@ -2367,8 +2370,12 @@ public final class Client extends RSApplet {
 				this.crossY = super.clickY;
 				this.crossType = 2;
 				this.crossIndex = 0;
-				this.stream.putOpcode(153);
-				this.stream.putLEShort(actionTarget);
+				if (!RSCConfig.rscProtocol)
+				{
+					// TODO: Implement this
+					this.stream.putOpcode(153);
+					this.stream.putLEShort(actionTarget);
+				}
 			}
 		}
 		if (menuAction == 516) {
@@ -2474,12 +2481,20 @@ public final class Client extends RSApplet {
 					if (menuAction == 484) {
 						// Follow another player
 
-						this.stream.putOpcode(139);
-						this.stream.putLEShort(this.localPlayers[p]);
+						if (!RSCConfig.rscProtocol)
+						{
+							// TODO: Implement this, following
+							this.stream.putOpcode(139);
+							this.stream.putLEShort(this.localPlayers[p]);
+						}
 					}
 					if (menuAction == 6) {
-						this.stream.putOpcode(128);
-						this.stream.putShort(this.localPlayers[p]);
+						if (!RSCConfig.rscProtocol)
+						{
+							// TODO: Implement this, unknown
+							this.stream.putOpcode(128);
+							this.stream.putShort(this.localPlayers[p]);
+						}
 					}
 					foundPlayer = true;
 					break;
@@ -2573,8 +2588,12 @@ public final class Client extends RSApplet {
 				this.crossY = super.clickY;
 				this.crossType = 2;
 				this.crossIndex = 0;
-				this.stream.putOpcode(73);
-				this.stream.putLEShort(actionTarget);
+				if (!RSCConfig.rscProtocol)
+				{
+					// TODO: Implement this?
+					this.stream.putOpcode(73);
+					this.stream.putLEShort(actionTarget);
+				}
 			}
 		}
 		if (menuAction == 213) {
@@ -2795,8 +2814,12 @@ public final class Client extends RSApplet {
 				this.crossY = super.clickY;
 				this.crossType = 2;
 				this.crossIndex = 0;
-				this.stream.putOpcode(139);
-				this.stream.putLEShort(actionTarget);
+				if (!RSCConfig.rscProtocol)
+				{
+					// TODO: Implement this, player action
+					this.stream.putOpcode(139);
+					this.stream.putLEShort(actionTarget);
+				}
 			}
 		}
 		if (menuAction == 956 && this.clickInteractiveObject(actionTarget, actionInformation1, actionInformation2)) {
@@ -2962,10 +2985,12 @@ public final class Client extends RSApplet {
 		}
 		if (menuAction == 502) {
 			this.clickInteractiveObject(actionTarget, actionInformation1, actionInformation2);
-			this.stream.putOpcode(132);
-			this.stream.putLEShortA(actionInformation2 + this.baseX);
-			this.stream.putShort(actionTarget >> 14 & 0x7FFF);
-			this.stream.putShortA(actionInformation1 + this.baseY);
+			if (!RSCConfig.rscProtocol) {
+				this.stream.putOpcode(132);
+				this.stream.putLEShortA(actionInformation2 + this.baseX);
+				this.stream.putShort(actionTarget >> 14 & 0x7FFF);
+				this.stream.putShortA(actionInformation1 + this.baseY);
+			}
 		}
 		if (menuAction == 1125) {
 			final ItemDefinition item = ItemDefinition.getDefinition(actionTarget);
@@ -3232,34 +3257,66 @@ public final class Client extends RSApplet {
 			final int x = this.walkingQueueX[currentIndex];
 			final int y = this.walkingQueueY[currentIndex];
 			currentWalkingQueueSize += maxPathSize;
-			if (currentWalkingQueueSize >= 92) {
-				this.stream.putOpcode(36);
-				this.stream.putInt(0);
-				currentWalkingQueueSize = 0;
+
+			if (RSCConfig.rscProtocol)
+			{
+				if (currentWalkingQueueSize >= 92)
+					currentWalkingQueueSize = 0;
+
+				if (clickType == 0)
+					this.stream.RSC_newPacket(16);
+				if (clickType == 1)
+					this.stream.RSC_newPacket(187);
+				if (clickType == 2)
+					this.stream.RSC_newPacket(187);
+
+				int localX = localPlayer.waypointX[0];
+				int localY = localPlayer.waypointY[0];
+
+				this.stream.putLEShort(localX);
+				this.stream.putLEShort(localY);
+				for (int counter = 1; counter < maxPathSize; counter++) {
+					currentIndex--;
+					this.stream.put(-localX + this.walkingQueueX[currentIndex]);
+					this.stream.put(this.walkingQueueY[currentIndex] - localY);
+
+					System.out.println(-x + this.walkingQueueX[currentIndex]);
+				}
+
+				this.stream.RSC_finalizePacket();
 			}
-			if (clickType == 0) {
-				this.stream.putOpcode(164);
-				this.stream.put(maxPathSize + maxPathSize + 3);
-			}
-			if (clickType == 1) {
-				this.stream.putOpcode(248);
-				this.stream.put(maxPathSize + maxPathSize + 3 + 14);
-			}
-			if (clickType == 2) {
-				this.stream.putOpcode(98);
-				this.stream.put(maxPathSize + maxPathSize + 3);
-			}
-			this.stream.putLEShortA(x + this.baseX);
-			this.destinationX = this.walkingQueueX[0];
-			this.destinationY = this.walkingQueueY[0];
-			for (int counter = 1; counter < maxPathSize; counter++) {
-				currentIndex--;
-				this.stream.put(this.walkingQueueX[currentIndex] - x);
-				this.stream.put(this.walkingQueueY[currentIndex] - y);
+			else
+			{
+				if (currentWalkingQueueSize >= 92) {
+					this.stream.putOpcode(36);
+					this.stream.putInt(0);
+					currentWalkingQueueSize = 0;
+				}
+				if (clickType == 0) {
+					this.stream.putOpcode(164);
+					this.stream.put(maxPathSize + maxPathSize + 3);
+				}
+				if (clickType == 1) {
+					this.stream.putOpcode(248);
+					this.stream.put(maxPathSize + maxPathSize + 3 + 14);
+				}
+				if (clickType == 2) {
+					this.stream.putOpcode(98);
+					this.stream.put(maxPathSize + maxPathSize + 3);
+				}
+				this.stream.putLEShortA(x + this.baseX);
+				this.destinationX = this.walkingQueueX[0];
+				this.destinationY = this.walkingQueueY[0];
+				for (int counter = 1; counter < maxPathSize; counter++) {
+					currentIndex--;
+					this.stream.put(this.walkingQueueX[currentIndex] - x);
+					this.stream.put(this.walkingQueueY[currentIndex] - y);
+				}
+
+				this.stream.putLEShort(y + this.baseY);
+				this.stream.putByteC(super.keyStatus[5] != 1 ? 0 : 1);
 			}
 
-			this.stream.putLEShort(y + this.baseY);
-			this.stream.putByteC(super.keyStatus[5] != 1 ? 0 : 1);
 			return true;
 		}
 		return clickType != 1;
@@ -4672,8 +4729,17 @@ public final class Client extends RSApplet {
 
 	public void RSC_loadRegion(int areaX, int areaY)
 	{
-		int playerRegionX = areaX;
-		int playerRegionY = areaY;
+		areaX += RSCConfig.planeWidth;
+		areaY += RSCConfig.planeHeight;
+		int var6 = (areaX - -24) / 48;
+		int var7 = (24 + areaY) / 48;
+		int playerRegionX = -48 + var6 * 48;
+		int playerRegionY = -48 + 48 * var7;
+		playerRegionX -= RSCConfig.planeWidth;
+		playerRegionY -= RSCConfig.planeHeight;
+
+		System.out.println("REGION " + playerRegionX + ", " + playerRegionY);
+
 		this.loadGeneratedMap = false;
 
 		if (this.regionX == playerRegionX && this.regionY == playerRegionY && this.loadingStage == 2) {
@@ -4685,6 +4751,7 @@ public final class Client extends RSApplet {
 		this.regionY = playerRegionY;
 		this.baseX = (this.regionX - 6) * 8;
 		this.baseY = (this.regionY - 6) * 8;
+
 		this.inTutorialIsland = (this.regionX / 8 == 48 || this.regionX / 8 == 49) && this.regionY / 8 == 48;
 		if (this.regionX / 8 == 48 && this.regionY / 8 == 148) {
 			this.inTutorialIsland = true;
@@ -6514,7 +6581,7 @@ public final class Client extends RSApplet {
 	}
 
 	private void login(final String playerUsername, final String playerPassword, final boolean recoveredConnection) {
-		RSCConfig.Start();
+		RSCConfig.Start(this);
 
 		signlink.errorname = playerUsername;
 		try {
