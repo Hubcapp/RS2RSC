@@ -466,7 +466,7 @@ public final class Client extends RSApplet {
 	public int tradeMode;
 	private int chatEffectsDisabled;
 	private final int[] trackDelay;
-	private int inTutorial;
+	public int inTutorial;
 	private final boolean rsAlreadyLoaded;
 	private int oneMouseButton;
 	private int minimapRandomisationCounter;

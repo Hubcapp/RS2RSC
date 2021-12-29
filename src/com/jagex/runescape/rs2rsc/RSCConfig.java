@@ -759,6 +759,12 @@ public class RSCConfig {
                 client.pushMessage(message, 6, sender);
                 break;
             }
+            case 111:
+            {
+                boolean tutorial = buffer.getUnsignedByte() != 0;
+                // TODO: What to do with this...
+                break;
+            }
             case 120:
             {
                 String sender = buffer.RSC_readString();
