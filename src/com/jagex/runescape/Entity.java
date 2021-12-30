@@ -29,7 +29,7 @@ public class Entity extends Animable {
 	final int[] hitArray;
 	final int[] hitMarkTypes;
 	final int[] hitsLoopCycle;
-	int queuedAnimationId;
+	public int queuedAnimationId;
 	int queuedAnimationFrame;
 	int queuedAnimationDuration;
 	int graphicId;

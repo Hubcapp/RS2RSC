@@ -245,7 +245,7 @@ public final class Client extends RSApplet {
 	private boolean windowFocused;
 	public long[] friendsListAsLongs;
 	private int currentSong;
-	private static int localWorldId = 10;
+	public static int localWorldId = 10;
 	static int portOffset;
 	private static boolean membersWorld = true;
 	private static boolean lowMemory;
@@ -688,11 +688,6 @@ public final class Client extends RSApplet {
 			if (targetName.equals(localPlayer.name)) {
 				return;
 			} else {
-				this.friendsList[this.friendsCount] = targetName;
-				this.friendsListAsLongs[this.friendsCount] = targetHash;
-				this.friendsWorldIds[this.friendsCount] = 0;
-				this.friendsCount++;
-				this.redrawTab = true;
 				if (RSCConfig.rscProtocol)
 				{
 					this.stream.RSC_newPacket(195);
@@ -701,6 +696,11 @@ public final class Client extends RSApplet {
 				}
 				else
 				{
+					this.friendsList[this.friendsCount] = targetName;
+					this.friendsListAsLongs[this.friendsCount] = targetHash;
+					this.friendsWorldIds[this.friendsCount] = 0;
+					this.friendsCount++;
+					this.redrawTab = true;
 					this.stream.putOpcode(188);
 					this.stream.putLong(targetHash);
 				}
@@ -1672,7 +1672,11 @@ public final class Client extends RSApplet {
 		}
 		for (int a = 0; a < this.menuActionRow; a++) {
             if (this.menuActionId[a] == 516) {
-				this.menuActionName[a] = "Walk here @whi@" + displayName;
+				this.menuActionName[a] = "Walk here";
+				if (!RSCConfig.rscProtocol)
+				{
+					this.menuActionName[a] += " @whi@" + displayName;
+				}
                 return;
             }
         }
@@ -3569,9 +3573,15 @@ public final class Client extends RSApplet {
 			if (this.friendsWorldIds[type] == 0) {
                 rsInterface.textDefault = "@red@Offline";
             } else if (this.friendsWorldIds[type] == localWorldId) {
-                rsInterface.textDefault = "@gre@World-" + (this.friendsWorldIds[type] - 9);
+				if (RSCConfig.rscProtocol)
+					rsInterface.textDefault = "@gre@" + RSCConfig.friendServers[type];
+				else
+                	rsInterface.textDefault = "@gre@World-" + (this.friendsWorldIds[type] - 9);
             } else {
-                rsInterface.textDefault = "@yel@World-" + (this.friendsWorldIds[type] - 9);
+				if (RSCConfig.rscProtocol)
+					rsInterface.textDefault = "@yel@" + RSCConfig.friendServers[type];
+				else
+					rsInterface.textDefault = "@yel@World-" + (this.friendsWorldIds[type] - 9);
             }
 			rsInterface.actionType = 1;
 			return;
@@ -4738,8 +4748,6 @@ public final class Client extends RSApplet {
 		playerRegionX -= RSCConfig.planeWidth;
 		playerRegionY -= RSCConfig.planeHeight;
 
-		System.out.println("REGION " + playerRegionX + ", " + playerRegionY);
-
 		this.loadGeneratedMap = false;
 
 		if (this.regionX == playerRegionX && this.regionY == playerRegionY && this.loadingStage == 2) {
@@ -4947,7 +4955,7 @@ public final class Client extends RSApplet {
 					this.socket.read(this.inStream.buffer, 1);
 					byte ending = this.inStream.buffer[0];
 					this.socket.read(this.inStream.buffer, this.packetSize - 1);
-					this.inStream.buffer[this.packetSize] = ending;
+					this.inStream.buffer[this.packetSize - 1] = ending;
 				}
 				else
 				{

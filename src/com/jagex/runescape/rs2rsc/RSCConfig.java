@@ -4,7 +4,6 @@ import com.jagex.runescape.Buffer;
 import com.jagex.runescape.Client;
 import com.jagex.runescape.Player;
 import com.jagex.runescape.TextClass;
-import com.jagex.runescape.definition.EntityDefinition;
 
 import java.math.BigInteger;
 
@@ -31,6 +30,7 @@ public class RSCConfig {
     private static byte[] aByteArray210;
     public static int localServerIndex;
 
+    public static String[] friendServers = new String[200];
     private static int magicLoc = 128;
     private static int localRegionX;
     private static int localRegionY;
@@ -552,7 +552,6 @@ public class RSCConfig {
         if (!isLocal)
         {
             client.localPlayers[client.localPlayerCount++] = serverIndex;
-            System.out.println("Registering " + serverIndex);
         }
 
         return player;
@@ -568,6 +567,18 @@ public class RSCConfig {
                 return 1061;
             case 87: // bronze Axe
                 return 1351;
+            case 12: // Iron Axe
+                return 1349;
+            case 88: // Steel Axe
+                return 1353;
+            case 428: // Black Axe
+                return 1361;
+            case 203: // Mithril Axe
+                return 1355;
+            case 204: // Adamantite Axe
+                return 1357;
+            case 405: // rune Axe
+                return 1359;
             case 104: // Medium Bronze Helmet
                 return 1139;
             case 108: // Large Bronze Helmet
@@ -576,14 +587,14 @@ public class RSCConfig {
                 return 1013;
             case 206: // Bronze Plate Mail Legs
                 return 1075;
-            case 405: // rune Axe
-                return 1359;
             case 971: // Santa's hat
                 return 1050;
             case 1288: // Cape of legends
                 return 1052;
             case 205: // bronze battle Axe
                 return 1375;
+            case 93: // Rune battle Axe
+                return 1373;
             case 117: // Bronze Plate Mail Body
                 return 1117;
             case 113: // Bronze Chain Mail Body
@@ -654,7 +665,7 @@ public class RSCConfig {
             case 109: // bronze Axe
                 return RSC_TranslateItem(205);
             case 114: // rune Axe
-                return RSC_TranslateItem(405);
+                return RSC_TranslateItem(93);
             case 172: // Black amulet
                 return 4677;
             case 209: // Santa's hat
@@ -676,8 +687,31 @@ public class RSCConfig {
         switch (itemID)
         {
             case 1351: // bronze Axe
+            case 1349: // Iron Axe
+            case 1353: // Steel Axe
+            case 1361: // Black Axe
+            case 1355: // Mithril Axe
+            case 1357: // Adamantite Axe
             case 1359: // rune Axe
             case 1375: // bronze battle Axe
+            case 1373: // Rune battle Axe
+                return true;
+        }
+
+        return false;
+    }
+
+    public static boolean RSC_isAxe(int itemID)
+    {
+        switch (itemID)
+        {
+            case 1351: // bronze Axe
+            case 1349: // Iron Axe
+            case 1353: // Steel Axe
+            case 1361: // Black Axe
+            case 1355: // Mithril Axe
+            case 1357: // Adamantite Axe
+            case 1359: // rune Axe
                 return true;
         }
 
@@ -898,24 +932,113 @@ public class RSCConfig {
 
     public static void RSC_PlayAnimation(Player player, int itemID)
     {
-        //itemID = RSC_TranslateItem(itemID);
+        itemID = RSC_TranslateItem(itemID);
+
+        // Reset Animation
+        int animation = -1;
+
+        // Woodcutting
         switch (itemID)
         {
-            //case 64:
-            //    player.animation = 875;
-            //    break;
-            default:
-                player.animation = -1;
-                System.out.println("Unhandled bubble animation: " + itemID);
+            case 1351: // bronze Axe
+                animation = 879;
+                break;
+            case 1349: // Iron Axe
+                animation = 877;
+                break;
+            case 1353: // Steel Axe
+                animation = 875;
+                break;
+            case 1361: // Black Axe
+                animation = 873;
+                break;
+            case 1355: // Mithril Axe
+                animation = 871;
+                break;
+            case 1357: // Adamantite Axe
+                animation = 869;
+                break;
+            case 1359: // rune Axe
+                animation = 867;
                 break;
         }
 
-        if (player.animation != -1)
+        // Restart Animation if it was set
+        if (animation != -1)
         {
+            player.animation = animation;
             player.currentAnimationFrame = 0;
             player.currentAnimationLoopCount = 0;
             player.animationDelay = 0;
         }
+    }
+
+    public static String RSC_removeChatFormatting(String str)
+    {
+        str = RSC_removeStringFormatting(str, '@');
+        str = RSC_removeStringFormatting(str, '~');
+        return str;
+    }
+
+    public static String RSC_removeStringFormatting(String str, char removeCharacter)
+    {
+        int pos = -1;
+        for (int i = 0; i < str.length(); i++)
+        {
+            char c = str.charAt(i);
+            if (c == removeCharacter)
+            {
+                if (pos == -1)
+                {
+                    pos = i;
+                }
+                else
+                {
+                    int diff = i - pos;
+                    System.out.println(diff);
+                    if (diff >= 4)
+                    {
+                        str = str.substring(0, pos) + str.substring(i + 1);
+                        i -= 5;
+                        pos = -1;
+                    }
+                    else
+                    {
+                        pos = i;
+                    }
+                }
+            }
+        }
+
+        return str;
+    }
+
+    public static void RSC_sortFriendList(Client client) {
+        boolean go = true;
+
+        while (go) {
+            go = false;
+
+            for (int index = 0; index < (client.friendsCount - 1); ++index) {
+                // TODO: I think this sorting also sorts based on same world or not
+                if (client.friendsWorldIds[index] == 0 && client.friendsWorldIds[index + 1] != 0) {
+                    String server = friendServers[index];
+                    friendServers[index] = friendServers[index + 1];
+                    friendServers[index + 1] = server;
+                    String name = client.friendsList[index];
+                    client.friendsList[index] = client.friendsList[index + 1];
+                    client.friendsList[index + 1] = name;
+                    int online = client.friendsWorldIds[index];
+                    client.friendsWorldIds[index] = client.friendsWorldIds[index + 1];
+                    client.friendsWorldIds[index + 1] = online;
+                    long hash = client.friendsListAsLongs[index];
+                    client.friendsListAsLongs[index] = client.friendsListAsLongs[index + 1];
+                    client.friendsListAsLongs[index + 1] = hash;
+                    go = true;
+                }
+            }
+        }
+        ;
     }
 
     public static int RSC_HandleOpcode(int opcode, Client client, Buffer buffer)
@@ -931,15 +1054,15 @@ public class RSCConfig {
             {
                 String name = buffer.RSC_readString();
                 String oldName = buffer.RSC_readString();
+                String server = "";
                 int onlineStatus = buffer.getUnsignedByte();
 
                 boolean loggedIn = (4 & onlineStatus) != 0;
+                boolean wasAdded = false;
                 int index = -1;
 
                 if (loggedIn)
-                {
-                    String server = buffer.RSC_readString();
-                }
+                    server = buffer.RSC_readString();
 
                 for (int i = 0; i < client.friendsCount; i++)
                 {
@@ -953,17 +1076,24 @@ public class RSCConfig {
                 if (index == -1)
                 {
                     index = client.friendsCount++;
-
                     client.friendsList[index] = name;
                     client.friendsListAsLongs[index] = TextClass.nameToLong(name.trim());
-
-                    System.out.println("Registering friend " + name);
+                    wasAdded = true;
                 }
 
-                System.out.println("Updating friend '" + name + "' '" + oldName + "': " + loggedIn + " " + onlineStatus);
-
+                int prevWorldId = client.friendsWorldIds[index];
                 client.friendsWorldIds[index] = loggedIn ? 10 : 0;
+                friendServers[index] = server;
+                RSC_sortFriendList(client);
                 client.redrawTab = true;
+
+                if (wasAdded)
+                    prevWorldId = client.friendsWorldIds[index];
+
+                if (prevWorldId == 0 && client.friendsWorldIds[index] != 0)
+                    client.pushMessage(name + " has logged in.", 5, "");
+                else if (prevWorldId != 0 && client.friendsWorldIds[index] == 0)
+                    client.pushMessage(name + " has logged out.", 5, "");
 
                 break;
             }
@@ -971,6 +1101,7 @@ public class RSCConfig {
             {
                 String sender = buffer.RSC_readString();
                 String message = buffer.RSC_cabbage();
+                message = RSCConfig.RSC_removeChatFormatting(message);
                 client.pushMessage(message, 6, sender);
                 break;
             }
@@ -987,6 +1118,7 @@ public class RSCConfig {
                 int modStatus = buffer.getUnsignedByte();
                 long unk = buffer.getLong();
                 String message = buffer.RSC_cabbage();
+                message = RSCConfig.RSC_removeChatFormatting(message);
                 client.pushMessage(message, 7, sender);
                 break;
             }
@@ -1004,8 +1136,6 @@ public class RSCConfig {
                 localRegionY = buffer.readBits(13);
                 int anim = buffer.readBits(4);
 
-                System.out.println("Local Coords: " + localRegionX + ", " + localRegionY);
-
                 // Load region
                 localRegionX = 446;
                 localRegionY = 484;
@@ -1015,8 +1145,6 @@ public class RSCConfig {
 
                 int localX = localRegionX;//64 + magicLoc * localRegionX;
                 int localY = localRegionY;//64 + magicLoc * localRegionY;
-
-                System.out.println(localX + ", " + localY + " SPAWN");
 
                 // Set local player
                 Player localPlayer = RSC_getPlayer(client, localServerIndex, localX, localY, anim);
@@ -1055,8 +1183,6 @@ public class RSCConfig {
                     int playerX = localX + areaX;
                     int playerY = localY + areaY;
 
-                    System.out.println("Load player " + serverIndex + " " + playerX + ", " + playerY);
-
                     Player otherPlayer = RSC_getPlayer(client, serverIndex, playerX, playerY, otherAnim);
                 }
 
@@ -1071,12 +1197,15 @@ public class RSCConfig {
             case 234:
             {
                 int playerCount = buffer.getUnsignedLEShort();
+                System.out.println("Player update count: " + playerCount);
                 for (int i = 0; i < playerCount; i++)
                 {
                     int serverIndex = buffer.getUnsignedLEShort();
+                    int updateType = buffer.getUnsignedByte();
                     Player player = client.players[serverIndex];
 
-                    int updateType = buffer.getUnsignedByte();
+                    System.out.println("[UPDATE] " + player.name + " " + updateType);
+
                     switch (updateType)
                     {
                         case 0:
@@ -1089,8 +1218,11 @@ public class RSCConfig {
                         {
                             int mod = buffer.getUnsignedByte();
                             String message = buffer.RSC_cabbage();
+                            message = RSCConfig.RSC_removeChatFormatting(message);
 
                             client.RSC_setTextMessage(player, message);
+                            if (player != Client.localPlayer)
+                                client.pushMessage(message, 2, player.name);
                             break;
                         }
                         case 5:
@@ -1127,7 +1259,6 @@ public class RSCConfig {
                                 int id = buffer.getUnsignedByte();
                                 if (id == 0)
                                     continue;
-                                System.out.println("Equip: " + id);
                                 id = RSC_TranslateEquipment(id);
                                 if (id == -1)
                                     continue;
@@ -1231,8 +1362,6 @@ public class RSCConfig {
                             player.npcAppearance = null;
                             player.combatLevel = level;
 
-                            System.out.println(username + ": " + serverIndex);
-
                             // Set colors
                             // 0 - hair
                             // 1 - top
@@ -1333,8 +1462,6 @@ public class RSCConfig {
 
                             if (feetArmorID > -1)
                                 feetArmorID = 0x200 + feetArmorID;
-
-                            System.out.println(genderID + " GENDER");
 
                             // Full helmet
                             if (helmetID != -1)
@@ -1457,6 +1584,7 @@ public class RSCConfig {
                 int type = buffer.getUnsignedByte();
                 int unk = buffer.getUnsignedByte();
                 String message = buffer.RSC_readString();
+                message = RSCConfig.RSC_removeChatFormatting(message);
                 String sender = null;
                 String clan = null;
                 String color = null;
@@ -1470,6 +1598,15 @@ public class RSCConfig {
                 int rs2Type = 0;
                 switch (type)
                 {
+                    case 7: // Duel
+                        sender = message.substring(0, message.indexOf('(') - 1);
+                        message = message.substring(message.indexOf('('));
+                        rs2Type = 8;
+                        break;
+                    case 6: // Trade
+                        message = "wishes to trade with you.";
+                        rs2Type = 4;
+                        break;
                     case 3: // Quest
                         rs2Type = 0;
                         break;
