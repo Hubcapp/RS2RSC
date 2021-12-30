@@ -437,6 +437,23 @@ public class RSCConfig {
         System.out.println("using rsc protocol");
     }
 
+    public static void Update(Client client)
+    {
+        if (!rscProtocol)
+            return;
+
+        // Update local player
+        if (Client.localPlayer != null)
+            Client.localPlayer.RSC_update();
+
+        // Update other players
+        for (int i = 0; i < client.localPlayerCount; i++)
+        {
+            Player otherPlayer = client.players[client.localPlayers[i]];
+            otherPlayer.RSC_update();
+        }
+    }
+
     public static int RSC_convertXP(int xp)
     {
         return xp / 4;
@@ -611,6 +628,8 @@ public class RSCConfig {
                 return 1540;
             case 4: // Wooden Shield
                 return 1171;
+            case 166: // tinderbox
+                return 590;
         }
 
         return 0;
@@ -922,6 +941,22 @@ public class RSCConfig {
     {
         switch (direction)
         {
+            case 0: // South
+                return 0;
+            case 1: // Southeast
+                return (int) (Math.atan2(-1, 1) * 325.949) & 0x7FF;
+            case 2: // East
+                return (int) (Math.atan2(-1, 0) * 325.949) & 0x7FF;
+            case 3: // Northeast
+                return (int) (Math.atan2(-1, -1) * 325.949) & 0x7FF;
+            case 4: // North
+                return (int) (Math.atan2(0, -1) * 325.949) & 0x7FF;
+            case 5: // Northwest
+                return (int) (Math.atan2(1, -1) * 325.949) & 0x7FF;
+            case 6: // West
+                return (int) (Math.atan2(1, 0) * 325.949) & 0x7FF;
+            case 7: // Southwest
+                return (int) (Math.atan2(1, 1) * 325.949) & 0x7FF;
             default:
                 System.out.println("Unhandled rsc direction: " + direction);
                 break;
@@ -930,7 +965,7 @@ public class RSCConfig {
         return direction;
     }
 
-    public static void RSC_PlayAnimation(Player player, int itemID)
+    public static void RSC_PlayAnimation(Player player, int itemID, int length)
     {
         itemID = RSC_TranslateItem(itemID);
 
@@ -963,13 +998,15 @@ public class RSCConfig {
                 break;
         }
 
+        // Firemaking
+        if (itemID == 590)
+            animation = 733;
+
         // Restart Animation if it was set
         if (animation != -1)
         {
-            player.animation = animation;
-            player.currentAnimationFrame = 0;
-            player.currentAnimationLoopCount = 0;
-            player.animationDelay = 0;
+            player.RSC_queuedAnimation = animation;
+            player.RSC_queuedAnimationEnd = Client.tick + 150;
         }
     }
 
@@ -1152,6 +1189,10 @@ public class RSCConfig {
                 int playerCount = buffer.readBits(8);
                 for (int i = 0; i < playerCount; i++)
                 {
+                    Player player = client.players[client.localPlayers[i]];
+
+                    System.out.println(player.name);
+
                     int reqUpdate = buffer.readBits(1);
                     if (reqUpdate != 0) {
                         int updateType = buffer.readBits(1);
@@ -1161,6 +1202,7 @@ public class RSCConfig {
                             if (unk == 3)
                                 continue;
                             int nextAnim = buffer.readBits(2) + (unk << 2);
+
                         }
                         else
                         {
@@ -1194,6 +1236,29 @@ public class RSCConfig {
                 client.logout();
                 break;
             }
+            case 48:
+            {
+                while (client.packetSize > buffer.position)
+                {
+                    if (buffer.getUnsignedByte() == 255)
+                    {
+                        // Clear object?
+                        int x = buffer.get();
+                        int y = buffer.get();
+
+                        System.out.println("Game Object Clear: " + x + ", " + y);
+                    }
+                    else
+                    {
+                        buffer.position--;
+                        int id = buffer.getUnsignedLEShort();
+                        int x = buffer.get();
+                        int y = buffer.get();
+                        System.out.println("Game Object Spawn: " + id + ", " + x + ", " + y);
+                    }
+                }
+                break;
+            }
             case 234:
             {
                 int playerCount = buffer.getUnsignedLEShort();
@@ -1211,7 +1276,7 @@ public class RSCConfig {
                         case 0:
                         {
                             int itemID = buffer.getUnsignedLEShort();
-                            RSC_PlayAnimation(player, itemID);
+                            RSC_PlayAnimation(player, itemID, 150);
                             break;
                         }
                         case 1:
@@ -1223,6 +1288,19 @@ public class RSCConfig {
                             client.RSC_setTextMessage(player, message);
                             if (player != Client.localPlayer)
                                 client.pushMessage(message, 2, player.name);
+                            break;
+                        }
+                        case 2:
+                        {
+                            int damage = buffer.getUnsignedByte();
+                            int hp = buffer.getUnsignedByte();
+                            int hpMax = buffer.getUnsignedByte();
+
+                            // Players have red hit splats in rsc
+                            player.updateHitData(1, damage, Client.tick);
+                            player.loopCycleStatus = Client.tick + 200;
+                            player.currentHealth = hp;
+                            player.maxHealth = hpMax;
                             break;
                         }
                         case 5:

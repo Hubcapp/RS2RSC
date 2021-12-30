@@ -396,7 +396,7 @@ public final class Client extends RSApplet {
 	private boolean reportAbuseMute;
 	private boolean loadGeneratedMap;
 	private boolean cutsceneActive;
-	static int tick;
+	public static int tick;
 	private static final String validUserPassChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!\"\243$%^&*()-_=+[{]};:'@#~,<.>/?\\| ";
 	private RSImageProducer tabImageProducer;
 	private RSImageProducer gameScreenImageProducer;

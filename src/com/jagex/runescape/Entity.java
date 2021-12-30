@@ -100,6 +100,28 @@ public class Entity extends Animable {
 		return false;
 	}
 
+	public int RSC_queuedAnimation = -1;
+	public int RSC_queuedAnimationEnd = -1;
+
+	public void RSC_update()
+	{
+		if (RSC_queuedAnimation != -1 && queuedAnimationId == standAnimationId)
+		{
+			animation = RSC_queuedAnimation;
+			currentAnimationFrame = 0;
+			currentAnimationLoopCount = 0;
+			animationDelay = 0;
+			RSC_queuedAnimation = -1;
+		}
+
+		if (RSC_queuedAnimationEnd != -1 && Client.tick >= RSC_queuedAnimationEnd)
+		{
+			animation = -1;
+			RSC_queuedAnimationEnd = -1;
+			System.out.println("Stopping the animation");
+		}
+	}
+
 	public final void move(final boolean flag, final int direction) {
 		int x = this.waypointX[0];
 		int y = this.waypointY[0];

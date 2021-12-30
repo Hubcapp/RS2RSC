@@ -1,5 +1,7 @@
 package com.jagex.runescape;
 
+import com.jagex.runescape.rs2rsc.RSCConfig;
+
 import java.applet.Applet;
 import java.awt.*;
 import java.awt.event.*;
@@ -475,6 +477,9 @@ public class RSApplet extends Applet
 			if (this.delayTime > 0) {
                 this.fps = (1000 * ratio) / (this.delayTime * 256);
             }
+
+			RSCConfig.Update((Client)this);
+
 			this.processDrawing();
 			if (this.debugRequested) {
 				System.out.println("ntime:" + currentTime);
