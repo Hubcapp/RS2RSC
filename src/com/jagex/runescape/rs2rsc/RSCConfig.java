@@ -4,8 +4,11 @@ import com.jagex.runescape.Buffer;
 import com.jagex.runescape.Client;
 import com.jagex.runescape.Player;
 import com.jagex.runescape.TextClass;
+import com.jagex.runescape.definition.GameObjectDefinition;
+import rscminus.common.JGameData;
 
 import java.math.BigInteger;
+import java.util.Map;
 
 public class RSCConfig {
     public static boolean rscProtocol = true;
@@ -37,6 +40,8 @@ public class RSCConfig {
     public static int planeWidth;
     public static int planeHeight;
     public static int planeIndex;
+
+    private static BiMap<Integer, Integer> objectIDTable = new BiMap<Integer, Integer>();
 
     public static byte[] RSC_stringToUnicode(String str) {
         int strlen = str.length();
@@ -434,6 +439,10 @@ public class RSCConfig {
             }
         }
 
+        objectIDTable.put(0, 1279); // Tree
+        objectIDTable.put(1, 1276); // Tree
+        objectIDTable.put(97, 2732); // fire
+
         System.out.println("using rsc protocol");
     }
 
@@ -495,6 +504,18 @@ public class RSCConfig {
         client.playerActionUnpinned[1] = true;
         client.playerActionUnpinned[2] = true;
         client.playerActionUnpinned[3] = true;
+
+        // Translate Objects to rsc
+        for (Map.Entry<Integer, Integer> entry : objectIDTable.getKeyEntrySet())
+        {
+            int rscID = entry.getValue();
+            int rs2ID = entry.getKey();
+            GameObjectDefinition def = GameObjectDefinition.getDefinition(rs2ID);
+            def.name = JGameData.sceneryName[rscID];
+            def.description = JGameData.sceneryExamine[rscID].getBytes();
+            def.sizeX = JGameData.sceneryWidth[rscID];
+            def.sizeY = JGameData.sceneryHeight[rscID];
+        }
     }
 
     public static void RSC_HandleInterface(int actionID, Client client, Buffer buffer)
@@ -572,6 +593,17 @@ public class RSCConfig {
         }
 
         return player;
+    }
+
+    public static int RSC_TranslateObject(int objectID)
+    {
+        Integer val = objectIDTable.get(objectID);
+        if (val == null)
+        {
+            System.out.println("Unhandled object id: " + objectID);
+            return -1;
+        }
+        return val.intValue();
     }
 
     public static int RSC_TranslateItem(int itemID)
@@ -1173,6 +1205,9 @@ public class RSCConfig {
                 localRegionY = buffer.readBits(13);
                 int anim = buffer.readBits(4);
 
+                client.playerPositionX = localRegionX;
+                client.playerPositionY = localRegionY;
+
                 // Load region
                 localRegionX = 446;
                 localRegionY = 484;
@@ -1229,6 +1264,8 @@ public class RSCConfig {
                 }
 
                 buffer.finishBitAccess();
+
+                client.loadingMap = false;
                 break;
             }
             case 4:
@@ -1254,7 +1291,14 @@ public class RSCConfig {
                         int id = buffer.getUnsignedLEShort();
                         int x = buffer.get();
                         int y = buffer.get();
-                        System.out.println("Game Object Spawn: " + id + ", " + x + ", " + y);
+
+                        int rs2ID = RSC_TranslateObject(id);
+                        if (rs2ID != -1 && Math.abs(x) <= 8 && Math.abs(y) <= 8)
+                        {
+                            int orientation = 0;
+                            client.RSC_spawnGameObject(x, y, orientation, rs2ID);
+                            System.out.println("Spawning " + rs2ID + " at " + x + ", " + y);
+                        }
                     }
                 }
                 break;
@@ -1607,8 +1651,6 @@ public class RSCConfig {
                             player.appearanceOffset += player.gender;
 
                             player.visible = true;
-
-                            client.loadingMap = false;
                             break;
                         }
                         default:

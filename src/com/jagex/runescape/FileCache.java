@@ -34,7 +34,7 @@ final class FileCache {
 			final int size = ((buffer[0] & 0xff) << 16) + ((buffer[1] & 0xff) << 8) + (buffer[2] & 0xff);
 			int sector = ((buffer[3] & 0xff) << 16) + ((buffer[4] & 0xff) << 8) + (buffer[5] & 0xff);
 
-			if (size < 0 || size > 0x7a120) {
+			if (size < 0 || size > 0xffffff) {
                 return null;
             }
 

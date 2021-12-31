@@ -2,6 +2,7 @@ package com.jagex.runescape.screen.title;
 
 import com.jagex.runescape.*;
 import com.jagex.runescape.definition.GameFont;
+import com.jagex.runescape.rs2rsc.RSCConfig;
 
 import java.awt.*;
 
@@ -437,7 +438,10 @@ public class TitleScreen {
             int _y = y / 2 + 80;
             this.fontSmall.drawCentredTextWithPotentialShadow(statusString, x / 2, _y, 0x75A9A9, true);
             _y = y / 2 - 20;
-            this.fontBold.drawCentredTextWithPotentialShadow("Welcome to RuneScape", x / 2, _y, 0xFFFF00, true);
+            String welcome = "Welcome to RuneScape";
+            if (RSCConfig.rscProtocol)
+                welcome += " Classic";
+            this.fontBold.drawCentredTextWithPotentialShadow(welcome, x / 2, _y, 0xFFFF00, true);
             _y += 30;
             int _x = x / 2 - 80;
             final int __y = y / 2 + 20;

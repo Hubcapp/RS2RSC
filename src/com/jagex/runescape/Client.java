@@ -17,6 +17,7 @@ import com.jagex.runescape.scene.WorldController;
 import com.jagex.runescape.scene.object.GroundDecoration;
 import com.jagex.runescape.scene.object.Wall;
 import com.jagex.runescape.scene.object.WallDecoration;
+import rscminus.common.JGameData;
 
 @SuppressWarnings("serial")
 public final class Client extends RSApplet {
@@ -115,10 +116,13 @@ public final class Client extends RSApplet {
 				System.out.println("Usage: node-id, port-offset, [lowmem/highmem], [free/members], storeid");
 				return;
 			}
+			if (RSCConfig.rscProtocol)
+				JGameData.init(membersWorld);
 			signlink.storeid = Integer.parseInt(args[4]);
 			signlink.startpriv(InetAddress.getLocalHost());
 			final Client client1 = new Client();
 			client1.createClientFrame(765, 503);
+			RSCConfig.Start(client1);
 		} catch (final Exception exception) {
 			exception.printStackTrace();
 		}
@@ -299,7 +303,7 @@ public final class Client extends RSApplet {
 	private int walkableInterfaceId;
 	private static final int[] EXPERIENCE_TABLE;
 	private int sameClickPositionCounter;
-	private int loadingStage;
+	public int loadingStage;
 	private IndexedImage scrollBarUp;
 	private IndexedImage scrollBarDown;
 	private int anInt1026;
@@ -334,7 +338,7 @@ public final class Client extends RSApplet {
 	private final int[] characterEditIdentityKits;
 	private int moveItemSlotEnd;
 	private int lastActiveInventoryInterface;
-	private OnDemandFetcher onDemandFetcher;
+	public OnDemandFetcher onDemandFetcher;
 	public int regionX;
 	public int regionY;
 	private int loadingBarPercentage;
@@ -409,7 +413,7 @@ public final class Client extends RSApplet {
 	private String enteredUsername;
 	private String enteredPassword;
 	private boolean genericLoadingError;
-	private final int[] objectTypes = { 0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3 };
+	public final int[] objectTypes = { 0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3 };
 	private int reportAbuseInterfaceID;
 	private DoubleEndedQueue spawnObjectList;
 	private int[] chatboxLineOffsets;
@@ -452,7 +456,7 @@ public final class Client extends RSApplet {
 	public boolean updateChatSettings;
 	private int[] mapCoordinates;
 	private int[] terrainDataIds;
-	private int[] objectDataIds;
+	public int[] objectDataIds;
 	private int lastClickX;
 	private int lastClickY;
 	private final int[] privateMessages;
@@ -462,7 +466,7 @@ public final class Client extends RSApplet {
 	private int atInventoryInterface;
 	private int atInventoryIndex;
 	private int atInventoryInterfaceType;
-	private byte[][] objectData;
+	public byte[][] objectData;
 	public int tradeMode;
 	private int chatEffectsDisabled;
 	private final int[] trackDelay;
@@ -480,8 +484,8 @@ public final class Client extends RSApplet {
 	private int renderCount;
 	private String loginMessage1;
 	private String loginMessage2;
-	private int playerPositionX;
-	private int playerPositionY;
+	public int playerPositionX;
+	public int playerPositionY;
 	private GameFont fontSmall;
 	private GameFont fontPlain;
 	private GameFont fontBold;
@@ -2040,7 +2044,7 @@ public final class Client extends RSApplet {
 		 */
 	}
 
-	private void createObjectSpawnRequest(final int delayUntilRespawn, final int id2, final int face2, final int type, final int y, final int type2, final int z,
+	public void createObjectSpawnRequest(final int delayUntilRespawn, final int id2, final int face2, final int type, final int y, final int type2, final int z,
 										  final int x, final int delayUntilSpawn) {
 		GameObjectSpawnRequest request = null;
 		for (GameObjectSpawnRequest request2 = (GameObjectSpawnRequest) this.spawnObjectList
@@ -4777,28 +4781,24 @@ public final class Client extends RSApplet {
 				}
 			}
 
-			this.terrainData = new byte[r][];
+			this.objectDataIds = new int[r];
 			this.objectData = new byte[r][];
+			this.terrainData = new byte[r][];
 			this.mapCoordinates = new int[r];
 			this.terrainDataIds = new int[r];
-			this.objectDataIds = new int[r];
 			r = 0;
 			for (int x = (this.regionX - 6) / 8; x <= (this.regionX + 6) / 8; x++) {
 				for (int y = (this.regionY - 6) / 8; y <= (this.regionY + 6) / 8; y++) {
 					this.mapCoordinates[r] = (x << 8) + y;
+					this.objectDataIds[r] = -1;
 					if (this.inTutorialIsland
 							&& (y == 49 || y == 149 || y == 147 || x == 50 || x == 49 && y == 47)) {
 						this.terrainDataIds[r] = -1;
-						this.objectDataIds[r] = -1;
 						r++;
 					} else {
 						final int terrainId = this.terrainDataIds[r] = this.onDemandFetcher.getMapId(0, x, y);
 						if (terrainId != -1) {
 							this.onDemandFetcher.request(3, terrainId);
-						}
-						final int objectId = this.objectDataIds[r] = this.onDemandFetcher.getMapId(1, x, y);
-						if (objectId != -1) {
-							this.onDemandFetcher.request(3, objectId);
 						}
 						r++;
 					}
@@ -6589,8 +6589,6 @@ public final class Client extends RSApplet {
 	}
 
 	private void login(final String playerUsername, final String playerPassword, final boolean recoveredConnection) {
-		RSCConfig.Start(this);
-
 		signlink.errorname = playerUsername;
 		try {
 			if (!recoveredConnection) {
@@ -7623,6 +7621,18 @@ public final class Client extends RSApplet {
 				}
 			}
 		} while (true);
+	}
+
+	public void RSC_spawnGameObject(int objectX, int objectY, int orientation, int objectId)
+	{
+		int x = localPlayer.waypointX[0] + objectX;
+		int y = localPlayer.waypointY[0] + objectY;
+		final int objectType = 10;
+		final int type = this.objectTypes[objectType];
+		if (x >= 0 && y >= 0 && x < 104 && y < 104) {
+			this.createObjectSpawnRequest(-1, objectId, orientation, type, y, objectType, RSCConfig.planeIndex, x, 0);
+			this.onDemandFetcher.request(3, objectId);
+		}
 	}
 
 	private boolean menuRowIsAddFriend(final int row) {
@@ -9775,14 +9785,13 @@ public final class Client extends RSApplet {
 		}
 	}
 
-	private void spawnGameObjects() {
+	public void spawnGameObjects() {
 		if (this.loadingStage == 2) {
-			for (GameObjectSpawnRequest spawnRequest = (GameObjectSpawnRequest) this.spawnObjectList
-					.peekFront(); spawnRequest != null; spawnRequest = (GameObjectSpawnRequest) this.spawnObjectList
-							.getPrevious()) {
+			for (GameObjectSpawnRequest spawnRequest = (GameObjectSpawnRequest) this.spawnObjectList.peekFront(); spawnRequest != null; spawnRequest = (GameObjectSpawnRequest) this.spawnObjectList.getPrevious()) {
 				if (spawnRequest.delayUntilRespawn > 0) {
                     spawnRequest.delayUntilRespawn--;
                 }
+
 				if (spawnRequest.delayUntilRespawn == 0) {
 					if (spawnRequest.id < 0 || Region.modelTypeCached(spawnRequest.id, spawnRequest.type)) {
 						this.despawnGameObject(spawnRequest.y, spawnRequest.z, spawnRequest.face, spawnRequest.type,
@@ -9799,12 +9808,19 @@ public final class Client extends RSApplet {
 						this.despawnGameObject(spawnRequest.y, spawnRequest.z, spawnRequest.face2, spawnRequest.type2,
 								spawnRequest.x, spawnRequest.objectType, spawnRequest.id2);
 						spawnRequest.delayUntilSpawn = -1;
-						if (spawnRequest.id2 == spawnRequest.id && spawnRequest.id == -1) {
-                            spawnRequest.unlink();
-                        } else if (spawnRequest.id2 == spawnRequest.id && spawnRequest.face2 == spawnRequest.face
-								&& spawnRequest.type2 == spawnRequest.type) {
-                            spawnRequest.unlink();
-                        }
+
+						if (RSCConfig.rscProtocol)
+						{
+							spawnRequest.unlink();
+						}
+						else {
+							if (spawnRequest.id2 == spawnRequest.id && spawnRequest.id == -1) {
+								spawnRequest.unlink();
+							} else if (spawnRequest.id2 == spawnRequest.id && spawnRequest.face2 == spawnRequest.face
+									&& spawnRequest.type2 == spawnRequest.type) {
+								spawnRequest.unlink();
+							}
+						}
 					}
 				}
 			}

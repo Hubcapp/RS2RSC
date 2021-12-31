@@ -5,11 +5,15 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="21491aa0-0eb7-4d56-9c39-3c7d87baa446" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/src/rscminus/common/FileUtil.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/rscminus/common/JContent.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/rscminus/common/JGameData.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/317refactor.iml" beforeDir="false" afterPath="$PROJECT_DIR$/317refactor.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/com/jagex/runescape/Client.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/jagex/runescape/Client.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/com/jagex/runescape/Entity.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/jagex/runescape/Entity.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/com/jagex/runescape/RSApplet.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/jagex/runescape/RSApplet.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/com/jagex/runescape/FileCache.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/jagex/runescape/FileCache.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/com/jagex/runescape/rs2rsc/RSCConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/jagex/runescape/rs2rsc/RSCConfig.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/com/jagex/runescape/screen/title/TitleScreen.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/jagex/runescape/screen/title/TitleScreen.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -147,7 +151,10 @@
   </component>
   <component name="PropertiesComponent">
     <property name="com.android.tools.idea.instantapp.provision.ProvisionBeforeRunTaskProvider.myTimeStamp" value="1547849952083" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/lib/commons-compress-1.18.jar" />
+    <property name="project.structure.last.edited" value="Modules" />
+    <property name="project.structure.proportion" value="0.0" />
+    <property name="project.structure.side.proportion" value="0.0" />
     <property name="run.code.analysis.last.selected.profile" value="pProject Default" />
     <property name="settings.editor.selected.configurable" value="Errors" />
   </component>
