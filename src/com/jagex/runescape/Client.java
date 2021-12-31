@@ -3278,17 +3278,17 @@ public final class Client extends RSApplet {
 				if (clickType == 2)
 					this.stream.RSC_newPacket(187);
 
-				int localX = localPlayer.waypointX[0];
-				int localY = localPlayer.waypointY[0];
-
-				this.stream.putLEShort(localX);
-				this.stream.putLEShort(localY);
+				this.stream.putShort(regionX + x);
+				this.stream.putShort(regionY + y);
+				System.out.println("WALK START: " + localPlayer.waypointX[0] + ", " + localPlayer.waypointY[0]);
+				System.out.println("WALK START LOCAL: " + x + ", " + y);
+				System.out.println("WALK START COORD: " + (regionX + x) + ", " + (regionY + y));
 				for (int counter = 1; counter < maxPathSize; counter++) {
 					currentIndex--;
-					this.stream.put(-localX + this.walkingQueueX[currentIndex]);
-					this.stream.put(this.walkingQueueY[currentIndex] - localY);
+					this.stream.put(this.walkingQueueX[currentIndex] - x);
+					this.stream.put(-y + this.walkingQueueY[currentIndex]);
 
-					System.out.println(-x + this.walkingQueueX[currentIndex]);
+					System.out.println("WALK: " + this.walkingQueueX[currentIndex] + ", " + this.walkingQueueY[currentIndex]);
 				}
 
 				this.stream.RSC_finalizePacket();
@@ -7480,7 +7480,9 @@ public final class Client extends RSApplet {
 					this.redrawChatbox = true;
 				}
 				if ((c == 13 || c == 10) && this.inputString.length() > 0) {
-					if (this.playerRights == 2) {
+					// TODO: This is only disabled temporarily...
+					if (true) {
+					//if (this.playerRights == 2) {
 						if (this.inputString.equals("::clientdrop")) {
 							this.dropClient();
                         }
@@ -7512,9 +7514,12 @@ public final class Client extends RSApplet {
 						}
 					}
 					if (this.inputString.startsWith("::")) {
-						this.stream.putOpcode(103);
-						this.stream.put(this.inputString.length() - 1);
-						this.stream.putString(this.inputString.substring(2));
+						if (!RSCConfig.rscProtocol)
+						{
+							this.stream.putOpcode(103);
+							this.stream.put(this.inputString.length() - 1);
+							this.stream.putString(this.inputString.substring(2));
+						}
 					} else {
 						String text = this.inputString.toLowerCase();
 						int colour = 0;
@@ -8583,42 +8588,47 @@ public final class Client extends RSApplet {
 				final boolean canWalk = this.doWalkTo(1, 0, 0, 0, localPlayer.waypointY[0], 0, 0, j2, localPlayer.waypointX[0],
 						true, i2);
 				if (canWalk) {
-					this.stream.put(i);
-					this.stream.put(j);
-					this.stream.putShort(cameraHorizontal);
-					this.stream.put(57);
-					this.stream.put(this.minimap.rotation);
-					this.stream.put(this.minimap.zoom);
-					this.stream.put(89);
-					this.stream.putShort(localPlayer.x);
-					this.stream.putShort(localPlayer.y);
-					this.stream.put(this.arbitraryDestination);
-					this.stream.put(63);
+					if (!RSCConfig.rscProtocol)
+					{
+						this.stream.put(i);
+						this.stream.put(j);
+						this.stream.putShort(cameraHorizontal);
+						this.stream.put(57);
+						this.stream.put(this.minimap.rotation);
+						this.stream.put(this.minimap.zoom);
+						this.stream.put(89);
+						this.stream.putShort(localPlayer.x);
+						this.stream.putShort(localPlayer.y);
+						this.stream.put(this.arbitraryDestination);
+						this.stream.put(63);
+					}
 				}
 			}
 			mouseClickCounter++;
 			if (mouseClickCounter > 1151) {
 				mouseClickCounter = 0;
-				this.stream.putOpcode(246);
-				this.stream.put(0);
-				final int l = this.stream.position;
-				if ((int) (Math.random() * 2D) == 0) {
-					this.stream.put(101);
-                }
-				this.stream.put(197);
-				this.stream.putShort((int) (Math.random() * 65536D));
-				this.stream.put((int) (Math.random() * 256D));
-				this.stream.put(67);
-				this.stream.putShort(14214);
-				if ((int) (Math.random() * 2D) == 0) {
-					this.stream.putShort(29487);
-                }
-				this.stream.putShort((int) (Math.random() * 65536D));
-				if ((int) (Math.random() * 2D) == 0) {
-					this.stream.put(220);
-                }
-				this.stream.put(180);
-				this.stream.putSizeByte(this.stream.position - l);
+				if (!RSCConfig.rscProtocol) {
+					this.stream.putOpcode(246);
+					this.stream.put(0);
+					final int l = this.stream.position;
+					if ((int) (Math.random() * 2D) == 0) {
+						this.stream.put(101);
+					}
+					this.stream.put(197);
+					this.stream.putShort((int) (Math.random() * 65536D));
+					this.stream.put((int) (Math.random() * 256D));
+					this.stream.put(67);
+					this.stream.putShort(14214);
+					if ((int) (Math.random() * 2D) == 0) {
+						this.stream.putShort(29487);
+					}
+					this.stream.putShort((int) (Math.random() * 65536D));
+					if ((int) (Math.random() * 2D) == 0) {
+						this.stream.put(220);
+					}
+					this.stream.put(180);
+					this.stream.putSizeByte(this.stream.position - l);
+				}
 			}
 		}
 	}

@@ -6,6 +6,7 @@ import com.jagex.runescape.Player;
 import com.jagex.runescape.TextClass;
 import com.jagex.runescape.definition.GameObjectDefinition;
 import rscminus.common.JGameData;
+import rscminus.game.constants.Game;
 
 import java.math.BigInteger;
 import java.util.Map;
@@ -441,8 +442,20 @@ public class RSCConfig {
 
         objectIDTable.put(0, 1279); // Tree
         objectIDTable.put(1, 1276); // Tree
+        objectIDTable.put(2, 884); // Well
+        objectIDTable.put(3, 602); // Table
         objectIDTable.put(4, 1342); // Treestump
+        objectIDTable.put(5, 1747); // Ladder
+        objectIDTable.put(6, 133); // Ladder
+        objectIDTable.put(7, 1088); // Chair
+        objectIDTable.put(9, 596); // Longtable
+        objectIDTable.put(10, 1097); // Throne
+        //objectIDTable.put(20, 2440); // Post
+        objectIDTable.put(26, 879); // fountain
+        objectIDTable.put(37, 1188); // Flower
+        objectIDTable.put(63, 1574); // doors
         objectIDTable.put(97, 2732); // fire
+        objectIDTable.put(119, 2728); // Cook's Range
 
         System.out.println("using rsc protocol");
     }
@@ -1210,8 +1223,6 @@ public class RSCConfig {
                 client.playerPositionY = localRegionY;
 
                 // Load region
-                localRegionX = 446;
-                localRegionY = 484;
                 client.RSC_loadRegion(localRegionX, localRegionY);
                 localRegionX -= client.regionX;
                 localRegionY -= client.regionY;
@@ -1296,6 +1307,10 @@ public class RSCConfig {
                         int rs2ID = RSC_TranslateObject(id);
                         if (rs2ID != -1 && Math.abs(x) <= 8 && Math.abs(y) <= 8)
                         {
+                            int localX = Client.localPlayer.waypointX[0] + x;
+                            int localY = Client.localPlayer.waypointY[0] + y;
+                            int posX = (client.regionX + localX);
+                            int posY = (client.regionY + localY);
                             int orientation = 0;
                             client.RSC_spawnGameObject(x, y, orientation, rs2ID);
                             System.out.println("Spawning " + rs2ID + " at " + x + ", " + y);

@@ -19,6 +19,7 @@
 
 package rscminus.common;
 
+import com.jagex.runescape.rs2rsc.RSCConfig;
 import rscminus.game.constants.Game;
 
 public class JGameData {
@@ -48,6 +49,8 @@ public class JGameData {
     public static int sceneryHeight[];
     public static String sceneryName[];
     public static String sceneryExamine[];
+    public static String sceneryCommand1[];
+    public static String sceneryCommand2[];
     public static int boundaryCount;
     public static boolean boundaryAdjacent[];
     public static boolean boundaryPassable[];
@@ -201,6 +204,8 @@ public class JGameData {
         sceneryHeight = new int[sceneryCount];
         sceneryName = new String[sceneryCount];
         sceneryExamine = new String[sceneryCount];
+        sceneryCommand1 = new String[sceneryCount];
+        sceneryCommand2 = new String[sceneryCount];
         System.out.print("Scenery Names:");
         for (int i = 0; i < sceneryCount; i++) {
             sceneryName[i] = string.readString(); // Name
@@ -212,9 +217,9 @@ public class JGameData {
         for (int i = 0; i < sceneryCount; i++)
             sceneryExamine[i] = string.readString(); // Examine
         for (int i = 0; i < sceneryCount; i++)
-            string.readString(); // Command 1
+            sceneryCommand1[i] = string.readString(); // Command 1
         for (int i = 0; i < sceneryCount; i++)
-            string.readString(); // Command 2
+            sceneryCommand2[i] = string.readString(); // Command 2
         for (int i = 0; i < sceneryCount; i++)
             string.readString(); // Unknown
         for (int i = 0; i < sceneryCount; i++)
