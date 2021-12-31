@@ -441,6 +441,7 @@ public class RSCConfig {
 
         objectIDTable.put(0, 1279); // Tree
         objectIDTable.put(1, 1276); // Tree
+        objectIDTable.put(4, 1342); // Treestump
         objectIDTable.put(97, 2732); // fire
 
         System.out.println("using rsc protocol");
