@@ -482,6 +482,16 @@ public class RSCConfig {
         return xp / 4;
     }
 
+    public static String RSC_SanitizeMenu(String option)
+    {
+        if (option.equalsIgnoreCase("examine"))
+            return null;
+        if (option.equalsIgnoreCase("walkto"))
+            return null;
+
+        return option;
+    }
+
     public static void RSC_HandleLogin(Client client)
     {
         if (!rscProtocol)
@@ -527,6 +537,17 @@ public class RSCConfig {
             GameObjectDefinition def = GameObjectDefinition.getDefinition(rs2ID);
             def.name = JGameData.sceneryName[rscID];
             def.description = JGameData.sceneryExamine[rscID].getBytes();
+            String action1 = JGameData.sceneryCommand1[rscID];
+            if (action1.length() == 0)
+                action1 = null;
+            else
+                action1 = RSC_SanitizeMenu(action1);
+            String action2 = JGameData.sceneryCommand2[rscID];
+            if (action2.length() == 0)
+                action2 = null;
+            else
+                action2 = RSC_SanitizeMenu(action2);
+            def.actions = new String[] { action1, action2, null, null, null };
             def.sizeX = JGameData.sceneryWidth[rscID];
             def.sizeY = JGameData.sceneryHeight[rscID];
         }
@@ -615,6 +636,17 @@ public class RSCConfig {
         if (val == null)
         {
             System.out.println("Unhandled object id: " + objectID);
+            return -1;
+        }
+        return val.intValue();
+    }
+
+    public static int RSC_TranslateObjectReverse(int objectID)
+    {
+        Integer val = objectIDTable.getKey(objectID);
+        if (val == null)
+        {
+            System.out.println("Unhandled reverse object id: " + objectID);
             return -1;
         }
         return val.intValue();

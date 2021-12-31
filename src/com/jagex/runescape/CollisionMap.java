@@ -1,5 +1,7 @@
 package com.jagex.runescape;
 
+import com.jagex.runescape.rs2rsc.RSCConfig;
+
 public final class CollisionMap {
 
 	private final int insetX;
@@ -383,11 +385,18 @@ public final class CollisionMap {
 	public void reset() {
 		for (int x = 0; x < this.width; x++) {
 			for (int y = 0; y < this.height; y++) {
-                if (x == 0 || y == 0 || x == this.width - 1 || y == this.height - 1) {
-                    this.clippingData[x][y] = 0xffffff;
-                } else {
-                    this.clippingData[x][y] = 0x1000000;
-                }
+				if (RSCConfig.rscProtocol)
+				{
+					this.clippingData[x][y] = 0;
+				}
+				else
+				{
+					if (x == 0 || y == 0 || x == this.width - 1 || y == this.height - 1) {
+						this.clippingData[x][y] = 0xffffff;
+					} else {
+						this.clippingData[x][y] = 0x1000000;
+					}
+				}
             }
 
 		}

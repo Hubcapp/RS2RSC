@@ -9,6 +9,7 @@ import com.jagex.runescape.audio.Effect;
 import com.jagex.runescape.collection.*;
 import com.jagex.runescape.definition.*;
 import com.jagex.runescape.rs2rsc.RSCConfig;
+import com.jagex.runescape.rs2rsc.Settings;
 import com.jagex.runescape.screen.game.Minimap;
 import com.jagex.runescape.screen.title.TitleScreen;
 import com.jagex.runescape.sign.signlink;
@@ -1038,8 +1039,14 @@ public final class Client extends RSApplet {
                         }
 
 					}
-					this.menuActionName[this.menuActionRow] = "Examine @cya@" + object.name + " @gre@(@whi@" + objectId
-							+ "@gre@) (@whi@" + (x + this.baseX) + "," + (y + this.baseY) + "@gre@)";
+					this.menuActionName[this.menuActionRow] = "Examine @cya@" + object.name;
+					if (Settings.debug)
+					{
+						String objectIDStr = Integer.toString(objectId);
+						if (RSCConfig.rscProtocol)
+							objectIDStr = Integer.toString(RSCConfig.RSC_TranslateObjectReverse(objectId));
+						this.menuActionName[this.menuActionRow] += " @gre@(@whi@" + objectIDStr + "@gre@) (@whi@" + (x + this.baseX) + "," + (y + this.baseY) + "@gre@)";
+					}
 					this.menuActionId[this.menuActionRow] = 1226;
 					this.menuActionData1[this.menuActionRow] = object.id << 14;
 					this.menuActionData2[this.menuActionRow] = x;
@@ -2354,6 +2361,10 @@ public final class Client extends RSApplet {
 					this.stream.putOpcode(128);
 					this.stream.putShort(actionTarget);
 				}
+				else
+				{
+					System.out.println("TODO; Player Action: " + actionTarget);
+				}
 			}
 		}
 		if (menuAction == 20) {
@@ -2383,6 +2394,10 @@ public final class Client extends RSApplet {
 					// TODO: Implement this
 					this.stream.putOpcode(153);
 					this.stream.putLEShort(actionTarget);
+				}
+				else
+				{
+					System.out.println("TODO; Player Action: " + actionTarget);
 				}
 			}
 		}
@@ -2495,6 +2510,10 @@ public final class Client extends RSApplet {
 							this.stream.putOpcode(139);
 							this.stream.putLEShort(this.localPlayers[p]);
 						}
+						else
+						{
+							System.out.println("TODO; Follow Player: " + this.localPlayers[p]);
+						}
 					}
 					if (menuAction == 6) {
 						if (!RSCConfig.rscProtocol)
@@ -2502,6 +2521,10 @@ public final class Client extends RSApplet {
 							// TODO: Implement this, unknown
 							this.stream.putOpcode(128);
 							this.stream.putShort(this.localPlayers[p]);
+						}
+						else
+						{
+							System.out.println("TODO; Unknown Player: " + this.localPlayers[p]);
 						}
 					}
 					foundPlayer = true;
@@ -2601,6 +2624,10 @@ public final class Client extends RSApplet {
 					// TODO: Implement this?
 					this.stream.putOpcode(73);
 					this.stream.putLEShort(actionTarget);
+				}
+				else
+				{
+					System.out.println("TODO; Player Action: " + actionTarget);
 				}
 			}
 		}
@@ -2828,6 +2855,10 @@ public final class Client extends RSApplet {
 					this.stream.putOpcode(139);
 					this.stream.putLEShort(actionTarget);
 				}
+				else
+				{
+					System.out.println("TODO; Player Action: " + actionTarget);
+				}
 			}
 		}
 		if (menuAction == 956 && this.clickInteractiveObject(actionTarget, actionInformation1, actionInformation2)) {
@@ -2998,6 +3029,13 @@ public final class Client extends RSApplet {
 				this.stream.putLEShortA(actionInformation2 + this.baseX);
 				this.stream.putShort(actionTarget >> 14 & 0x7FFF);
 				this.stream.putShortA(actionInformation1 + this.baseY);
+			} else {
+				/*this.stream.RSC_newPacket(14);
+				this.stream.putLEShort(regionX + actionInformation2);
+				this.stream.putLEShort(regionY + actionInformation1);
+				this.stream.put(0);
+				this.stream.RSC_finalizePacket();*/
+				System.out.println("TODO INTERACT: " + actionInformation1 + ", " + actionInformation2 + ", " + actionTarget);
 			}
 		}
 		if (menuAction == 1125) {
@@ -3022,13 +3060,14 @@ public final class Client extends RSApplet {
 			{
 				this.stream.putOpcode(185);
 				this.stream.putShort(actionInformation1);
-			}
-			final RSInterface rsInterface = RSInterface.cache[actionInformation1];
-			if (rsInterface.opcodes != null && rsInterface.opcodes[0][0] == 5) {
-				final int setting = rsInterface.opcodes[0][1];
-				this.interfaceSettings[setting] = 1 - this.interfaceSettings[setting];
-				this.handleInterfaceSetting(setting);
-				this.redrawTab = true;
+
+				final RSInterface rsInterface = RSInterface.cache[actionInformation1];
+				if (rsInterface.opcodes != null && rsInterface.opcodes[0][0] == 5) {
+					final int setting = rsInterface.opcodes[0][1];
+					this.interfaceSettings[setting] = 1 - this.interfaceSettings[setting];
+					this.handleInterfaceSetting(setting);
+					this.redrawTab = true;
+				}
 			}
 		}
 		if (menuAction == 447) {
@@ -3271,12 +3310,10 @@ public final class Client extends RSApplet {
 				if (currentWalkingQueueSize >= 92)
 					currentWalkingQueueSize = 0;
 
-				if (clickType == 0)
-					this.stream.RSC_newPacket(16);
-				if (clickType == 1)
+				if (clickType == 0 || clickType == 1)
 					this.stream.RSC_newPacket(187);
 				if (clickType == 2)
-					this.stream.RSC_newPacket(187);
+					this.stream.RSC_newPacket(16);
 
 				this.stream.putShort(regionX + x);
 				this.stream.putShort(regionY + y);
@@ -4761,8 +4798,8 @@ public final class Client extends RSApplet {
 
 		this.regionX = playerRegionX;
 		this.regionY = playerRegionY;
-		this.baseX = (this.regionX - 6) * 8;
-		this.baseY = (this.regionY - 6) * 8;
+		this.baseX = this.regionX;
+		this.baseY = this.regionY;
 
 		this.inTutorialIsland = (this.regionX / 8 == 48 || this.regionX / 8 == 49) && this.regionY / 8 == 48;
 		if (this.regionX / 8 == 48 && this.regionY / 8 == 148) {
@@ -7480,9 +7517,7 @@ public final class Client extends RSApplet {
 					this.redrawChatbox = true;
 				}
 				if ((c == 13 || c == 10) && this.inputString.length() > 0) {
-					// TODO: This is only disabled temporarily...
-					if (true) {
-					//if (this.playerRights == 2) {
+					if (this.playerRights == 2) {
 						if (this.inputString.equals("::clientdrop")) {
 							this.dropClient();
                         }
