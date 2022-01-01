@@ -7,6 +7,8 @@ import com.jagex.runescape.Client;
 import com.jagex.runescape.Model;
 import com.jagex.runescape.OnDemandFetcher;
 import com.jagex.runescape.collection.Cache;
+import com.jagex.runescape.rs2rsc.RSCConfig;
+import rscminus.game.constants.Game;
 
 public final class GameObjectDefinition {
 
@@ -201,8 +203,8 @@ public final class GameObjectDefinition {
 			animatedModel.vertexSkin = null;
 		}
 		while (face-- > 0) {
-            animatedModel.rotate90Degrees();
-        }
+			animatedModel.rotate90Degrees();
+		}
 		if (this.modifiedModelColors != null) {
 			for (int c = 0; c < this.modifiedModelColors.length; c++) {
                 animatedModel.recolour(this.modifiedModelColors[c], this.originalModelColors[c]);
@@ -242,8 +244,8 @@ public final class GameObjectDefinition {
         }
 	}
 
-	public Model getModelAt(final int i, final int j, final int k, final int l, final int i1, final int j1, final int k1) {
-		Model model = this.getAnimatedModel(i, k1, j);
+	public Model getModelAt(final int i, final int direction, final int k, final int l, final int i1, final int j1, final int k1) {
+		Model model = this.getAnimatedModel(i, k1, direction);
 		if (model == null) {
             return null;
         }

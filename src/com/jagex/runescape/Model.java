@@ -172,6 +172,8 @@ public final class Model extends Animable {
 
 	public int triangleCount;
 
+	public int direction;
+
 	public int[] triangleX;
 
 	public int[] triangleY;
@@ -1806,6 +1808,16 @@ public final class Model extends Animable {
 			final int vertexX = this.verticesX[vertex];
             this.verticesX[vertex] = this.verticesZ[vertex];
             this.verticesZ[vertex] = -vertexX;
+		}
+	}
+
+	public void rotate(int degrees) {
+		final int sine = SINE[degrees];
+		final int cosine = COSINE[degrees];
+		for (int vertex = 0; vertex < this.vertexCount; vertex++) {
+			final int newVertexZ = this.verticesZ[vertex] * sine + this.verticesX[vertex] * cosine >> 16;
+			this.verticesZ[vertex] = this.verticesZ[vertex] * cosine - this.verticesX[vertex] * sine >> 16;
+			this.verticesX[vertex] = newVertexZ;
 		}
 	}
 

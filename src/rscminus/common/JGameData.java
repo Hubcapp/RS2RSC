@@ -19,6 +19,7 @@
 
 package rscminus.common;
 
+import com.jagex.runescape.Client;
 import com.jagex.runescape.rs2rsc.RSCConfig;
 import rscminus.game.constants.Game;
 
@@ -338,6 +339,8 @@ public class JGameData {
             return false;
         }
 
+        System.out.println("Loaded map: " + x + ", " + y);
+
         // Clear collisions
         for (int i = 0; i < Game.REGION_SIZE; i++)
             regionCollisionMask[x][y][floor][i] = Game.COLLISION_NONE;
@@ -403,7 +406,7 @@ public class JGameData {
         for (int i = 0; i < Game.REGION_SIZE; i++) {
             int tileDirection = map.readUnsignedByte();
             if (tileDirection >= 128) {
-                for (int i2 = 0; i2 < tileDirection - 128; i2++)
+                for (int i2 = 0; (tileDirection - 128) > i2; i2++)
                     regionDirection[x][y][floor][i++] = 0;
                 i--;
             } else {
@@ -416,5 +419,20 @@ public class JGameData {
         map.close();
 
         return true;
+    }
+
+    public static int getTileDirection(int x, int y)
+    {
+        int floor = y / Game.WORLD_Y_OFFSET;
+        int floorOffset = floor * Game.WORLD_Y_OFFSET;
+        int worldX = Game.WORLD_PLANE_X + x;
+        int worldY = Game.WORLD_PLANE_Y - floorOffset + y;
+        int chunkX = worldX / Game.REGION_WIDTH;
+        int chunkY = worldY / Game.REGION_HEIGHT;
+        int localX = worldX - (chunkX * Game.REGION_WIDTH);
+        int localY = worldY - (chunkY * Game.REGION_HEIGHT);
+        int index = (localX * Game.REGION_HEIGHT) + localY;
+        int direction = JGameData.regionDirection[chunkX][chunkY][RSCConfig.planeIndex][index];
+        return direction;
     }
 }

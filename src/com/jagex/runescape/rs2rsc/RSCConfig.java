@@ -9,6 +9,7 @@ import rscminus.common.JGameData;
 import rscminus.game.constants.Game;
 
 import java.math.BigInteger;
+import java.util.HashMap;
 import java.util.Map;
 
 public class RSCConfig {
@@ -43,6 +44,7 @@ public class RSCConfig {
     public static int planeIndex;
 
     private static BiMap<Integer, Integer> objectIDTable = new BiMap<Integer, Integer>();
+    private static Map<Integer, Integer> objectIDDirTable = new HashMap<Integer, Integer>();
 
     public static byte[] RSC_stringToUnicode(String str) {
         int strlen = str.length();
@@ -440,6 +442,7 @@ public class RSCConfig {
             }
         }
 
+        // Setup object ids
         objectIDTable.put(0, 1279); // Tree
         objectIDTable.put(1, 1276); // Tree
         objectIDTable.put(2, 884); // Well
@@ -451,11 +454,17 @@ public class RSCConfig {
         objectIDTable.put(9, 596); // Longtable
         objectIDTable.put(10, 1097); // Throne
         //objectIDTable.put(20, 2440); // Post
+        objectIDTable.put(25, 203); // candles
         objectIDTable.put(26, 879); // fountain
+        //objectIDTable.put(27, 888); // landscape
         objectIDTable.put(37, 1188); // Flower
+        objectIDTable.put(38, 1163); // Mushroom
         objectIDTable.put(63, 1574); // doors
         objectIDTable.put(97, 2732); // fire
         objectIDTable.put(119, 2728); // Cook's Range
+
+        // Setup object ids directions
+        objectIDDirTable.put(1097, 1); // Throne
 
         System.out.println("using rsc protocol");
     }
@@ -1156,6 +1165,15 @@ public class RSCConfig {
         ;
     }
 
+    public static int RSC_fixObjectDirection(int id, int direction)
+    {
+        if (!objectIDDirTable.containsKey(id))
+            return direction;
+
+        direction = (direction + objectIDDirTable.get(id)) % 8;
+        return direction;
+    }
+
     public static int RSC_HandleOpcode(int opcode, Client client, Buffer buffer)
     {
         if (!rscProtocol)
@@ -1324,8 +1342,10 @@ public class RSCConfig {
                     if (buffer.getUnsignedByte() == 255)
                     {
                         // Clear object?
-                        int x = buffer.get();
-                        int y = buffer.get();
+                        int x = buffer.get() >> 3;
+                        int y = buffer.get() >> 3;
+
+                        client.RSC_removeGameObject(x, y);
 
                         System.out.println("Game Object Clear: " + x + ", " + y);
                     }
@@ -1336,14 +1356,20 @@ public class RSCConfig {
                         int x = buffer.get();
                         int y = buffer.get();
 
+                        client.RSC_removeGameObject(x, y);
+
+                        if (id == 60000)
+                            continue;
+
                         int rs2ID = RSC_TranslateObject(id);
                         if (rs2ID != -1 && Math.abs(x) <= 8 && Math.abs(y) <= 8)
                         {
                             int localX = Client.localPlayer.waypointX[0] + x;
                             int localY = Client.localPlayer.waypointY[0] + y;
-                            int posX = (client.regionX + localX);
-                            int posY = (client.regionY + localY);
-                            int orientation = 0;
+                            int posX = client.regionX + localX;
+                            int posY = client.regionY + localY;
+                            int orientation = JGameData.getTileDirection(posX, posY);
+                            orientation = RSC_fixObjectDirection(rs2ID, orientation);
                             client.RSC_spawnGameObject(x, y, orientation, rs2ID);
                             System.out.println("Spawning " + rs2ID + " at " + x + ", " + y);
                         }
@@ -1721,6 +1747,24 @@ public class RSCConfig {
                 System.out.println("Load Area: " + localServerIndex + ", " + planeWidth + ", " + planeHeight + ", " + planeIndex);
                 break;
             }
+            case 33: // Set XP
+            {
+                int skill = buffer.getUnsignedByte();
+                client.skillExperience[skill] = RSC_convertXP(buffer.getInt());
+
+                client.redrawTab = true;
+                break;
+            }
+            case 159: // Set Skill
+            {
+                int skill = buffer.getUnsignedByte();
+                client.skillLevel[skill] = buffer.getUnsignedByte();
+                client.skillMaxLevel[skill] = buffer.getUnsignedByte();
+                client.skillExperience[skill] = RSC_convertXP(buffer.getInt());
+
+                client.redrawTab = true;
+                break;
+            }
             case 156: // Set Stats
             {
                 for (int skill = 0; skill < 18; ++skill)
@@ -1732,6 +1776,8 @@ public class RSCConfig {
 
                 int questPoints = buffer.getUnsignedByte();
                 // TODO: Set quest points
+
+                client.redrawTab = true;
                 break;
             }
             case 51: // Privacy Settings

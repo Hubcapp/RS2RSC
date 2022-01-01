@@ -5,12 +5,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="21491aa0-0eb7-4d56-9c39-3c7d87baa446" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/src/com/jagex/runescape/rs2rsc/Settings.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/com/jagex/runescape/Buffer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/jagex/runescape/Buffer.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/com/jagex/runescape/Client.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/jagex/runescape/Client.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/com/jagex/runescape/CollisionMap.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/jagex/runescape/CollisionMap.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/com/jagex/runescape/IndexedImage.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/jagex/runescape/IndexedImage.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/com/jagex/runescape/Model.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/jagex/runescape/Model.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/com/jagex/runescape/definition/GameObjectDefinition.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/jagex/runescape/definition/GameObjectDefinition.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/com/jagex/runescape/rs2rsc/RSCConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/jagex/runescape/rs2rsc/RSCConfig.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/rscminus/common/JGameData.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/rscminus/common/JGameData.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -167,7 +168,6 @@
     <configuration name="Client" type="Application" factoryName="Application" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="com.jagex.runescape.Client" />
       <module name="317refactor" />
-      <option name="PROGRAM_PARAMETERS" value="10 0 highmem members 32" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>

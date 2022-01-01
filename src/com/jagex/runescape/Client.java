@@ -91,9 +91,12 @@ public final class Client extends RSApplet {
 		return "@yel@";
 	}
 
-	public static void main(final String[] args) {
+	public static void main(String[] args) {
 		try {
 			System.out.println("RS2 user client - release #" + 317);
+
+			if (RSCConfig.rscProtocol)
+				args = new String[] { "10", "0", "highmem", "members", "32" };
 
 			if (args.length != 5) {
 				System.out.println("Usage: node-id, port-offset, [lowmem/highmem], [free/members], storeid");
@@ -1044,7 +1047,11 @@ public final class Client extends RSApplet {
 					{
 						String objectIDStr = Integer.toString(objectId);
 						if (RSCConfig.rscProtocol)
+						{
 							objectIDStr = Integer.toString(RSCConfig.RSC_TranslateObjectReverse(objectId));
+							objectIDStr += ";" + JGameData.getTileDirection(regionX + x, regionY + y);
+
+						}
 						this.menuActionName[this.menuActionRow] += " @gre@(@whi@" + objectIDStr + "@gre@) (@whi@" + (x + this.baseX) + "," + (y + this.baseY) + "@gre@)";
 					}
 					this.menuActionId[this.menuActionRow] = 1226;
@@ -2174,6 +2181,13 @@ public final class Client extends RSApplet {
 		throw new RuntimeException();
 	}
 
+	public void RSC_removeGameObject(int x, int y)
+	{
+		x += localPlayer.waypointX[0];
+		y += localPlayer.waypointY[0];
+		this.worldController.removeInteractiveObject(x, y, RSCConfig.planeIndex);
+	}
+
 	private void despawnGameObject(final int y, final int z, final int face, final int l, final int x, final int objectType, final int objectId) {
 		if (x >= 1 && y >= 1 && x <= 102 && y <= 102) {
 			if (lowMemory && z != this.plane) {
@@ -3030,12 +3044,12 @@ public final class Client extends RSApplet {
 				this.stream.putShort(actionTarget >> 14 & 0x7FFF);
 				this.stream.putShortA(actionInformation1 + this.baseY);
 			} else {
-				/*this.stream.RSC_newPacket(14);
-				this.stream.putLEShort(regionX + actionInformation2);
-				this.stream.putLEShort(regionY + actionInformation1);
-				this.stream.put(0);
-				this.stream.RSC_finalizePacket();*/
-				System.out.println("TODO INTERACT: " + actionInformation1 + ", " + actionInformation2 + ", " + actionTarget);
+				this.stream.RSC_newPacket(136);
+				this.stream.putShort(regionX + actionInformation2);
+				this.stream.putShort(regionY + actionInformation1);
+				this.stream.RSC_finalizePacket();
+				System.out.println("TODO INTERACT POS: " + localPlayer.waypointX[0] + ", " + localPlayer.waypointY[0]);
+				System.out.println("TODO INTERACT: " + actionInformation2 + ", " + actionInformation1 + ", " + actionTarget);
 			}
 		}
 		if (menuAction == 1125) {
@@ -3393,9 +3407,9 @@ public final class Client extends RSApplet {
 		if (this.multiCombatZone) {
 			this.headIcons[1].drawImage(472, 296);
         }
+		int y = 20;
+		final int x = 507;
 		if (displayFpsAndMemory) {
-			final int x = 507;
-			int y = 20;
 			int colour = 0xFFFF00;
 			if (super.fps < 15) {
                 colour = 0xFF0000;
@@ -3409,6 +3423,11 @@ public final class Client extends RSApplet {
                 colour = 0xFF0000;
             }
 			this.fontPlain.drawTextLeft("Mem:" + memory + "k", x, y, 0xFFFF00);
+			y += 15;
+		}
+		if (Settings.debug)
+		{
+			this.fontPlain.drawTextLeft("Pos: (" + (baseX + Client.localPlayer.waypointX[0]) + ", " + (baseY + Client.localPlayer.waypointY[0]) + ")", x, y, 0xFFFF00);
 			y += 15;
 		}
 		if (this.systemUpdateTime != 0) {

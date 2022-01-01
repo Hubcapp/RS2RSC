@@ -353,12 +353,14 @@ public final class Buffer extends Cacheable {
 
     public void RSC_finalizePacket() {
         int n;
+
+        // Encrypt opcode
         if (this.encryptor != null) {
             n = this.buffer[RSC_packetStart + 2] & 255;
             this.buffer[RSC_packetStart + 2] = (byte) (this.encryptor.value() + n);
         }
 
-        n = this.position - 2;
+        n = this.position - RSC_packetStart - 2;
         if (n >= 160) {
             this.buffer[RSC_packetStart + 0] = (byte) (n / 256 + 160);
             this.buffer[RSC_packetStart + 1] = (byte) (n & 255);

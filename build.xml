@@ -1,0 +1,109 @@
+<project name="317refactor" default="run">
+	<property name="main.src.dir" value="src" />
+	<property name="main.build.dir" value="build/main" />
+	<property name="test.src.dir" value="test" />
+	<property name="test.build.dir" value="build/test" />
+	
+	<property name="dist.dir" value="dist" />
+	<property name="bin.dir" value="bin" />
+	<property name="assets.dir" value="assets" />
+	<property name="doc.dir" value="doc" />
+
+	<property name="jar.main-class" value="com.jagex.runescape.Client" />
+	<property name="jar.name" value="${ant.project.name}.jar" />
+	<property name="jar.file" value="${dist.dir}/${jar.name}" />
+	
+	<path id="classpath.main">
+		<fileset dir="${basedir}">
+			<include name="lib/*.jar" />
+			<exclude name="lib/junit-*.jar" />
+			<exclude name="lib/hamcrest-core-*.jar" />
+		</fileset>
+	</path>
+	
+	<path id="classpath.test">
+		<fileset dir="${basedir}">
+			<include name="lib/junit-*.jar" />
+			<include name="lib/hamcrest-core-*.jar" />
+		</fileset>
+		<pathelement location="${main.build.dir}"/>
+	</path>
+	
+	<pathconvert property="classpath.jar" pathsep=";">
+		<path refid="classpath.main"/>
+		<mapper>
+			<chainedmapper>
+				<flattenmapper />
+				<globmapper from="*.jar" to="lib/*.jar" />
+			</chainedmapper>
+		</mapper>
+	</pathconvert>
+
+	<target name="compile">
+		<mkdir dir="${main.build.dir}" />
+		<javac srcdir="${main.src.dir}" destdir="${main.build.dir}" includeantruntime="false" encoding="UTF-8">
+			<classpath refid="classpath.main" />
+		</javac>
+	</target>
+	
+	<target name="test-compile" depends="compile">
+		<mkdir dir="${test.build.dir}"/>
+		<javac srcdir="${test.src.dir}" destdir="${test.build.dir}" includeantruntime="false">
+			<classpath refid="classpath.test"/>
+		</javac>
+	</target>
+	
+	<target name="test" depends="test-compile">
+		<junit printsummary="on" haltonfailure="yes" fork="true">
+			<classpath>
+				<path refid="classpath.test"/>
+				<pathelement location="${test.build.dir}"/>
+			</classpath>
+			<formatter type="brief" usefile="false" />
+			<batchtest>
+				<fileset dir="${test.src.dir}" includes="**/*Test.java" />
+			</batchtest>
+		</junit>
+	</target>
+
+	<target name="dist" depends="compile">
+		<mkdir dir="${bin.dir}" />
+		<mkdir dir="${dist.dir}" />
+
+		<jar destfile="${jar.file}" basedir="${main.build.dir}">
+			<manifest>
+				<attribute name="Main-Class" value="${jar.main-class}"/>
+			</manifest>
+			<fileset dir=".">
+				<include name="${assets.dir}/**" />
+				<include name="LICENSE" />
+			</fileset>
+			<zipgroupfileset dir="lib" includes="*.jar" excludes="junit-*.jar,hamcrest-core-*.jar" />
+		</jar>
+	</target>
+
+	<target name="distrun" depends="dist">
+		<java jar="${jar.file}" dir="${bin.dir}" fork="true" />
+	</target>
+	
+	<target name="run" depends="compile">
+		<java classname="${jar.main-class}" fork="true">
+			<classpath>
+				<path refid="classpath.main"/>
+				<pathelement location="${main.build.dir}"/>
+			</classpath>
+		</java>
+	</target>
+
+	<target name="clean">
+		<delete dir="${main.build.dir}" />
+		<delete dir="${test.build.dir}" />
+		<delete dir="${bin.dir}" />
+		<delete dir="${doc.dir}" />
+	</target>
+
+	<target name="doc" description="Generate JavaDocs">
+		<javadoc access="private" classpath="${classpath.jar}" sourcepath="${main.src.dir}" destdir="${doc.dir}" source="1.8" use="true" />
+	</target>
+
+</project>
