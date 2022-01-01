@@ -7,6 +7,8 @@ import com.jagex.runescape.Model;
 import com.jagex.runescape.Rasterizer;
 import com.jagex.runescape.Sprite;
 import com.jagex.runescape.collection.Cache;
+import com.jagex.runescape.rs2rsc.RSCConfig;
+import rscminus.common.JGameData;
 
 public final class ItemDefinition {
 
@@ -22,7 +24,10 @@ public final class ItemDefinition {
 		stream.position = streamOffsets[id];
 		definition.id = id;
 		definition.setDefaults();
-		definition.readValues(stream);
+		if (RSCConfig.rscProtocol)
+			definition.RSC_readValues(id);
+		else
+			definition.readValues(stream);
 		if (definition.noteTemplateId != -1) {
             definition.toNote();
         }
@@ -433,6 +438,20 @@ public final class ItemDefinition {
             cached = false;
         }
 		return cached;
+	}
+
+	private void RSC_readValues(int id) {
+		int rscID = RSCConfig.RSC_TranslateItemReverse(id);
+
+		readValues(stream);
+
+		name = JGameData.itemName[rscID];
+		description = JGameData.itemExamine[rscID].getBytes();
+		stackable = JGameData.itemStackable[rscID];
+		String action1 = JGameData.itemCommand[rscID];
+		if (action1.length() == 0)
+			action1 = null;
+		actions = new String[] { action1, null, null, null, null };
 	}
 
 	private void readValues(final Buffer stream) {

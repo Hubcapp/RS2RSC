@@ -1,10 +1,8 @@
 package com.jagex.runescape.rs2rsc;
 
-import com.jagex.runescape.Buffer;
-import com.jagex.runescape.Client;
-import com.jagex.runescape.Player;
-import com.jagex.runescape.TextClass;
+import com.jagex.runescape.*;
 import com.jagex.runescape.definition.GameObjectDefinition;
+import com.jagex.runescape.definition.ItemDefinition;
 import rscminus.common.JGameData;
 import rscminus.game.constants.Game;
 
@@ -36,6 +34,12 @@ public class RSCConfig {
     public static int localServerIndex;
 
     public static String[] friendServers = new String[200];
+    public static int[] inventoryID = new int[30];
+    public static boolean[] inventoryEquipped = new boolean[30];
+    public static int[] inventoryAmount = new int[30];
+    public static int inventoryCount = 0;
+    public static boolean inventoryUpdate = false;
+
     private static int magicLoc = 128;
     private static int localRegionX;
     private static int localRegionY;
@@ -459,6 +463,7 @@ public class RSCConfig {
         objectIDTable.put(25, 203); // candles
         objectIDTable.put(26, 879); // fountain
         //objectIDTable.put(27, 888); // landscape
+        objectIDTable.put(34, 1173); // Fern
         objectIDTable.put(37, 1188); // Flower
         objectIDTable.put(38, 1163); // Mushroom
         objectIDTable.put(63, 1574); // doors
@@ -471,7 +476,9 @@ public class RSCConfig {
         objectIDDirTable.put(1097, 1); // Throne
 
         itemIDTable.put(4, 1171); // Wooden Shield
+        itemIDTable.put(10, 995); // Coins
         itemIDTable.put(12, 1349); // Iron Axe
+        itemIDTable.put(14, 1511); // Logs
         itemIDTable.put(16, 1059); // Leather Gloves
         itemIDTable.put(17, 1061); // Boots
         itemIDTable.put(87, 1351); // bronze Axe
@@ -482,6 +489,7 @@ public class RSCConfig {
         itemIDTable.put(113, 1103); // Bronze Chain Mail Body
         itemIDTable.put(117, 1117); // Bronze Plate Mail Body
         itemIDTable.put(124, 1173); // Bronze Square Shield
+        itemIDTable.put(132, 2142 ); // cookedmeat
         itemIDTable.put(166, 590); // tinderbox
         itemIDTable.put(183, 1007); // Cape (red)
         itemIDTable.put(194, 1013); // skirt (pink)
@@ -493,6 +501,7 @@ public class RSCConfig {
         itemIDTable.put(203, 1355); // Mithril Axe
         itemIDTable.put(204, 1357); // Adamantite Axe
         itemIDTable.put(205, 1375); // bronze battle axe
+        itemIDTable.put(349, 317); // Raw Shrimp
         itemIDTable.put(375, 301); // Lobster Pot
         itemIDTable.put(376, 303); // Small fishing net
         itemIDTable.put(377, 307); // Fishing Rod
@@ -504,6 +513,22 @@ public class RSCConfig {
         itemIDTable.put(1288, 1052); // Cape of legends
 
         System.out.println("using rsc protocol");
+    }
+
+    public static RSInterface getInventoryInterface()
+    {
+        RSInterface tab = null;
+        for (int i = 0; i < RSInterface.cache.length; i++)
+        {
+            if (RSInterface.cache[i] == null)
+                continue;
+            if (RSInterface.cache[i].inventory)
+            {
+                tab = RSInterface.cache[i];
+                break;
+            }
+        }
+        return tab;
     }
 
     public static void Update(Client client)
@@ -520,6 +545,29 @@ public class RSCConfig {
         {
             Player otherPlayer = client.players[client.localPlayers[i]];
             otherPlayer.RSC_update();
+        }
+
+        // Update inventory
+        if (inventoryUpdate) {
+            RSInterface tab = getInventoryInterface();
+            int count = Math.min(inventoryCount, 28);
+            int length = Math.min(tab.inventoryItemId.length, inventoryID.length);
+
+            if (tab != null) {
+                for (int i = 0; i < count; i++) {
+                    tab.inventoryItemId[i] = RSC_TranslateItem(inventoryID[i]) + 1;
+                    tab.inventoryStackSize[i] = inventoryAmount[i];
+                }
+
+                for (int i = count; i < length; i++)
+                {
+                    tab.inventoryItemId[i] = -1;
+                    tab.inventoryStackSize[i] = 0;
+                }
+            }
+
+            client.redrawTab = true;
+            inventoryUpdate = false;
         }
     }
 
@@ -558,6 +606,7 @@ public class RSCConfig {
 
         // Set sidebar interfaces
         client.setSidebarID(1, 3917); // Stats
+        client.setSidebarID(3, 3213); // Inventory
         client.setSidebarID(8, 5065); // Friends
         client.setSidebarID(10, 2449); // Logout
         client.setSidebarID(11, 4445); // Settings
@@ -722,7 +771,18 @@ public class RSCConfig {
         if (val == null)
         {
             System.out.println("Unhandled item id: " + itemID);
-            return -1;
+            return 0;
+        }
+        return val.intValue();
+    }
+
+    public static int RSC_TranslateItemReverse(int itemID)
+    {
+        Integer val = itemIDTable.getKey(itemID);
+        if (val == null)
+        {
+            System.out.println("Unhandled item id: " + itemID);
+            return 0;
         }
         return val.intValue();
     }
@@ -1277,6 +1337,49 @@ public class RSCConfig {
             {
                 boolean tutorial = buffer.getUnsignedByte() != 0;
                 // TODO: What to do with this...
+                break;
+            }
+            case 53: // Inventory
+            {
+                inventoryCount = buffer.getUnsignedByte();
+                for (int i = 0; i < inventoryCount; i++)
+                {
+                    int mod = buffer.getUnsignedLEShort();
+                    inventoryID[i] = mod & 32767;
+                    inventoryEquipped[i] = (mod / '\u8000') == 1;
+                    inventoryAmount[i] = 1;
+                    if (JGameData.itemStackable[inventoryID[i]])
+                        inventoryAmount[i] = buffer.RSC_getUnsignedInt3();
+                }
+                inventoryUpdate = true;
+                break;
+            }
+            case 123: // Inventory remove
+            {
+                int slot = buffer.getUnsignedByte();
+                inventoryCount--;
+
+                for (int i = slot; i < inventoryCount; i++)
+                {
+                    inventoryID[i] = inventoryID[i + 1];
+                    inventoryAmount[i] = inventoryAmount[i + 1];
+                    inventoryEquipped[i] = inventoryEquipped[i + 1];
+                }
+                inventoryUpdate = true;
+                break;
+            }
+            case 90: // Inventory Slot
+            {
+                int i = buffer.getUnsignedByte();
+                int mod = buffer.getUnsignedLEShort();
+                inventoryID[i] = mod & 32767;
+                inventoryEquipped[i] = (mod / '\u8000') == 1;
+                inventoryAmount[i] = 1;
+                if (JGameData.itemStackable[inventoryID[i]])
+                    inventoryAmount[i] = buffer.RSC_getUnsignedInt3();
+                inventoryUpdate = true;
+                if (inventoryCount <= i)
+                    inventoryCount = i + 1;
                 break;
             }
             case 120:

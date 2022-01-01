@@ -343,7 +343,7 @@ public final class Client extends RSApplet {
 	private int friendsListAction;
 	private final int[] characterEditIdentityKits;
 	private int moveItemSlotEnd;
-	private int lastActiveInventoryInterface;
+	public int lastActiveInventoryInterface;
 	public OnDemandFetcher onDemandFetcher;
 	public int regionX;
 	public int regionY;
@@ -430,7 +430,7 @@ public final class Client extends RSApplet {
 	public static int cameraHorizontal;
 	private int cameraModificationH;
 	private int cameraModificationV;
-	private int inventoryOverlayInterfaceID;
+	public int inventoryOverlayInterfaceID;
 	private Buffer stream;
 	private int lastAddress;
 	private int splitPrivateChat;
@@ -1166,8 +1166,14 @@ public final class Client extends RSApplet {
                                 }
                             }
 
-							this.menuActionName[this.menuActionRow] = "Examine @lre@" + definition.name + " @gre@(@whi@"
-									+ item.itemId + "@gre@)";
+							this.menuActionName[this.menuActionRow] = "Examine @lre@" + definition.name;
+							if (Settings.getDebug())
+							{
+								int itemID = item.itemId;
+								if (RSCConfig.rscProtocol)
+									itemID = RSCConfig.RSC_TranslateItem(itemID);
+								this.menuActionName[this.menuActionRow] += " @gre@(@whi@" + itemID + "@gre@)";
+							}
 							this.menuActionId[this.menuActionRow] = 1448;
 							this.menuActionData1[this.menuActionRow] = item.itemId;
 							this.menuActionData2[this.menuActionRow] = x;
@@ -1449,6 +1455,7 @@ public final class Client extends RSApplet {
 											this.menuActionData3[this.menuActionRow] = childInterface.id;
 											this.menuActionRow++;
 										}
+
 										if (childInterface.inventory && itemDef.actions != null) {
 											for (int i4 = 2; i4 >= 0; i4--) {
                                                 if (itemDef.actions[i4] != null) {
@@ -1471,6 +1478,29 @@ public final class Client extends RSApplet {
                                             }
 
 										}
+
+										if (childInterface.inventory && RSCConfig.rscProtocol) {
+											int rscID = RSCConfig.RSC_TranslateItemReverse(itemDef.id);
+											if (JGameData.itemWearable[rscID] != 0) {
+												String option = "Wield";
+												int menuID = 970;
+												if ((24 & JGameData.itemWearable[rscID]) == 0)
+													option = "Wear";
+												if (RSCConfig.inventoryEquipped[slot])
+												{
+													option = "Remove";
+													menuID = 971;
+												}
+
+												this.menuActionName[this.menuActionRow] = option + " @lre@" + itemDef.name;
+												this.menuActionId[this.menuActionRow] = menuID;
+												this.menuActionData1[this.menuActionRow] = itemDef.id;
+												this.menuActionData2[this.menuActionRow] = slot;
+												this.menuActionData3[this.menuActionRow] = childInterface.id;
+												this.menuActionRow++;
+											}
+										}
+
 										if (childInterface.actions != null) {
 											for (int j4 = 4; j4 >= 0; j4--) {
                                                 if (childInterface.actions[j4] != null) {
@@ -1499,8 +1529,14 @@ public final class Client extends RSApplet {
                                             }
 
 										}
-										this.menuActionName[this.menuActionRow] = "Examine @lre@" + itemDef.name + " @gre@(@whi@"
-												+ (childInterface.inventoryItemId[slot] - 1) + "@gre@)";
+										this.menuActionName[this.menuActionRow] = "Examine @lre@" + itemDef.name;
+										if (Settings.getDebug())
+										{
+											int itemID = childInterface.inventoryItemId[slot] - 1;
+											if (RSCConfig.rscProtocol)
+												itemID = RSCConfig.RSC_TranslateItem(itemID);
+											this.menuActionName[this.menuActionRow] += " @gre@(@whi@" + itemID + "@gre@)";
+										}
 										this.menuActionId[this.menuActionRow] = 1125;
 										this.menuActionData1[this.menuActionRow] = itemDef.id;
 										this.menuActionData2[this.menuActionRow] = slot;
@@ -2337,10 +2373,21 @@ public final class Client extends RSApplet {
 			this.stream.putShort(actionInformation2 + this.baseX);
 		}
 		if (menuAction == 74) {
-			this.stream.putOpcode(122);
-			this.stream.putLEShortA(actionInformation1);
-			this.stream.putShortA(actionInformation2);
-			this.stream.putLEShort(actionTarget);
+			if (RSCConfig.rscProtocol)
+			{
+				int src = actionInformation2;
+
+				this.stream.RSC_newPacket(90);
+				this.stream.putShort(src);
+				this.stream.RSC_finalizePacket();
+			}
+			else
+			{
+				this.stream.putOpcode(122);
+				this.stream.putLEShortA(actionInformation1);
+				this.stream.putShortA(actionInformation2);
+				this.stream.putLEShort(actionTarget);
+			}
 			this.atInventoryLoopCycle = 0;
 			this.atInventoryInterface = actionInformation1;
 			this.atInventoryIndex = actionInformation2;
@@ -2560,13 +2607,26 @@ public final class Client extends RSApplet {
 			}
 		}
 		if (menuAction == 870) {
-			this.stream.putOpcode(53);
-			this.stream.putShort(actionInformation2);
-			this.stream.putShortA(this.lastItemSelectedSlot);
-			this.stream.putLEShortA(actionTarget);
-			this.stream.putShort(this.lastItemSelectedInterface);
-			this.stream.putLEShort(this.useItemId);
-			this.stream.putShort(actionInformation1);
+			if (!RSCConfig.rscProtocol)
+			{
+				this.stream.putOpcode(53);
+				this.stream.putShort(actionInformation2);
+				this.stream.putShortA(this.lastItemSelectedSlot);
+				this.stream.putLEShortA(actionTarget);
+				this.stream.putShort(this.lastItemSelectedInterface);
+				this.stream.putLEShort(this.useItemId);
+				this.stream.putShort(actionInformation1);
+			}
+			else
+			{
+				int src = this.lastItemSelectedSlot;
+				int dst = actionInformation2;
+
+				this.stream.RSC_newPacket(91);
+				this.stream.putShort(src);
+				this.stream.putShort(dst);
+				this.stream.RSC_finalizePacket();
+			}
 			this.atInventoryLoopCycle = 0;
 			this.atInventoryInterface = actionInformation1;
 			this.atInventoryIndex = actionInformation2;
@@ -2579,10 +2639,24 @@ public final class Client extends RSApplet {
             }
 		}
 		if (menuAction == 847) {
-			this.stream.putOpcode(87);
-			this.stream.putShortA(actionTarget);
-			this.stream.putShort(actionInformation1);
-			this.stream.putShortA(actionInformation2);
+			if (!RSCConfig.rscProtocol)
+			{
+				this.stream.putOpcode(87);
+				this.stream.putShortA(actionTarget);
+				this.stream.putShort(actionInformation1);
+				this.stream.putShortA(actionInformation2);
+			}
+			else
+			{
+				int src = actionInformation2;
+
+				this.stream.RSC_newPacket(246);
+				this.stream.putShort(src);
+				this.stream.RSC_finalizePacket();
+
+				ItemDefinition def = ItemDefinition.getDefinition(actionTarget);
+				this.pushMessage("Dropping " + def.name, 0, null);
+			}
 			this.atInventoryLoopCycle = 0;
 			this.atInventoryInterface = actionInformation1;
 			this.atInventoryIndex = actionInformation2;
@@ -2669,6 +2743,40 @@ public final class Client extends RSApplet {
 			this.stream.putLEShort(actionInformation1 + this.baseY);
 			this.stream.putShort(actionTarget);
 			this.stream.putShortA(actionInformation2 + this.baseX);
+		}
+		if (menuAction == 970) {
+			int src = actionInformation2;
+			this.stream.RSC_newPacket(169);
+			this.stream.putShort(src);
+			this.stream.RSC_finalizePacket();
+
+			this.atInventoryLoopCycle = 0;
+			this.atInventoryInterface = actionInformation1;
+			this.atInventoryIndex = actionInformation2;
+			this.atInventoryInterfaceType = 2;
+			if (RSInterface.cache[actionInformation1].parentID == this.openInterfaceId) {
+				this.atInventoryInterfaceType = 1;
+			}
+			if (RSInterface.cache[actionInformation1].parentID == this.chatboxInterfaceId) {
+				this.atInventoryInterfaceType = 3;
+			}
+		}
+		if (menuAction == 971) {
+			int src = actionInformation2;
+			this.stream.RSC_newPacket(170);
+			this.stream.putShort(src);
+			this.stream.RSC_finalizePacket();
+
+			this.atInventoryLoopCycle = 0;
+			this.atInventoryInterface = actionInformation1;
+			this.atInventoryIndex = actionInformation2;
+			this.atInventoryInterfaceType = 2;
+			if (RSInterface.cache[actionInformation1].parentID == this.openInterfaceId) {
+				this.atInventoryInterfaceType = 1;
+			}
+			if (RSInterface.cache[actionInformation1].parentID == this.chatboxInterfaceId) {
+				this.atInventoryInterfaceType = 3;
+			}
 		}
 		if (menuAction == 632) {
 			this.stream.putOpcode(145);
@@ -7292,11 +7400,15 @@ public final class Client extends RSApplet {
 						} else {
 							rsInterface.swapInventoryItems(this.moveItemSlotStart, this.moveItemSlotEnd);
 						}
-						this.stream.putOpcode(214);
-						this.stream.putLEShortA(this.moveItemInterfaceId);
-						this.stream.putByteC(moveItemInsetionMode);
-						this.stream.putLEShortA(this.moveItemSlotStart);
-						this.stream.putLEShort(this.moveItemSlotEnd);
+						if (!RSCConfig.rscProtocol)
+						{
+							// TODO: Drag item packet
+							this.stream.putOpcode(214);
+							this.stream.putLEShortA(this.moveItemInterfaceId);
+							this.stream.putByteC(moveItemInsetionMode);
+							this.stream.putLEShortA(this.moveItemSlotStart);
+							this.stream.putLEShort(this.moveItemSlotEnd);
+						}
 					}
 				} else if ((this.oneMouseButton == 1 || this.menuRowIsAddFriend(this.menuActionRow - 1)) && this.menuActionRow > 2) {
 					this.processMenuHovering();

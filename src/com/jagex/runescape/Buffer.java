@@ -540,6 +540,14 @@ public final class Buffer extends Cacheable {
         }
     }
 
+    public int RSC_getUnsignedInt3() {
+        if(this.buffer[this.position] >= 0) {
+            return this.getUnsignedLEShort();
+        } else {
+            return this.getInt() & Integer.MAX_VALUE;
+        }
+    }
+
     public void RSC_putShort2(int var2) {
         if (var2 >= 0 && var2 < 128) {
             this.put(var2);
