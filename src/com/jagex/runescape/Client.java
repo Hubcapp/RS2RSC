@@ -6653,6 +6653,7 @@ public final class Client extends RSApplet {
 				this.setupLoginScreen();
 				this.titleScreen.drawLoginScreen(super.gameGraphics, true, this.loginScreenState, this.onDemandFetcher.statusString, this.loginMessage1, this.loginMessage2, this.enteredUsername, this.enteredPassword, tick, this.loginScreenFocus);
 			}
+
 			this.socket = new RSSocket(this, this.openSocket(RSCConfig.port + portOffset));
 			final long nameLong = TextClass.nameToLong(playerUsername);
 			final int nameHash = (int) (nameLong >> 16 & 31L);
@@ -6668,6 +6669,7 @@ public final class Client extends RSApplet {
 				seed[2] = (int) (Math.random() * 9.9999999E7D);
 				seed[3] = (int) (Math.random() * 9.9999999E7D);
 
+				this.stream.position = 0;
 				this.stream.RSC_newPacket(0);
 				this.stream.put(recoveredConnection ? 1 : 0);
 				this.stream.putInt(RSCConfig.rscVersion);
@@ -8740,9 +8742,13 @@ public final class Client extends RSApplet {
 		if (this.activeInterfaceType != 0) {
             return;
         }
-		this.menuActionName[0] = "Cancel";
-		this.menuActionId[0] = 1107;
-		this.menuActionRow = 1;
+		if (!RSCConfig.rscProtocol) {
+			this.menuActionName[0] = "Cancel";
+			this.menuActionId[0] = 1107;
+			this.menuActionRow = 1;
+		} else {
+			this.menuActionRow = 0;
+		}
 		this.buildSplitPrivateChatMenu();
 		this.anInt886 = 0;
 		if (super.mouseX > 4 && super.mouseY > 4 && super.mouseX < 516 && super.mouseY < 338) {

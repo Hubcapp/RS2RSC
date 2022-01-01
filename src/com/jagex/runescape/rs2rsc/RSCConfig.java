@@ -462,6 +462,7 @@ public class RSCConfig {
         objectIDTable.put(63, 1574); // doors
         objectIDTable.put(97, 2732); // fire
         objectIDTable.put(119, 2728); // Cook's Range
+        objectIDTable.put(192, 42); // fish (Lure/Bait)
 
         // Setup object ids directions
         objectIDDirTable.put(1097, 1); // Throne
