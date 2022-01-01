@@ -46,6 +46,8 @@ public class RSCConfig {
     private static BiMap<Integer, Integer> objectIDTable = new BiMap<Integer, Integer>();
     private static Map<Integer, Integer> objectIDDirTable = new HashMap<Integer, Integer>();
 
+    private static BiMap<Integer, Integer> itemIDTable = new BiMap<Integer, Integer>();
+
     public static byte[] RSC_stringToUnicode(String str) {
         int strlen = str.length();
         byte[] buf = new byte[strlen];
@@ -463,9 +465,43 @@ public class RSCConfig {
         objectIDTable.put(97, 2732); // fire
         objectIDTable.put(119, 2728); // Cook's Range
         objectIDTable.put(192, 42); // fish (Lure/Bait)
+        objectIDTable.put(193, 44); // fish (Net/Bait)
 
         // Setup object ids directions
         objectIDDirTable.put(1097, 1); // Throne
+
+        itemIDTable.put(4, 1171); // Wooden Shield
+        itemIDTable.put(12, 1349); // Iron Axe
+        itemIDTable.put(16, 1059); // Leather Gloves
+        itemIDTable.put(17, 1061); // Boots
+        itemIDTable.put(87, 1351); // bronze Axe
+        itemIDTable.put(88, 1349); // Steel Axe
+        itemIDTable.put(93, 1373); // Rune battle Axe
+        itemIDTable.put(104, 1139); // Medium Bronze Helmet
+        itemIDTable.put(108, 1155); // Large Bronze Helmet
+        itemIDTable.put(113, 1103); // Bronze Chain Mail Body
+        itemIDTable.put(117, 1117); // Bronze Plate Mail Body
+        itemIDTable.put(124, 1173); // Bronze Square Shield
+        itemIDTable.put(166, 590); // tinderbox
+        itemIDTable.put(183, 1007); // Cape (red)
+        itemIDTable.put(194, 1013); // skirt (pink)
+        itemIDTable.put(206, 1075); // Bronze Plate Mail Legs
+        itemIDTable.put(288, 1654); // Gold necklace
+        itemIDTable.put(296, 1692); // Gold Amulet
+        itemIDTable.put(420, 1540); // Anti dragon breath Shield
+        itemIDTable.put(428, 1261); // Black Axe
+        itemIDTable.put(203, 1355); // Mithril Axe
+        itemIDTable.put(204, 1357); // Adamantite Axe
+        itemIDTable.put(205, 1375); // bronze battle axe
+        itemIDTable.put(375, 301); // Lobster Pot
+        itemIDTable.put(376, 303); // Small fishing net
+        itemIDTable.put(377, 307); // Fishing Rod
+        itemIDTable.put(378, 309); // Fly Fishing Rod
+        itemIDTable.put(379, 311); // Harpoon
+        itemIDTable.put(405, 1359); // rune Axe
+        itemIDTable.put(548, 305); // Big Net
+        itemIDTable.put(971, 1050); // Santa's hat
+        itemIDTable.put(1288, 1052); // Cape of legends
 
         System.out.println("using rsc protocol");
     }
@@ -516,8 +552,8 @@ public class RSCConfig {
          */
 
         // Set settings
-        client.sendConfig(166, DEFAULT_BRIGHTNESS + 1); // Brightness
-        client.sendConfig(287, 0); // Split private chat
+        client.sendConfig(166, Settings.getBrightness() + 1); // Brightness
+        client.sendConfig(287, Settings.getSplitPrivateChat() ? 1 : 0); // Split private chat
         client.sendConfig(171, 0); // Chat effects
 
         // Set sidebar interfaces
@@ -567,6 +603,24 @@ public class RSCConfig {
     {
         switch (actionID)
         {
+            case 952: // Split Private Chat (On)
+                Settings.setSplitPrivateChat(true);
+                break;
+            case 953: // Split Private Chat (Off)
+                Settings.setSplitPrivateChat(false);
+                break;
+            case 5452: // Brightness (Dark)
+                Settings.setBrightness(0);
+                break;
+            case 6273: // Brightness (Normal)
+                Settings.setBrightness(1);
+                break;
+            case 6275: // Brightness (Bright)
+                Settings.setBrightness(2);
+                break;
+            case 6277: // Brightness (Very Bright)
+                Settings.setBrightness(3);
+                break;
             case 6279: // Mouse Buttons (One)
             {
                 buffer.RSC_newPacket(111);
@@ -664,63 +718,13 @@ public class RSCConfig {
 
     public static int RSC_TranslateItem(int itemID)
     {
-        switch (itemID)
+        Integer val = itemIDTable.get(itemID);
+        if (val == null)
         {
-            case 16: // Leather Gloves
-                return 1059;
-            case 17: // Boots
-                return 1061;
-            case 87: // bronze Axe
-                return 1351;
-            case 12: // Iron Axe
-                return 1349;
-            case 88: // Steel Axe
-                return 1353;
-            case 428: // Black Axe
-                return 1361;
-            case 203: // Mithril Axe
-                return 1355;
-            case 204: // Adamantite Axe
-                return 1357;
-            case 405: // rune Axe
-                return 1359;
-            case 104: // Medium Bronze Helmet
-                return 1139;
-            case 108: // Large Bronze Helmet
-                return 1155;
-            case 194: // skirt (pink)
-                return 1013;
-            case 206: // Bronze Plate Mail Legs
-                return 1075;
-            case 971: // Santa's hat
-                return 1050;
-            case 1288: // Cape of legends
-                return 1052;
-            case 205: // bronze battle Axe
-                return 1375;
-            case 93: // Rune battle Axe
-                return 1373;
-            case 117: // Bronze Plate Mail Body
-                return 1117;
-            case 113: // Bronze Chain Mail Body
-                return 1103;
-            case 183: // Cape (red)
-                return 1007;
-            case 296: // Gold Amulet
-                return 1692;
-            case 288: // Gold necklace
-                return 1654;
-            case 124: // Bronze Square Shield
-                return 1173;
-            case 420: // Anti dragon breath Shield
-                return 1540;
-            case 4: // Wooden Shield
-                return 1171;
-            case 166: // tinderbox
-                return 590;
+            System.out.println("Unhandled item id: " + itemID);
+            return -1;
         }
-
-        return 0;
+        return val.intValue();
     }
 
     public static int RSC_TranslateEquipment(int equipID)
@@ -1055,10 +1059,36 @@ public class RSCConfig {
 
     public static void RSC_PlayAnimation(Player player, int itemID, int length)
     {
+        int rscItemID = itemID;
         itemID = RSC_TranslateItem(itemID);
+
+        // We don't know what item it is, we can't play an animation
+        if (itemID == -1)
+            return;
 
         // Reset Animation
         int animation = -1;
+
+        // Fishing
+        switch (itemID)
+        {
+            case 301: // Lobster Pot
+                animation = 619;
+                break;
+            case 303: // Net
+                animation = 621;
+                break;
+            case 305: // Big Net
+                animation = 620;
+                break;
+            case 307: // Fishing Rod
+            case 309: // Fly Fishing Rod
+                animation = 622;
+                break;
+            case 311: // Harpoon
+                animation = 618;
+                break;
+        }
 
         // Woodcutting
         switch (itemID)
@@ -1095,6 +1125,10 @@ public class RSCConfig {
         {
             player.RSC_queuedAnimation = animation;
             player.RSC_queuedAnimationEnd = Client.tick + 150;
+        }
+        else
+        {
+            System.out.println("Unhandled bubble animation: " + rscItemID);
         }
     }
 

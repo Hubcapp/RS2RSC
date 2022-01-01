@@ -95,6 +95,8 @@ public final class Client extends RSApplet {
 		try {
 			System.out.println("RS2 user client - release #" + 317);
 
+			Settings.Init();
+
 			if (RSCConfig.rscProtocol)
 				args = new String[] { "10", "0", "highmem", "members", "32" };
 
@@ -1023,7 +1025,10 @@ public final class Client extends RSApplet {
 									this.menuActionId[this.menuActionRow] = 502;
                                 }
                                 if (action == 1) {
-									this.menuActionId[this.menuActionRow] = 900;
+                                	if (RSCConfig.rscProtocol)
+										this.menuActionId[this.menuActionRow] = 1002;
+                                	else
+										this.menuActionId[this.menuActionRow] = 900;
                                 }
                                 if (action == 2) {
 									this.menuActionId[this.menuActionRow] = 113;
@@ -1043,7 +1048,7 @@ public final class Client extends RSApplet {
 
 					}
 					this.menuActionName[this.menuActionRow] = "Examine @cya@" + object.name;
-					if (Settings.debug)
+					if (Settings.getDebug())
 					{
 						String objectIDStr = Integer.toString(objectId);
 						if (RSCConfig.rscProtocol)
@@ -1054,7 +1059,10 @@ public final class Client extends RSApplet {
 						}
 						this.menuActionName[this.menuActionRow] += " @gre@(@whi@" + objectIDStr + "@gre@) (@whi@" + (x + this.baseX) + "," + (y + this.baseY) + "@gre@)";
 					}
-					this.menuActionId[this.menuActionRow] = 1226;
+					if (RSCConfig.rscProtocol)
+						this.menuActionId[this.menuActionRow] = 2226;
+					else
+						this.menuActionId[this.menuActionRow] = 1226;
 					this.menuActionData1[this.menuActionRow] = object.id << 14;
 					this.menuActionData2[this.menuActionRow] = x;
 					this.menuActionData3[this.menuActionRow] = y;
@@ -2265,7 +2273,8 @@ public final class Client extends RSApplet {
 		int menuAction = this.menuActionId[row];
 		final int actionTarget = this.menuActionData1[row];
 		if (menuAction >= 2000) {
-            menuAction -= 2000;
+			if (!RSCConfig.rscProtocol)
+            	menuAction -= 2000;
         }
 		if (menuAction == 582) {
 			final NPC npc = this.npcs[actionTarget];
@@ -2807,12 +2816,19 @@ public final class Client extends RSApplet {
 				}
 			}
 		}
-		if (menuAction == 900) {
-			this.clickInteractiveObject(actionTarget, actionInformation1, actionInformation2);
-			this.stream.putOpcode(252);
-			this.stream.putLEShortA(actionTarget >> 14 & 0x7FFF);
-			this.stream.putLEShort(actionInformation1 + this.baseY);
-			this.stream.putShortA(actionInformation2 + this.baseX);
+		if (menuAction == 1002 || menuAction == 900) {
+			if (!RSCConfig.rscProtocol) {
+				this.clickInteractiveObject(actionTarget, actionInformation1, actionInformation2);
+				this.stream.putOpcode(252);
+				this.stream.putLEShortA(actionTarget >> 14 & 0x7FFF);
+				this.stream.putLEShort(actionInformation1 + this.baseY);
+				this.stream.putShortA(actionInformation2 + this.baseX);
+			} else {
+				this.stream.RSC_newPacket(79);
+				this.stream.putShort(regionX + actionInformation2);
+				this.stream.putShort(regionY + actionInformation1);
+				this.stream.RSC_finalizePacket();
+			}
 		}
 		if (menuAction == 412) {
 			final NPC npc = this.npcs[actionTarget];
@@ -3094,7 +3110,7 @@ public final class Client extends RSApplet {
 			this.redrawTab = true;
 			return;
 		}
-		if (menuAction == 1226) {
+		if (menuAction == 2226 || menuAction == 1226) {
 			final int objectId = actionTarget >> 14 & 0x7FFF;
 			final GameObjectDefinition object = GameObjectDefinition.getDefinition(objectId);
 			final String description;
@@ -3425,7 +3441,7 @@ public final class Client extends RSApplet {
 			this.fontPlain.drawTextLeft("Mem:" + memory + "k", x, y, 0xFFFF00);
 			y += 15;
 		}
-		if (Settings.debug)
+		if (Settings.getDebug())
 		{
 			this.fontPlain.drawTextLeft("Pos: (" + (baseX + Client.localPlayer.waypointX[0]) + ", " + (baseY + Client.localPlayer.waypointY[0]) + ")", x, y, 0xFFFF00);
 			y += 15;
@@ -8810,7 +8826,31 @@ public final class Client extends RSApplet {
                     ordered = false;
                 }
             }
+		}
 
+		ordered = false;
+		while (!ordered) {
+			ordered = true;
+			for (int a = 0; a < this.menuActionRow - 1; a++) {
+				if (this.menuActionId[a] < 2000 && this.menuActionId[a + 1] > 2000) {
+					final String s = this.menuActionName[a];
+					this.menuActionName[a] = this.menuActionName[a + 1];
+					this.menuActionName[a + 1] = s;
+					int temp = this.menuActionId[a];
+					this.menuActionId[a] = this.menuActionId[a + 1];
+					this.menuActionId[a + 1] = temp;
+					temp = this.menuActionData2[a];
+					this.menuActionData2[a] = this.menuActionData2[a + 1];
+					this.menuActionData2[a + 1] = temp;
+					temp = this.menuActionData3[a];
+					this.menuActionData3[a] = this.menuActionData3[a + 1];
+					this.menuActionData3[a + 1] = temp;
+					temp = this.menuActionData1[a];
+					this.menuActionData1[a] = this.menuActionData1[a + 1];
+					this.menuActionData1[a + 1] = temp;
+					ordered = false;
+				}
+			}
 		}
 	}
 

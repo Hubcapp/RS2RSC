@@ -110,6 +110,7 @@ public class Entity extends Animable {
 			animation = RSC_queuedAnimation;
 			currentAnimationFrame = 0;
 			currentAnimationLoopCount = 0;
+			currentAnimationDuration = 0;
 			animationDelay = 0;
 			RSC_queuedAnimation = -1;
 		}
