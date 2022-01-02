@@ -60,7 +60,7 @@ public final class Buffer extends Cacheable {
         this.position = (this.bitPosition + 7) / 8;
     }
 
-    public void xtea_encrypt(int var1, int[] isaackeys, int var4) {
+    public void RSC_xtea_encrypt(int var1, int[] isaackeys, int var4) {
         int var5 = this.position;
         this.position = var1;
         int var6 = (-var1 + var4) / 8;

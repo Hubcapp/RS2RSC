@@ -6824,13 +6824,14 @@ public final class Client extends RSApplet {
 				for (int i = 0; i < 24; i++) // write 24 random bytes
 					this.stream.put(0);
 				this.stream.RSC_putString(playerUsername);
-				this.stream.xtea_encrypt(xtea_start, seed, this.stream.position);
+				this.stream.RSC_xtea_encrypt(xtea_start, seed, this.stream.position);
 				this.stream.RSC_setLengthShort(2, this.stream.position - xtea_start);
 				this.stream.RSC_finalizePacket();
 
 				this.socket.write(this.stream.position, this.stream.buffer);
 
 				initialResponseCode = 0;
+				this.serverSessionKey = 0xDEADBEEF;
 				responseCode = this.socket.read();
 
 				this.stream.encryptor = new ISAACRandomGenerator(seed);
@@ -6904,6 +6905,7 @@ public final class Client extends RSApplet {
 				this.login(playerUsername, playerPassword, recoveredConnection);
 				return;
 			}
+
 			if (responseCode == 2) {
 				if (Settings.getRememberUsername())
 					Settings.setRememberUsername(playerUsername);
@@ -7119,6 +7121,7 @@ public final class Client extends RSApplet {
 				this.login(playerUsername, playerPassword, recoveredConnection);
 				return;
 			}
+
 			if (responseCode == -1) {
 				if (initialResponseCode == 0) {
 					if (this.loginFailures < 2) {
