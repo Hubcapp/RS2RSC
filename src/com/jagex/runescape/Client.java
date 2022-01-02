@@ -10085,6 +10085,31 @@ public final class Client extends RSApplet {
 		}
 	}
 
+	public void RSC_spawnGroundItem(int x, int y, int id)
+	{
+		x += RSCConfig.localRegionX;
+		y += RSCConfig.localRegionY;
+		if (x >= 0 && y >= 0 && x < 104 && y < 104) {
+			final Item item = new Item();
+			item.itemId = id;
+			item.itemCount = 1;
+			if (this.groundArray[this.plane][x][y] == null)
+				this.groundArray[this.plane][x][y] = new DoubleEndedQueue();
+			this.groundArray[this.plane][x][y].pushBack(item);
+			this.spawnGroundItem(x, y);
+
+			for (GameObjectSpawnRequest spawnRequest = (GameObjectSpawnRequest) this.spawnObjectList
+					.peekFront(); spawnRequest != null; spawnRequest = (GameObjectSpawnRequest) this.spawnObjectList
+					.getPrevious()) {
+				if (spawnRequest.x >= this.playerPositionX && spawnRequest.x < this.playerPositionX + 8
+						&& spawnRequest.y >= this.playerPositionY && spawnRequest.y < this.playerPositionY + 8
+						&& spawnRequest.z == this.plane) {
+					spawnRequest.delayUntilRespawn = 0;
+				}
+			}
+		}
+	}
+
 	private void spawnGroundItem(final int x, final int y) {
 		final DoubleEndedQueue groundItemList = this.groundArray[this.plane][x][y];
 		if (groundItemList == null) {

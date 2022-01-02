@@ -445,6 +445,9 @@ public final class ItemDefinition {
 
 		readValues(stream);
 
+		if (rscID == -1)
+			return;
+
 		name = JGameData.itemName[rscID];
 		description = JGameData.itemExamine[rscID].getBytes();
 		stackable = JGameData.itemStackable[rscID];

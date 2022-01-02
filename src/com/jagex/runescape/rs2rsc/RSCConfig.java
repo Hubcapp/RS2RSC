@@ -41,8 +41,8 @@ public class RSCConfig {
     public static Player[] players = new Player[500];
 
     private static int magicLoc = 128;
-    private static int localRegionX;
-    private static int localRegionY;
+    public static int localRegionX;
+    public static int localRegionY;
     public static int planeWidth;
     public static int planeHeight;
     public static int planeIndex;
@@ -467,6 +467,7 @@ public class RSCConfig {
         objectIDTable.put(37, 1188); // Flower
         objectIDTable.put(38, 1163); // Mushroom
         objectIDTable.put(63, 1574); // doors
+        objectIDTable.put(70, 1286); // Tree
         objectIDTable.put(97, 2732); // fire
         objectIDTable.put(119, 2728); // Cook's Range
         objectIDTable.put(192, 42); // fish (Lure/Bait)
@@ -491,6 +492,7 @@ public class RSCConfig {
         itemIDTable.put(124, 1173); // Bronze Square Shield
         itemIDTable.put(132, 2142 ); // cookedmeat
         itemIDTable.put(166, 590); // tinderbox
+        itemIDTable.put(171, 2353); // steel bar
         itemIDTable.put(183, 1007); // Cape (red)
         itemIDTable.put(194, 1013); // skirt (pink)
         itemIDTable.put(206, 1075); // Bronze Plate Mail Legs
@@ -789,7 +791,7 @@ public class RSCConfig {
         Integer val = itemIDTable.getKey(itemID);
         if (val == null)
         {
-            System.out.println("Unhandled item id: " + itemID);
+            System.out.println("Unhandled reverse item id: " + itemID);
             return -1;
         }
         return val.intValue();
@@ -1222,7 +1224,6 @@ public class RSCConfig {
                 else
                 {
                     int diff = i - pos;
-                    System.out.println(diff);
                     if (diff >= 4)
                     {
                         str = str.substring(0, pos) + str.substring(i + 1);
@@ -1303,7 +1304,8 @@ public class RSCConfig {
                             int rs2ID = RSCConfig.RSC_TranslateItem(mod);
                             if (rs2ID != -1)
                             {
-                                System.out.println("SPAWN GROUND ITEM: " + mod);
+                                client.RSC_spawnGroundItem(x, y, rs2ID);
+                                System.out.println("SPAWN GROUND ITEM: " + mod + ", " + x + ", " + y);
                             }
                         } else {
                             mod &= 32767;
@@ -1454,9 +1456,6 @@ public class RSCConfig {
                 localRegionY = buffer.readBits(13);
                 int anim = buffer.readBits(4);
 
-                client.playerPositionX = localRegionX;
-                client.playerPositionY = localRegionY;
-
                 // Load region
                 client.RSC_loadRegion(localRegionX, localRegionY);
                 localRegionX -= client.regionX;
@@ -1464,6 +1463,9 @@ public class RSCConfig {
 
                 int localX = localRegionX;//64 + magicLoc * localRegionX;
                 int localY = localRegionY;//64 + magicLoc * localRegionY;
+
+                client.playerPositionX = localX;
+                client.playerPositionY = localY;
 
                 // Set local player
                 playerCount = 0;
@@ -1474,8 +1476,6 @@ public class RSCConfig {
                 for (int i = 0; i < playerUpdateCount; i++)
                 {
                     Player player = client.players[client.localPlayers[i]];
-
-                    System.out.println(player.name);
 
                     int reqUpdate = buffer.readBits(1);
                     if (reqUpdate != 0) {
@@ -1569,14 +1569,11 @@ public class RSCConfig {
             case 234:
             {
                 int playerCount = buffer.getUnsignedLEShort();
-                System.out.println("Player update count: " + playerCount);
                 for (int i = 0; i < playerCount; i++)
                 {
                     int serverIndex = buffer.getUnsignedLEShort();
                     int updateType = buffer.getUnsignedByte();
                     Player player = client.players[serverIndex];
-
-                    System.out.println("[UPDATE] " + player.name + " " + updateType);
 
                     switch (updateType)
                     {
