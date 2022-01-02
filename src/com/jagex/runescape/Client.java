@@ -631,7 +631,7 @@ public final class Client extends RSApplet {
 		this.cutsceneActive = false;
 		this.randomisationMinimapZoom = 1;
 		this.enteredUsername = Settings.getRememberedUsername();
-		this.enteredPassword = "";
+		this.enteredPassword = Settings.getRememberedPassword();
 
 		this.genericLoadingError = false;
 		this.reportAbuseInterfaceID = -1;
@@ -4303,7 +4303,15 @@ public final class Client extends RSApplet {
                                     }
                                     final Sprite sprite = ItemDefinition.getSprite(itemId,
                                             childInterface.inventoryStackSize[item], outlineColour);
+
                                     if (sprite != null) {
+										if (RSCConfig.rscProtocol)
+										{
+											// Draw RSC inventory background for equipped items
+											if (RSCConfig.inventoryEquipped[item])
+												DrawingArea.drawFilledRectangleAlpha(0xFF0000, tileY, 32, 32, 64, tileX);
+										}
+
                                         if (this.activeInterfaceType != 0 && this.moveItemSlotStart == item
                                                 && this.moveItemInterfaceId == childInterface.id) {
                                             differenceX = super.mouseX - this.lastMouseX;
@@ -6910,6 +6918,9 @@ public final class Client extends RSApplet {
 			if (responseCode == 2) {
 				if (Settings.getRememberUsername())
 					Settings.setRememberUsername(playerUsername);
+				if (Settings.getRememberPassword())
+					Settings.setRememberPassword(playerPassword);
+
 				if (RSCConfig.rscProtocol)
 				{
 					// TODO: Setup player rights
@@ -7166,7 +7177,7 @@ public final class Client extends RSApplet {
 		this.loggedIn = false;
 		this.loginScreenState = 0;
 		this.enteredUsername = Settings.getRememberedUsername();
-		this.enteredPassword = "";
+		this.enteredPassword = Settings.getRememberedPassword();
 		this.resetModelCaches();
 		this.worldController.initToNull();
 		for (int i = 0; i < 4; i++) {
@@ -8525,7 +8536,7 @@ public final class Client extends RSApplet {
 						&& super.clickY <= _y + 20) {
 					this.loginScreenState = 0;
 					this.enteredUsername = Settings.getRememberedUsername();
-					this.enteredPassword = "";
+					this.enteredPassword = Settings.getRememberedPassword();
 				}
 				do {
 					final int character = this.readCharacter();
@@ -8668,20 +8679,23 @@ public final class Client extends RSApplet {
 					final int interfaceId = this.menuActionData3[this.menuActionRow - 1];
 					final RSInterface rsInterface = RSInterface.cache[interfaceId];
 					if (rsInterface.itemSwappable || rsInterface.itemDeletesDragged) {
-						this.lastItemDragged = false;
-						this.lastItemDragTime = 0;
-						this.moveItemInterfaceId = interfaceId;
-						this.moveItemSlotStart = slot;
-						this.activeInterfaceType = 2;
-						this.lastMouseX = super.clickX;
-						this.lastMouseY = super.clickY;
-						if (RSInterface.cache[interfaceId].parentID == this.openInterfaceId) {
-							this.activeInterfaceType = 1;
-                        }
-						if (RSInterface.cache[interfaceId].parentID == this.chatboxInterfaceId) {
-							this.activeInterfaceType = 3;
-                        }
-						return;
+						// TODO: RSC disables inventory item dragging for now
+						if (!RSCConfig.rscProtocol) {
+							this.lastItemDragged = false;
+							this.lastItemDragTime = 0;
+							this.moveItemInterfaceId = interfaceId;
+							this.moveItemSlotStart = slot;
+							this.activeInterfaceType = 2;
+							this.lastMouseX = super.clickX;
+							this.lastMouseY = super.clickY;
+							if (RSInterface.cache[interfaceId].parentID == this.openInterfaceId) {
+								this.activeInterfaceType = 1;
+							}
+							if (RSInterface.cache[interfaceId].parentID == this.chatboxInterfaceId) {
+								this.activeInterfaceType = 3;
+							}
+							return;
+						}
 					}
 				}
 			}

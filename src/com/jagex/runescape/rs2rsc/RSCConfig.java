@@ -37,6 +37,9 @@ public class RSCConfig {
     public static int inventoryCount = 0;
     public static boolean inventoryUpdate = false;
 
+    public static int playerCount;
+    public static Player[] players = new Player[500];
+
     private static int magicLoc = 128;
     private static int localRegionX;
     private static int localRegionY;
@@ -498,6 +501,8 @@ public class RSCConfig {
         itemIDTable.put(203, 1355); // Mithril Axe
         itemIDTable.put(204, 1357); // Adamantite Axe
         itemIDTable.put(205, 1375); // bronze battle axe
+        itemIDTable.put(319, 1985); // Cheese
+        itemIDTable.put(320, 1982); // Tomato
         itemIDTable.put(349, 317); // Raw Shrimp
         itemIDTable.put(375, 301); // Lobster Pot
         itemIDTable.put(376, 303); // Small fishing net
@@ -595,6 +600,9 @@ public class RSCConfig {
             - Remove unused skills
             - Remove accept aid
          */
+
+        // Initialize rsc state
+        playerCount = 0;
 
         // Set settings
         client.sendConfig(166, Settings.getBrightness() + 1); // Brightness
@@ -715,18 +723,20 @@ public class RSCConfig {
 
         Player player = client.players[serverIndex];
         boolean isLocal = false;
+        boolean isSelf = false;
 
         if (player.waypointX[0] != areaX || player.waypointY[0] != areaY)
             player.setPos(areaX, areaY, false);
 
         if (serverIndex == localServerIndex)
         {
+            isSelf = true;
             isLocal = true;
             Client.localPlayer = player;
         }
 
         // Do we already know about this player?
-        if (!isLocal) {
+        if (!isSelf) {
             for (int otherServerIndex : client.localPlayers) {
                 if (otherServerIndex == serverIndex) {
                     isLocal = true;
@@ -735,10 +745,8 @@ public class RSCConfig {
             }
         }
 
-        if (!isLocal)
-        {
-            client.localPlayers[client.localPlayerCount++] = serverIndex;
-        }
+        if (!isSelf)
+            players[playerCount++] = player;
 
         return player;
     }
@@ -771,7 +779,7 @@ public class RSCConfig {
         if (val == null)
         {
             System.out.println("Unhandled item id: " + itemID);
-            return 0;
+            return -1;
         }
         return val.intValue();
     }
@@ -782,7 +790,7 @@ public class RSCConfig {
         if (val == null)
         {
             System.out.println("Unhandled item id: " + itemID);
-            return 0;
+            return -1;
         }
         return val.intValue();
     }
@@ -1278,6 +1286,32 @@ public class RSCConfig {
 
         switch (opcode)
         {
+            case 99: // Ground Items
+            {
+                while (client.packetSize > buffer.position)
+                {
+                    if (buffer.getUnsignedByte() == 255) {
+                        int x = buffer.get() >> 3;
+                        int y = buffer.get() >> 3;
+                    } else {
+                        buffer.position--;
+                        int mod = buffer.getUnsignedLEShort();
+                        int x = buffer.get();
+                        int y = buffer.get();
+
+                        if (('\u8000' & mod) == 0) {
+                            int rs2ID = RSCConfig.RSC_TranslateItem(mod);
+                            if (rs2ID != -1)
+                            {
+                                System.out.println("SPAWN GROUND ITEM: " + mod);
+                            }
+                        } else {
+                            mod &= 32767;
+                        }
+                    }
+                }
+                break;
+            }
             case 5:
             {
                 for (int i = 0; i < Game.QUEST_COUNT; i++)
@@ -1411,6 +1445,10 @@ public class RSCConfig {
             }
             case 191: // Local Player
             {
+                client.localPlayerCount = playerCount;
+                for (int i = 0; i < playerCount; i++)
+                    client.localPlayers[i] = players[i].index;
+
                 buffer.initBitAccess();
                 localRegionX = buffer.readBits(11);
                 localRegionY = buffer.readBits(13);
@@ -1428,10 +1466,12 @@ public class RSCConfig {
                 int localY = localRegionY;//64 + magicLoc * localRegionY;
 
                 // Set local player
+                playerCount = 0;
                 Player localPlayer = RSC_getPlayer(client, localServerIndex, localX, localY, anim);
 
-                int playerCount = buffer.readBits(8);
-                for (int i = 0; i < playerCount; i++)
+                int playerUpdateCount = buffer.readBits(8);
+
+                for (int i = 0; i < playerUpdateCount; i++)
                 {
                     Player player = client.players[client.localPlayers[i]];
 
@@ -1453,6 +1493,8 @@ public class RSCConfig {
                             int nextAnim = buffer.readBits(3);
                         }
                     }
+
+                    players[playerCount++] = player;
                 }
 
                 while (client.packetSize * 8 > buffer.bitPosition + 24)

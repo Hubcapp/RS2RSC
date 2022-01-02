@@ -23,6 +23,7 @@ public class Settings
     private static String serverIP = "game.openrsc.com";
     private static int serverPort = 43596;
     private static String rememberUsername = "<disabled>";
+    private static String rememberPassword = "<disabled>";
     private static boolean enterToLogin = false;
 
     private static String baseDir;
@@ -69,6 +70,7 @@ public class Settings
         props.setProperty("ServerIP", serverIP);
         props.setProperty("ServerPort", Integer.toString(serverPort));
         props.setProperty("RememberUsername", rememberUsername);
+        props.setProperty("RememberPassword", rememberPassword);
         props.setProperty("EnterToLogin", Boolean.toString(enterToLogin));
 
         try {
@@ -101,6 +103,7 @@ public class Settings
         serverIP = getPropString(props, "ServerIP", serverIP);
         serverPort = getPropInt(props, "ServerPort", serverPort);
         rememberUsername = getPropString(props, "RememberUsername", rememberUsername);
+        rememberPassword = getPropString(props, "RememberPassword", rememberPassword);
         enterToLogin = getPropBoolean(props, "EnterToLogin", enterToLogin);
 
         sanitizeConfigValues();
@@ -116,9 +119,21 @@ public class Settings
         return serverModulus;
     }
 
+    public static boolean getRememberPassword()
+    {
+        return !rememberPassword.equals("<disabled>");
+    }
+
     public static boolean getRememberUsername()
     {
         return !rememberUsername.equals("<disabled>");
+    }
+
+    public static String getRememberedPassword()
+    {
+        if (!getRememberPassword())
+            return "";
+        return rememberPassword;
     }
 
     public static String getRememberedUsername()
@@ -181,6 +196,14 @@ public class Settings
         if (val == null)
             val = "<disabled>";
         rememberUsername = val;
+        updateConfigChange();
+    }
+
+    public static void setRememberPassword(String val)
+    {
+        if (val == null)
+            val = "<disabled>";
+        rememberPassword = val;
         updateConfigChange();
     }
 
