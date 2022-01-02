@@ -6800,6 +6800,7 @@ public final class Client extends RSApplet {
 				seed[3] = (int) (Math.random() * 9.9999999E7D);
 
 				this.stream.position = 0;
+				this.stream.encryptor = null;
 				this.stream.RSC_newPacket(0);
 				this.stream.put(recoveredConnection ? 1 : 0);
 				this.stream.putInt(RSCConfig.rscVersion);
