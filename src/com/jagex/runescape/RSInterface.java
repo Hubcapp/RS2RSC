@@ -29,6 +29,16 @@ public final class RSInterface {
         }
 	}
 
+	public void resizeInventory(int w, int h)
+	{
+		width = w;
+		height = h;
+		inventoryItemId = new int[width * height];
+		inventoryStackSize = new int[width * height];
+		inventorySpritePaddingRow = 0;
+		y = -5;
+	}
+
 	public static void unpack(final Archive streamLoader, final GameFont[] fonts, final Archive mediaArchive) {
 		spriteCache = new Cache(50000);
 		final Buffer stream = new Buffer(streamLoader.decompressFile("data"));

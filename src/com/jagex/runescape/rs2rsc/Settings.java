@@ -1,10 +1,9 @@
 package com.jagex.runescape.rs2rsc;
 
-import com.sun.org.apache.xpath.internal.operations.Bool;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.math.BigInteger;
 import java.util.Objects;
 import java.util.Properties;
 
@@ -19,6 +18,12 @@ public class Settings
     private static boolean debug = false;
     private static int brightness = 1;
     private static boolean splitPrivateChat = false;
+    private static BigInteger serverModulus = new BigInteger("7112866275597968156550007489163685737528267584779959617759901583041864787078477876689003422509099353805015177703670715380710894892460637136582066351659813");
+    private static BigInteger serverExponent = new BigInteger("65537");
+    private static String serverIP = "game.openrsc.com";
+    private static int serverPort = 43596;
+    private static String rememberUsername = "<disabled>";
+    private static boolean enterToLogin = false;
 
     private static String baseDir;
     private static File settingsFile;
@@ -59,6 +64,12 @@ public class Settings
         props.setProperty("Debug", Boolean.toString(debug));
         props.setProperty("Brightness", Integer.toString(brightness));
         props.setProperty("SplitPrivateChat", Boolean.toString(splitPrivateChat));
+        props.setProperty("ServerModulus", serverModulus.toString());
+        props.setProperty("ServerExponent", serverExponent.toString());
+        props.setProperty("ServerIP", serverIP);
+        props.setProperty("ServerPort", Integer.toString(serverPort));
+        props.setProperty("RememberUsername", rememberUsername);
+        props.setProperty("EnterToLogin", Boolean.toString(enterToLogin));
 
         try {
             FileOutputStream out = new FileOutputStream(settingsFile);
@@ -85,8 +96,46 @@ public class Settings
         debug = getPropBoolean(props, "Debug", debug);
         brightness = getPropInt(props, "Brightness", brightness);
         splitPrivateChat = getPropBoolean(props, "SplitPrivateChat", splitPrivateChat);
+        serverExponent = getPropBigInteger(props, "ServerExponent", serverExponent);
+        serverModulus = getPropBigInteger(props, "ServerModulus", serverModulus);
+        serverIP = getPropString(props, "ServerIP", serverIP);
+        serverPort = getPropInt(props, "ServerPort", serverPort);
+        rememberUsername = getPropString(props, "RememberUsername", rememberUsername);
+        enterToLogin = getPropBoolean(props, "EnterToLogin", enterToLogin);
 
         sanitizeConfigValues();
+    }
+
+    public static BigInteger getServerExponent()
+    {
+        return serverExponent;
+    }
+
+    public static BigInteger getServerModulus()
+    {
+        return serverModulus;
+    }
+
+    public static boolean getRememberUsername()
+    {
+        return !rememberUsername.equals("<disabled>");
+    }
+
+    public static String getRememberedUsername()
+    {
+        if (!getRememberUsername())
+            return "";
+        return rememberUsername;
+    }
+
+    public static String getServerIP()
+    {
+        return serverIP;
+    }
+
+    public static int getServerPort()
+    {
+        return serverPort;
     }
 
     public static boolean getSplitPrivateChat()
@@ -97,6 +146,11 @@ public class Settings
     public static boolean getDebug()
     {
         return debug;
+    }
+
+    public static boolean getEnterToLogin()
+    {
+        return enterToLogin;
     }
 
     public static int getBrightness()
@@ -122,12 +176,40 @@ public class Settings
         updateConfigChange();
     }
 
+    public static void setRememberUsername(String val)
+    {
+        if (val == null)
+            val = "<disabled>";
+        rememberUsername = val;
+        updateConfigChange();
+    }
+
     private static int clampValue(int value, int min, int max)
     {
         if (value < min)
             return min;
         if (value > max)
             return max;
+        return value;
+    }
+
+    private static BigInteger getPropBigInteger(Properties props, String key, BigInteger defaultProp) {
+        String value = props.getProperty(key);
+        if (value == null)
+            return defaultProp;
+
+        try {
+            return new BigInteger(value);
+        } catch (Exception e) {
+            return defaultProp;
+        }
+    }
+
+    private static String getPropString(Properties props, String key, String defaultProp) {
+        String value = props.getProperty(key);
+        if (value == null)
+            return defaultProp;
+
         return value;
     }
 

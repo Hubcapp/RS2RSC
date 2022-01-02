@@ -13,10 +13,6 @@ import java.util.Map;
 public class RSCConfig {
     public static boolean rscProtocol = true;
     public static int rscVersion = 235;
-    public static String ip = "game.openrsc.com";
-    public static int port = 43596;
-    public static BigInteger modulus = new BigInteger("7112866275597968156550007489163685737528267584779959617759901583041864787078477876689003422509099353805015177703670715380710894892460637136582066351659813");
-    public static BigInteger exponent = new BigInteger("65537");
     public static int jaggrabPort = 43595; // unused, technically
 
     public static int DEFAULT_BRIGHTNESS = 1;
@@ -34,6 +30,7 @@ public class RSCConfig {
     public static int localServerIndex;
 
     public static String[] friendServers = new String[200];
+    public static boolean[] questComplete = new boolean[Game.QUEST_COUNT];
     public static int[] inventoryID = new int[30];
     public static boolean[] inventoryEquipped = new boolean[30];
     public static int[] inventoryAmount = new int[30];
@@ -550,7 +547,7 @@ public class RSCConfig {
         // Update inventory
         if (inventoryUpdate) {
             RSInterface tab = getInventoryInterface();
-            int count = Math.min(inventoryCount, 28);
+            int count = inventoryCount;
             int length = Math.min(tab.inventoryItemId.length, inventoryID.length);
 
             if (tab != null) {
@@ -606,6 +603,7 @@ public class RSCConfig {
 
         // Set sidebar interfaces
         client.setSidebarID(1, 3917); // Stats
+        //client.setSidebarID(2, 638); // Quest
         client.setSidebarID(3, 3213); // Inventory
         client.setSidebarID(8, 5065); // Friends
         client.setSidebarID(10, 2449); // Logout
@@ -613,6 +611,8 @@ public class RSCConfig {
 
         // Setup friends list
         client.friendListStatus = 2;
+
+        getInventoryInterface().resizeInventory(4, 8);
 
         // Setup player actions
         client.playerActionText[0] = "Duel with";
@@ -1278,6 +1278,15 @@ public class RSCConfig {
 
         switch (opcode)
         {
+            case 5:
+            {
+                for (int i = 0; i < Game.QUEST_COUNT; i++)
+                    questComplete[i] = (buffer.get() == 1);
+
+                //client.sendInterfaceString(663, "0"); // FREE QUESTS
+
+                break;
+            }
             case 149:
             {
                 String name = buffer.RSC_readString();
@@ -1913,7 +1922,7 @@ public class RSCConfig {
                     client.skillExperience[skill] = RSC_convertXP(buffer.getInt());
 
                 int questPoints = buffer.getUnsignedByte();
-                // TODO: Set quest points
+                client.sendConfig(101, questPoints);
 
                 client.redrawTab = true;
                 break;

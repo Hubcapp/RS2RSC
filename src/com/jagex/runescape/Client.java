@@ -630,8 +630,9 @@ public final class Client extends RSApplet {
 		this.loadGeneratedMap = false;
 		this.cutsceneActive = false;
 		this.randomisationMinimapZoom = 1;
-		this.enteredUsername = "";
+		this.enteredUsername = Settings.getRememberedUsername();
 		this.enteredPassword = "";
+
 		this.genericLoadingError = false;
 		this.reportAbuseInterfaceID = -1;
 		this.spawnObjectList = new DoubleEndedQueue();
@@ -4770,7 +4771,7 @@ public final class Client extends RSApplet {
         }
 		try {
 			if (super.gameFrame != null) {
-                return new URL("http://" + RSCConfig.ip + ":" + (80 + portOffset));
+                return new URL("http://" + Settings.getServerIP() + ":" + (80 + portOffset));
             }
 		} catch (final Exception _ex) {
 		}
@@ -5057,6 +5058,14 @@ public final class Client extends RSApplet {
 			this.destinationY -= _y;
 		}
 		this.cutsceneActive = false;
+	}
+
+	public void sendInterfaceString(int interfaceId, String text)
+	{
+		RSInterface.cache[interfaceId].textDefault = text;
+		if (RSInterface.cache[interfaceId].parentID == this.tabInterfaceIDs[this.currentTabId]) {
+			this.redrawTab = true;
+		}
 	}
 
 	private boolean handleIncomingData() {
@@ -5956,10 +5965,7 @@ public final class Client extends RSApplet {
 			if (this.packetOpcode == 126) {
 				final String text = this.inStream.getString();
 				final int interfaceId = this.inStream.getUnsignedLEShortA();
-				RSInterface.cache[interfaceId].textDefault = text;
-				if (RSInterface.cache[interfaceId].parentID == this.tabInterfaceIDs[this.currentTabId]) {
-					this.redrawTab = true;
-                }
+				sendInterfaceString(interfaceId, text);
 				this.packetOpcode = -1;
 				return true;
 			}
@@ -6778,7 +6784,7 @@ public final class Client extends RSApplet {
 				this.titleScreen.drawLoginScreen(super.gameGraphics, true, this.loginScreenState, this.onDemandFetcher.statusString, this.loginMessage1, this.loginMessage2, this.enteredUsername, this.enteredPassword, tick, this.loginScreenFocus);
 			}
 
-			this.socket = new RSSocket(this, this.openSocket(RSCConfig.port + portOffset));
+			this.socket = new RSSocket(this, this.openSocket(Settings.getServerPort() + portOffset));
 			final long nameLong = TextClass.nameToLong(playerUsername);
 			final int nameHash = (int) (nameLong >> 16 & 31L);
 
@@ -6899,6 +6905,8 @@ public final class Client extends RSApplet {
 				return;
 			}
 			if (responseCode == 2) {
+				if (Settings.getRememberUsername())
+					Settings.setRememberUsername(playerUsername);
 				if (RSCConfig.rscProtocol)
 				{
 					// TODO: Setup player rights
@@ -7153,8 +7161,8 @@ public final class Client extends RSApplet {
 		this.socket = null;
 		this.loggedIn = false;
 		this.loginScreenState = 0;
-		// myUsername = "";
-		// myPassword = "";
+		this.enteredUsername = Settings.getRememberedUsername();
+		this.enteredPassword = "";
 		this.resetModelCaches();
 		this.worldController.initToNull();
 		for (int i = 0; i < 4; i++) {
@@ -7459,7 +7467,12 @@ public final class Client extends RSApplet {
 		if (super.idleTime > 4500) {
 			this.idleLogout = 250;
 			super.idleTime -= 500;
-			this.stream.putOpcode(202);
+			if (!RSCConfig.rscProtocol) {
+				this.stream.putOpcode(202);
+			} else {
+				this.stream.RSC_newPacket(67);
+				this.stream.RSC_finalizePacket();
+			}
 		}
 		this.cameraRandomisationCounter++;
 		if (this.cameraRandomisationCounter > 500) {
@@ -8476,6 +8489,8 @@ public final class Client extends RSApplet {
 				this.loginMessage2 = "Enter your username & password.";
 				this.loginScreenState = 2;
 				this.loginScreenFocus = 0;
+				if (Settings.getRememberUsername())
+					this.loginScreenFocus = 1;
 			}
 		} else {
 			if (this.loginScreenState == 2) {
@@ -8540,7 +8555,10 @@ public final class Client extends RSApplet {
 							this.enteredPassword = this.enteredPassword.substring(0, this.enteredPassword.length() - 1);
                         }
 						if (character == 9 || character == 10 || character == 13) {
-							this.loginScreenFocus = 0;
+							if (Settings.getEnterToLogin())
+								this.login(enteredUsername, enteredPassword, false);
+							if (enteredUsername.length() == 0 || !Settings.getRememberedUsername().equalsIgnoreCase(enteredUsername))
+								this.loginScreenFocus = 0;
                         }
 						if (validCharacter) {
 							this.enteredPassword += (char) character;

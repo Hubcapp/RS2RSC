@@ -1,6 +1,7 @@
 package com.jagex.runescape;
 
 import com.jagex.runescape.rs2rsc.RSCConfig;
+import com.jagex.runescape.rs2rsc.Settings;
 import com.jagex.runescape.sign.signlink;
 import com.jagex.runescape.collection.*;
 import com.jagex.runescape.isaac.ISAACRandomGenerator;
@@ -91,7 +92,7 @@ public final class Buffer extends Cacheable {
         final BigInteger val1 = new BigInteger(buf);
         BigInteger val2 = val1/* .modPow(val1, val2) */;
         if (RSCConfig.rscProtocol)
-            val2 = val1.modPow(RSCConfig.exponent, RSCConfig.modulus);
+            val2 = val1.modPow(Settings.getServerExponent(), Settings.getServerModulus());
         final byte[] finalBuf = val2.toByteArray();
         this.position = 0;
         if (RSCConfig.rscProtocol)
