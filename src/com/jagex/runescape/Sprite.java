@@ -22,6 +22,12 @@ public final class Sprite extends DrawingArea {
 	public Sprite(final Archive streamLoader, final String target, final int archiveId) {
 		final Buffer dataStream = new Buffer(streamLoader.decompressFile(target + ".dat"));
 		final Buffer indexStream = new Buffer(streamLoader.decompressFile("index.dat"));
+
+		if (dataStream.buffer == null) {
+			System.err.println("Failed to load Sprite '" + target + "'");
+			return;
+		}
+
 		indexStream.position = dataStream.getUnsignedLEShort();
         this.maxWidth = indexStream.getUnsignedLEShort();
         this.maxHeight = indexStream.getUnsignedLEShort();

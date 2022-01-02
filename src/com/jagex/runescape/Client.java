@@ -8523,8 +8523,8 @@ public final class Client extends RSApplet {
 				if (super.clickType == 1 && super.clickX >= x - 75 && super.clickX <= x + 75 && super.clickY >= _y - 20
 						&& super.clickY <= _y + 20) {
 					this.loginScreenState = 0;
-					// myUsername = "";
-					// myPassword = "";
+					this.enteredUsername = Settings.getRememberedUsername();
+					this.enteredPassword = "";
 				}
 				do {
 					final int character = this.readCharacter();
