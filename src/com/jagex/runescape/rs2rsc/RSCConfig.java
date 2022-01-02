@@ -1304,11 +1304,14 @@ public class RSCConfig {
                             int rs2ID = RSCConfig.RSC_TranslateItem(mod);
                             if (rs2ID != -1)
                             {
-                                client.RSC_spawnGroundItem(x, y, rs2ID);
                                 System.out.println("SPAWN GROUND ITEM: " + mod + ", " + x + ", " + y);
+                                client.RSC_spawnGroundItem(x, y, rs2ID);
                             }
                         } else {
                             mod &= 32767;
+                            int rs2ID = RSCConfig.RSC_TranslateItem(mod);
+                            System.out.println("REMOVE GROUND ITEM: " + mod + ", " + x + ", " + y);
+                            client.RSC_removeGroundItem(x, y, rs2ID);
                         }
                     }
                 }

@@ -2926,8 +2926,8 @@ public final class Client extends RSApplet {
 			}
 		}
 		if (menuAction == 1002 || menuAction == 900) {
+			this.clickInteractiveObject(actionTarget, actionInformation1, actionInformation2);
 			if (!RSCConfig.rscProtocol) {
-				this.clickInteractiveObject(actionTarget, actionInformation1, actionInformation2);
 				this.stream.putOpcode(252);
 				this.stream.putLEShortA(actionTarget >> 14 & 0x7FFF);
 				this.stream.putLEShort(actionInformation1 + this.baseY);
@@ -10105,6 +10105,46 @@ public final class Client extends RSApplet {
 						&& spawnRequest.y >= this.playerPositionY && spawnRequest.y < this.playerPositionY + 8
 						&& spawnRequest.z == this.plane) {
 					spawnRequest.delayUntilRespawn = 0;
+				}
+			}
+		}
+	}
+
+	public void RSC_removeGroundItem(int x, int y, int id)
+	{
+		x += RSCConfig.localRegionX;
+		y += RSCConfig.localRegionY;
+		if (x >= 0 && y >= 0 && x < 104 && y < 104) {
+			DoubleEndedQueue list = this.groundArray[this.plane][x][y];
+			if (list != null) {
+				Linkable start = list.peekFront();
+				int count = 0;
+				boolean found = false;
+				while (start != null) {
+					Item item = (Item)start;
+					if (item.itemId == id) {
+						start.unlink();
+						found = true;
+						break;
+					}
+
+					count++;
+					start = start.next;
+				}
+
+				if (count == 0 && found)
+					this.groundArray[this.plane][x][y] = null;
+
+				this.spawnGroundItem(x, y);
+
+				for (GameObjectSpawnRequest spawnRequest = (GameObjectSpawnRequest) this.spawnObjectList
+						.peekFront(); spawnRequest != null; spawnRequest = (GameObjectSpawnRequest) this.spawnObjectList
+						.getPrevious()) {
+					if (spawnRequest.x >= this.playerPositionX && spawnRequest.x < this.playerPositionX + 8
+							&& spawnRequest.y >= this.playerPositionY && spawnRequest.y < this.playerPositionY + 8
+							&& spawnRequest.z == this.plane) {
+						spawnRequest.delayUntilRespawn = 0;
+					}
 				}
 			}
 		}
