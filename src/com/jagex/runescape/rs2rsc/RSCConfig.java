@@ -40,6 +40,11 @@ public class RSCConfig {
     public static Player[] players = new Player[500];
     public static int npcCount;
     public static NPC[] npcs = new NPC[500];
+    public static int[] shopItem = new int[40];
+    public static int[] shopItemAmount = new int[40];
+    public static int[] shopItemPrice = new int[40];
+    public static int shopItemCount = 0;
+    public static boolean showShop = false;
 
     private static int magicLoc = 128;
     public static int localRegionX;
@@ -511,6 +516,7 @@ public class RSCConfig {
         itemIDTable.put(17, 1061); // Boots
         itemIDTable.put(18, 1965); // Cabbage
         itemIDTable.put(20, 526); // Bones
+        itemIDTable.put(21, 1925); // Bucket
         itemIDTable.put(28, 1203); // Iron dagger
         itemIDTable.put(87, 1351); // bronze Axe
         itemIDTable.put(88, 1349); // Steel Axe
@@ -529,18 +535,19 @@ public class RSCConfig {
         itemIDTable.put(144, 1735); // shears
         itemIDTable.put(145, 1737); // wool
         itemIDTable.put(166, 590); // tinderbox
+        itemIDTable.put(167, 1755); // chisel
+        itemIDTable.put(168, 2347); // hammer
         itemIDTable.put(171, 2353); // steel bar
         itemIDTable.put(183, 1007); // Cape (red)
+        itemIDTable.put(185, 579); // wizardshat
         itemIDTable.put(194, 1013); // skirt (pink)
+        itemIDTable.put(203, 1355); // Mithril Axe
+        itemIDTable.put(204, 1357); // Adamantite Axe
+        itemIDTable.put(205, 1375); // bronze battle axe
         itemIDTable.put(206, 1075); // Bronze Plate Mail Legs
         itemIDTable.put(241, 1957); // Onion
         itemIDTable.put(288, 1654); // Gold necklace
         itemIDTable.put(296, 1692); // Gold Amulet
-        itemIDTable.put(420, 1540); // Anti dragon breath Shield
-        itemIDTable.put(428, 1261); // Black Axe
-        itemIDTable.put(203, 1355); // Mithril Axe
-        itemIDTable.put(204, 1357); // Adamantite Axe
-        itemIDTable.put(205, 1375); // bronze battle axe
         itemIDTable.put(319, 1985); // Cheese
         itemIDTable.put(320, 1982); // Tomato
         itemIDTable.put(349, 317); // Raw Shrimp
@@ -550,8 +557,11 @@ public class RSCConfig {
         itemIDTable.put(378, 309); // Fly Fishing Rod
         itemIDTable.put(379, 311); // Harpoon
         itemIDTable.put(405, 1359); // rune Axe
+        itemIDTable.put(420, 1540); // Anti dragon breath Shield
+        itemIDTable.put(428, 1261); // Black Axe
         itemIDTable.put(548, 305); // Big Net
         itemIDTable.put(971, 1050); // Santa's hat
+        itemIDTable.put(1263, 0); // Sleeping Bag
         itemIDTable.put(1288, 1052); // Cape of legends
 
         System.out.println("using rsc protocol");
@@ -564,7 +574,7 @@ public class RSCConfig {
         {
             if (RSInterface.cache[i] == null)
                 continue;
-            if (RSInterface.cache[i].inventory)
+            if (RSInterface.cache[i].inventory && RSInterface.cache[i].parentID == 3213)
             {
                 tab = RSInterface.cache[i];
                 break;
@@ -594,6 +604,12 @@ public class RSCConfig {
         {
             NPC otherNPC = client.npcs[client.npcIds[i]];
             otherNPC.RSC_update();
+        }
+
+        // Update Shop
+        if (showShop) {
+            client.sendInterface(3824);
+            showShop = false;
         }
 
         // Update inventory
@@ -633,6 +649,14 @@ public class RSCConfig {
             return null;
 
         return option;
+    }
+
+    public static void RSC_selectDialogueOption(Client client, Buffer buffer, int option)
+    {
+        buffer.RSC_newPacket(116);
+        buffer.put(option);
+        buffer.RSC_finalizePacket();
+        client.resetChatInterface();
     }
 
     public static void RSC_HandleLogin(Client client)
@@ -726,6 +750,12 @@ public class RSCConfig {
                 buffer.RSC_finalizePacket();
                 break;
             }
+            case 2461: // Dialogue Option 1
+                RSC_selectDialogueOption(client, buffer, 0);
+                break;
+            case 2462: // Dialogue Option 2
+                RSC_selectDialogueOption(client, buffer, 1);
+                break;
             default:
             {
                 System.out.println("Unhandled interface action id: " + actionID);
@@ -2159,8 +2189,57 @@ public class RSCConfig {
                 client.redrawTab = true;
                 break;
             }
+            case 101: // Open Shop
+            {
+                shopItemCount = buffer.getUnsignedByte();
+                int shopType = buffer.getUnsignedByte();
+                int shopSellPriceMod = buffer.getUnsignedByte();
+                int shopBuyPriceMod = buffer.getUnsignedByte();
+                int shopPriceMultiplier = buffer.getUnsignedByte();
+
+                for (int i = 0; i < shopItem.length; i++)
+                    shopItem[i] = -1;
+
+                for (int i = 0; i < shopItemCount; i++)
+                {
+                    shopItem[i] = buffer.getUnsignedLEShort();
+                    shopItemAmount[i] = buffer.getUnsignedLEShort();
+                    shopItemPrice[i] = buffer.getUnsignedLEShort();
+                }
+
+                showShop = true;
+                break;
+            }
+            case 252: // Close Option Menu
+            {
+                client.resetChatInterface();
+                break;
+            }
             case 245: // Option Menu
             {
+                int optionCount = buffer.getUnsignedByte();
+                String[] options = new String[optionCount];
+                for (int i = 0; i < optionCount; i++)
+                    options[i] = buffer.RSC_readString();
+
+                int interfaceID = -1;
+                int interfaceOption1 = -1;
+                int interfaceOption2 = -1;
+                switch (optionCount)
+                {
+                    case 2:
+                        interfaceID = 2459;
+                        interfaceOption1 = 2461;
+                        interfaceOption2 = 2462;
+                        break;
+                }
+
+                if (interfaceID != -1)
+                    client.sendChatInterface(interfaceID);
+                if (interfaceOption1 != -1)
+                    client.sendInterfaceString(interfaceOption1, options[0]);
+                if (interfaceOption2 != -1)
+                    client.sendInterfaceString(interfaceOption2, options[1]);
                 break;
             }
             case 51: // Privacy Settings

@@ -5176,9 +5176,21 @@ public final class Client extends RSApplet {
 		}
 	}
 
+	public void resetChatInterface()
+	{
+		sendChatInterface(-1);
+	}
+
+	public void sendInterface(int interfaceId)
+	{
+		this.clearTopInterfaces();
+		this.openInterfaceId = interfaceId;
+	}
+
 	public void sendChatInterface(int interfaceId)
 	{
-		this.loadInterface(interfaceId);
+		if (interfaceId > 0)
+			this.loadInterface(interfaceId);
 		if (this.inventoryOverlayInterfaceID != -1) {
 			this.inventoryOverlayInterfaceID = -1;
 			this.redrawTab = true;
