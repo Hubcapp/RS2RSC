@@ -158,9 +158,9 @@ public final class Client extends RSApplet {
 	private Socket jaggrabSocket;
 	private int loginScreenState;
 	private Buffer textStream;
-	private NPC[] npcs;
-	private int npcCount;
-	private int[] npcIds;
+	public NPC[] npcs;
+	public int npcCount;
+	public int[] npcIds;
 	private int actorsToUpdateCount;
 	private int[] actorsToUpdateIds;
 	private int mostRecentOpcode;
@@ -1651,6 +1651,30 @@ public final class Client extends RSApplet {
                     }
                 }
 
+				if (RSCConfig.rscProtocol) {
+					int rscID = RSCConfig.RSC_TranslateNPCReverse((int)definition.id);
+
+					this.menuActionName[this.menuActionRow] = "Talk-to @yel@" + displayName;
+					this.menuActionId[this.menuActionRow] = 583;
+					this.menuActionData1[this.menuActionRow] = data1;
+					this.menuActionData2[this.menuActionRow] = data2;
+					this.menuActionData3[this.menuActionRow] = data3;
+					this.menuActionRow++;
+
+					// NPC is attackable
+					if (JGameData.npcAttackable[rscID] > 0) {
+						this.menuActionName[this.menuActionRow] = "Attack @yel@" + displayName;
+						int modifier = 0;
+						if (definition.combatLevel > localPlayer.combatLevel)
+							modifier = 2000;
+						this.menuActionId[this.menuActionRow] = modifier + 584;
+						this.menuActionData1[this.menuActionRow] = data1;
+						this.menuActionData2[this.menuActionRow] = data2;
+						this.menuActionData3[this.menuActionRow] = data3;
+						this.menuActionRow++;
+					}
+				}
+
 			}
 			this.menuActionName[this.menuActionRow] = "Examine @yel@" + displayName + " @gre@(@whi@" + definition.id + "@gre@)";
 			this.menuActionId[this.menuActionRow] = 1025;
@@ -2322,11 +2346,53 @@ public final class Client extends RSApplet {
 				this.crossY = super.clickY;
 				this.crossType = 2;
 				this.crossIndex = 0;
-				this.stream.putOpcode(57);
-				this.stream.putShortA(this.useItemId);
-				this.stream.putShortA(actionTarget);
-				this.stream.putLEShort(this.lastItemSelectedSlot);
-				this.stream.putShortA(this.lastItemSelectedInterface);
+				if (RSCConfig.rscProtocol) {
+					int src = actionTarget;
+					int dst = this.lastItemSelectedSlot;
+
+					this.stream.RSC_newPacket(135);
+					this.stream.putShort(src);
+					this.stream.putShort(dst);
+					this.stream.RSC_finalizePacket();
+				} else {
+					this.stream.putOpcode(57);
+					this.stream.putShortA(this.useItemId);
+					this.stream.putShortA(actionTarget);
+					this.stream.putLEShort(this.lastItemSelectedSlot);
+					this.stream.putShortA(this.lastItemSelectedInterface);
+				}
+			}
+		}
+		if (menuAction == 583) {
+			final NPC npc = this.npcs[actionTarget];
+			if (npc != null) {
+				this.doWalkTo(2, 0, 1, 0, localPlayer.waypointY[0], 1, 0, npc.waypointY[0], localPlayer.waypointX[0], false,
+						npc.waypointX[0]);
+				this.crossX = super.clickX;
+				this.crossY = super.clickY;
+				this.crossType = 2;
+				this.crossIndex = 0;
+
+				int dst = actionTarget;
+				this.stream.RSC_newPacket(153);
+				this.stream.putShort(dst);
+				this.stream.RSC_finalizePacket();
+			}
+		}
+		if (menuAction == 584 || menuAction == 2584) {
+			final NPC npc = this.npcs[actionTarget];
+			if (npc != null) {
+				this.doWalkTo(2, 0, 1, 0, localPlayer.waypointY[0], 1, 0, npc.waypointY[0], localPlayer.waypointX[0], false,
+						npc.waypointX[0]);
+				this.crossX = super.clickX;
+				this.crossY = super.clickY;
+				this.crossType = 2;
+				this.crossIndex = 0;
+
+				int dst = actionTarget;
+				this.stream.RSC_newPacket(190);
+				this.stream.putShort(dst);
+				this.stream.RSC_finalizePacket();
 			}
 		}
 		if (menuAction == 234) {
@@ -2346,13 +2412,30 @@ public final class Client extends RSApplet {
 			this.stream.putLEShort(actionInformation2 + this.baseX);
 		}
 		if (menuAction == 62 && this.clickInteractiveObject(actionTarget, actionInformation1, actionInformation2)) {
-			this.stream.putOpcode(192);
-			this.stream.putShort(this.lastItemSelectedInterface);
-			this.stream.putLEShort(actionTarget >> 14 & 0x7FFF);
-			this.stream.putLEShortA(actionInformation1 + this.baseY);
-			this.stream.putLEShort(this.lastItemSelectedSlot);
-			this.stream.putLEShortA(actionInformation2 + this.baseX);
-			this.stream.putShort(this.useItemId);
+			if (RSCConfig.rscProtocol)
+			{
+				int src = this.lastItemSelectedSlot;
+				int useX = regionX + actionInformation2;
+				int useY = regionY + actionInformation1;
+
+				System.out.println("USE " + useX + ", " + useY + ", " + src);
+
+				this.stream.RSC_newPacket(115);
+				this.stream.putShort(useX);
+				this.stream.putShort(useY);
+				this.stream.putShort(src);
+				this.stream.RSC_finalizePacket();
+			}
+			else
+			{
+				this.stream.putOpcode(192);
+				this.stream.putShort(this.lastItemSelectedInterface);
+				this.stream.putLEShort(actionTarget >> 14 & 0x7FFF);
+				this.stream.putLEShortA(actionInformation1 + this.baseY);
+				this.stream.putLEShort(this.lastItemSelectedSlot);
+				this.stream.putLEShortA(actionInformation2 + this.baseX);
+				this.stream.putShort(this.useItemId);
+			}
 		}
 		if (menuAction == 511) {
 			boolean flag2 = this.doWalkTo(2, 0, 0, 0, localPlayer.waypointY[0], 0, 0, actionInformation1,
@@ -2447,8 +2530,15 @@ public final class Client extends RSApplet {
 				this.crossY = super.clickY;
 				this.crossType = 2;
 				this.crossIndex = 0;
-				this.stream.putOpcode(155);
-				this.stream.putLEShort(actionTarget);
+				if (RSCConfig.rscProtocol) {
+					int dst = actionTarget;
+					this.stream.RSC_newPacket(202);
+					this.stream.putShort(dst);
+					this.stream.RSC_finalizePacket();
+				} else {
+					this.stream.putOpcode(155);
+					this.stream.putLEShort(actionTarget);
+				}
 			}
 		}
 		if (menuAction == 779) {
@@ -3086,11 +3176,21 @@ public final class Client extends RSApplet {
 				this.crossY = super.clickY;
 				this.crossType = 2;
 				this.crossIndex = 0;
-				this.stream.putOpcode(14);
-				this.stream.putShortA(this.lastItemSelectedInterface);
-				this.stream.putShort(actionTarget);
-				this.stream.putShort(this.useItemId);
-				this.stream.putLEShort(this.lastItemSelectedSlot);
+				if (RSCConfig.rscProtocol) {
+					int src = actionTarget;
+					int dst = this.lastItemSelectedSlot;
+
+					this.stream.RSC_newPacket(113);
+					this.stream.putShort(src);
+					this.stream.putShort(dst);
+					this.stream.RSC_finalizePacket();
+				} else {
+					this.stream.putOpcode(14);
+					this.stream.putShortA(this.lastItemSelectedInterface);
+					this.stream.putShort(actionTarget);
+					this.stream.putShort(this.useItemId);
+					this.stream.putLEShort(this.lastItemSelectedSlot);
+				}
 			}
 		}
 		if (menuAction == 639) {
@@ -5076,6 +5176,20 @@ public final class Client extends RSApplet {
 		}
 	}
 
+	public void sendChatInterface(int interfaceId)
+	{
+		this.loadInterface(interfaceId);
+		if (this.inventoryOverlayInterfaceID != -1) {
+			this.inventoryOverlayInterfaceID = -1;
+			this.redrawTab = true;
+			this.drawTabIcons = true;
+		}
+		this.chatboxInterfaceId = interfaceId;
+		this.redrawChatbox = true;
+		this.openInterfaceId = -1;
+		this.continuedDialogue = false;
+	}
+
 	private boolean handleIncomingData() {
 		if (this.socket == null) {
             return false;
@@ -6229,16 +6343,7 @@ public final class Client extends RSApplet {
 			}
 			if (this.packetOpcode == 164) {
 				final int interfaceId = this.inStream.getUnsignedShort();
-				this.loadInterface(interfaceId);
-				if (this.inventoryOverlayInterfaceID != -1) {
-					this.inventoryOverlayInterfaceID = -1;
-					this.redrawTab = true;
-					this.drawTabIcons = true;
-				}
-				this.chatboxInterfaceId = interfaceId;
-				this.redrawChatbox = true;
-				this.openInterfaceId = -1;
-				this.continuedDialogue = false;
+				sendChatInterface(interfaceId);
 				this.packetOpcode = -1;
 				return true;
 			}
@@ -11163,18 +11268,27 @@ public final class Client extends RSApplet {
 		}
 	}
 
-	public void RSC_setTextMessage(Player player, String message)
+	public void RSC_setTextMessage(Entity entity, String message, int playerServerIndex)
 	{
-		player.overheadTextMessage = message;
-		if (player.overheadTextMessage.charAt(0) == '~') {
-			player.overheadTextMessage = player.overheadTextMessage.substring(1);
-			this.pushMessage(player.overheadTextMessage, 2, player.name);
-		} else if (player == localPlayer) {
-			this.pushMessage(player.overheadTextMessage, 2, player.name);
+		message = RSCConfig.RSC_removeChatFormatting(message);
+
+		String name = "";
+		if (entity instanceof Player)
+			name = ((Player)entity).name;
+		else if (entity instanceof NPC)
+			name = ((NPC)entity).npcDefinition.name;
+		entity.overheadTextMessage = message;
+		if (entity.overheadTextMessage.charAt(0) == '~') {
+			entity.overheadTextMessage = entity.overheadTextMessage.substring(1);
+			this.pushMessage(entity.overheadTextMessage, 2, name);
 		}
-		player.chatColour = 0;
-		player.chatEffect = 0;
-		player.textCycle = 150;
+
+		if (playerServerIndex == RSCConfig.localServerIndex)
+			this.pushMessage(entity.overheadTextMessage, 2, name);
+
+		entity.chatColour = 0;
+		entity.chatEffect = 0;
+		entity.textCycle = 150;
 	}
 
 	private void updatePlayer(final Buffer stream, final int updateType, final Player player, final int playerId) {

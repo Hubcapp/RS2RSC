@@ -21,6 +21,7 @@ package rscminus.common;
 
 import com.jagex.runescape.Client;
 import com.jagex.runescape.rs2rsc.RSCConfig;
+import com.jagex.runescape.rs2rsc.RSCMath;
 import rscminus.game.constants.Game;
 
 public class JGameData {
@@ -41,6 +42,7 @@ public class JGameData {
     public static int npcHits[];
     public static int npcDefense[];
     public static int npcAttackable[];
+    public static int npcCombatLevel[];
     public static String npcCommand[];
     public static int animationCount;
     public static String animationName[];
@@ -121,6 +123,7 @@ public class JGameData {
         npcDefense = new int[npcCount];
         npcAttackable = new int[npcCount];
         npcCommand = new String[npcCount];
+        npcCombatLevel = new int[npcCount];
         System.out.println("NPC Names:");
         for (int i = 0; i < npcCount; i++) {
             npcName[i] = string.readString();
@@ -163,6 +166,9 @@ public class JGameData {
             integer.skip(1); // Combat animation (?)
         for (int i = 0; i < npcCount; i++)
             npcCommand[i] = string.readString();
+        for (int i = 0; i < npcCount; i++)
+            npcCombatLevel[i] = (int)RSCMath.combatFormulaRSC(npcAttack[i], npcStrength[i], npcDefense[i], npcHits[i],
+                                                        0, 0, 0);
 
         // Read texture data
         int textureCount = integer.readUnsignedShort();

@@ -1,12 +1,11 @@
 package com.jagex.runescape.rs2rsc;
 
 import com.jagex.runescape.*;
+import com.jagex.runescape.definition.EntityDefinition;
 import com.jagex.runescape.definition.GameObjectDefinition;
-import com.jagex.runescape.definition.ItemDefinition;
 import rscminus.common.JGameData;
 import rscminus.game.constants.Game;
 
-import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -39,6 +38,8 @@ public class RSCConfig {
 
     public static int playerCount;
     public static Player[] players = new Player[500];
+    public static int npcCount;
+    public static NPC[] npcs = new NPC[500];
 
     private static int magicLoc = 128;
     public static int localRegionX;
@@ -49,7 +50,7 @@ public class RSCConfig {
 
     private static BiMap<Integer, Integer> objectIDTable = new BiMap<Integer, Integer>();
     private static Map<Integer, Integer> objectIDDirTable = new HashMap<Integer, Integer>();
-
+    private static BiMap<Integer, Integer> npcIDTable = new BiMap<Integer, Integer>();
     private static BiMap<Integer, Integer> itemIDTable = new BiMap<Integer, Integer>();
 
     public static byte[] RSC_stringToUnicode(String str) {
@@ -448,6 +449,29 @@ public class RSCConfig {
             }
         }
 
+        // Setup npc ids
+        npcIDTable.put(2, 43); // Sheep
+        npcIDTable.put(5, 0); // Hans
+        npcIDTable.put(11, 1); // Man
+        npcIDTable.put(23, 59); // Giant Spider
+        npcIDTable.put(29, 47); // Rat
+        npcIDTable.put(34, 61); // spider
+        npcIDTable.put(55, 520); // Shopkeeper
+        npcIDTable.put(57, 172); // Darkwizard
+        npcIDTable.put(62, 100); // Goblin
+        npcIDTable.put(66, 178); // Black Knight
+        npcIDTable.put(83, 521); // Shop Assistant
+        npcIDTable.put(95, 494); // Banker
+        npcIDTable.put(97, 755); // Morgan
+        npcIDTable.put(114, 708); // Imp
+        npcIDTable.put(118, 920); // Prince Ali
+        npcIDTable.put(122, 915); // Leela
+        npcIDTable.put(124, 743); // Ned
+        npcIDTable.put(125, 922); // Aggie
+        npcIDTable.put(225, 2538); // Giles
+        npcIDTable.put(226, 2537); // Miles
+        npcIDTable.put(227, 2536); // Niles
+
         // Setup object ids
         objectIDTable.put(0, 1279); // Tree
         objectIDTable.put(1, 1276); // Tree
@@ -462,6 +486,7 @@ public class RSCConfig {
         //objectIDTable.put(20, 2440); // Post
         objectIDTable.put(25, 203); // candles
         objectIDTable.put(26, 879); // fountain
+        objectIDTable.put(29, 612); // Counter
         //objectIDTable.put(27, 888); // landscape
         objectIDTable.put(34, 1173); // Fern
         objectIDTable.put(37, 1188); // Flower
@@ -478,10 +503,15 @@ public class RSCConfig {
 
         itemIDTable.put(4, 1171); // Wooden Shield
         itemIDTable.put(10, 995); // Coins
+        itemIDTable.put(11, 882); // Bronze Arrows
         itemIDTable.put(12, 1349); // Iron Axe
+        itemIDTable.put(13, 946); // Knife
         itemIDTable.put(14, 1511); // Logs
         itemIDTable.put(16, 1059); // Leather Gloves
         itemIDTable.put(17, 1061); // Boots
+        itemIDTable.put(18, 1965); // Cabbage
+        itemIDTable.put(20, 526); // Bones
+        itemIDTable.put(28, 1203); // Iron dagger
         itemIDTable.put(87, 1351); // bronze Axe
         itemIDTable.put(88, 1349); // Steel Axe
         itemIDTable.put(93, 1373); // Rune battle Axe
@@ -490,12 +520,20 @@ public class RSCConfig {
         itemIDTable.put(113, 1103); // Bronze Chain Mail Body
         itemIDTable.put(117, 1117); // Bronze Plate Mail Body
         itemIDTable.put(124, 1173); // Bronze Square Shield
-        itemIDTable.put(132, 2142 ); // cookedmeat
+        itemIDTable.put(132, 2142); // cookedmeat
+        itemIDTable.put(135, 1931); // pot
+        itemIDTable.put(136, 1933); // flour
+        itemIDTable.put(140, 1935); // jug
+        itemIDTable.put(141, 1937); // water
+        itemIDTable.put(142, 1993); // wine
+        itemIDTable.put(144, 1735); // shears
+        itemIDTable.put(145, 1737); // wool
         itemIDTable.put(166, 590); // tinderbox
         itemIDTable.put(171, 2353); // steel bar
         itemIDTable.put(183, 1007); // Cape (red)
         itemIDTable.put(194, 1013); // skirt (pink)
         itemIDTable.put(206, 1075); // Bronze Plate Mail Legs
+        itemIDTable.put(241, 1957); // Onion
         itemIDTable.put(288, 1654); // Gold necklace
         itemIDTable.put(296, 1692); // Gold Amulet
         itemIDTable.put(420, 1540); // Anti dragon breath Shield
@@ -549,6 +587,13 @@ public class RSCConfig {
         {
             Player otherPlayer = client.players[client.localPlayers[i]];
             otherPlayer.RSC_update();
+        }
+
+        // Update npcs
+        for (int i = 0; i < client.npcCount; i++)
+        {
+            NPC otherNPC = client.npcs[client.npcIds[i]];
+            otherNPC.RSC_update();
         }
 
         // Update inventory
@@ -605,6 +650,7 @@ public class RSCConfig {
 
         // Initialize rsc state
         playerCount = 0;
+        npcCount = 0;
 
         // Set settings
         client.sendConfig(166, Settings.getBrightness() + 1); // Brightness
@@ -633,29 +679,6 @@ public class RSCConfig {
         client.playerActionUnpinned[1] = true;
         client.playerActionUnpinned[2] = true;
         client.playerActionUnpinned[3] = true;
-
-        // Translate Objects to rsc
-        for (Map.Entry<Integer, Integer> entry : objectIDTable.getKeyEntrySet())
-        {
-            int rscID = entry.getValue();
-            int rs2ID = entry.getKey();
-            GameObjectDefinition def = GameObjectDefinition.getDefinition(rs2ID);
-            def.name = JGameData.sceneryName[rscID];
-            def.description = JGameData.sceneryExamine[rscID].getBytes();
-            String action1 = JGameData.sceneryCommand1[rscID];
-            if (action1.length() == 0)
-                action1 = null;
-            else
-                action1 = RSC_SanitizeMenu(action1);
-            String action2 = JGameData.sceneryCommand2[rscID];
-            if (action2.length() == 0)
-                action2 = null;
-            else
-                action2 = RSC_SanitizeMenu(action2);
-            def.actions = new String[] { action1, action2, null, null, null };
-            def.sizeX = JGameData.sceneryWidth[rscID];
-            def.sizeY = JGameData.sceneryHeight[rscID];
-        }
     }
 
     public static void RSC_HandleInterface(int actionID, Client client, Buffer buffer)
@@ -711,6 +734,29 @@ public class RSCConfig {
         }
     }
 
+    public static NPC RSC_getNPC(Client client, int serverIndex, int areaX, int areaY, int direction, int id)
+    {
+        // Add player if it doesn't exist
+        if (client.npcs[serverIndex] == null || client.npcs[serverIndex].index != serverIndex)
+        {
+            client.npcs[serverIndex] = new NPC();
+            client.npcs[serverIndex].index = serverIndex;
+            client.npcs[serverIndex].setPos(areaX, areaY, true);
+            client.npcs[serverIndex].turnDirection = RSC_ConvertDirection(direction);
+            client.npcs[serverIndex].currentRotation = client.npcs[serverIndex].turnDirection;
+            client.npcs[serverIndex].npcDefinition = EntityDefinition.getDefinition(RSCConfig.RSC_TranslateNPC(id));
+        }
+
+        NPC npc = client.npcs[serverIndex];
+
+        if (npc.waypointX[0] != areaX || npc.waypointY[0] != areaY)
+            npc.setPos(areaX, areaY, false);
+
+        npcs[npcCount++] = npc;
+
+        return npc;
+    }
+
     public static Player RSC_getPlayer(Client client, int serverIndex, int areaX, int areaY, int direction)
     {
         // Add player if it doesn't exist
@@ -733,18 +779,7 @@ public class RSCConfig {
         if (serverIndex == localServerIndex)
         {
             isSelf = true;
-            isLocal = true;
             Client.localPlayer = player;
-        }
-
-        // Do we already know about this player?
-        if (!isSelf) {
-            for (int otherServerIndex : client.localPlayers) {
-                if (otherServerIndex == serverIndex) {
-                    isLocal = true;
-                    break;
-                }
-            }
         }
 
         if (!isSelf)
@@ -771,6 +806,28 @@ public class RSCConfig {
         {
             System.out.println("Unhandled reverse object id: " + objectID);
             return -1;
+        }
+        return val.intValue();
+    }
+
+    public static int RSC_TranslateNPC(int npcID)
+    {
+        Integer val = npcIDTable.get(npcID);
+        if (val == null)
+        {
+            System.out.println("Unhandled npc id: " + npcID);
+            return 100;
+        }
+        return val.intValue();
+    }
+
+    public static int RSC_TranslateNPCReverse(int npcID)
+    {
+        Integer val = npcIDTable.getKey(npcID);
+        if (val == null)
+        {
+            System.out.println("Unhandled reverse npc id: " + npcID);
+            return 100;
         }
         return val.intValue();
     }
@@ -1055,6 +1112,8 @@ public class RSCConfig {
         // 15 - Light blue
         switch (color)
         {
+            case 4: // Light Green
+                return 9;
             case 5: // Dark Green
                 return 0;
             case 9: // Blue
@@ -1190,6 +1249,10 @@ public class RSCConfig {
         if (itemID == 590)
             animation = 733;
 
+        // Shearing
+        if (itemID == 1735)
+            animation = 893;
+
         // Restart Animation if it was set
         if (animation != -1)
         {
@@ -1278,6 +1341,40 @@ public class RSCConfig {
         return direction;
     }
 
+    public static void RSC_TurnEntityDir(Entity npc, int nextAnim)
+    {
+        npc.RSC_turnDirection = RSC_ConvertDirection(nextAnim);
+    }
+
+    public static void RSC_MoveEntityDir(Entity npc, int nextAnim)
+    {
+        int x = npc.waypointX[0];
+        int y = npc.waypointY[0];
+        if (nextAnim == 2 || nextAnim == 1 || nextAnim == 3)
+            x += 1;
+        if (nextAnim == 6 || nextAnim == 5 || nextAnim == 7)
+            x -= 1;
+        if (nextAnim == 4 || nextAnim == 3 || nextAnim == 5)
+            y += 1;
+        if (nextAnim == 0 || nextAnim == 1 || nextAnim == 7)
+            y -= 1;
+        npc.setPos(x, y, false);
+    }
+
+    public static void RSC_HitEntity(Entity entity, int damage, int hp, int hpMax)
+    {
+        int type = -1;
+        if (entity instanceof Player)
+            type = 1;
+        else if (entity instanceof NPC)
+            type = 0;
+        // Players have red hit splats in rsc
+        entity.updateHitData(type, damage, Client.tick);
+        entity.loopCycleStatus = Client.tick + 200;
+        entity.currentHealth = hp;
+        entity.maxHealth = hpMax;
+    }
+
     public static int RSC_HandleOpcode(int opcode, Client client, Buffer buffer)
     {
         if (!rscProtocol)
@@ -1287,6 +1384,36 @@ public class RSCConfig {
 
         switch (opcode)
         {
+            case 104:
+            {
+                int npcCount = buffer.getUnsignedLEShort();
+                for (int i = 0; i < npcCount; i++)
+                {
+                    int serverIndex = buffer.getUnsignedLEShort();
+                    NPC npc = client.npcs[serverIndex];
+                    int updateType = buffer.getUnsignedByte();
+                    switch (updateType)
+                    {
+                        case 1:
+                        {
+                            int playerServerIndex = buffer.getUnsignedLEShort();
+                            String message = buffer.RSC_cabbage();
+                            if (npc != null)
+                                client.RSC_setTextMessage(npc, message, playerServerIndex);
+                            break;
+                        }
+                        case 2:
+                        {
+                            int damage = buffer.getUnsignedByte();
+                            int hp = buffer.getUnsignedByte();
+                            int hpMax = buffer.getUnsignedByte();
+                            RSC_HitEntity(npc, damage, hp, hpMax);
+                            break;
+                        }
+                    }
+                }
+                break;
+            }
             case 99: // Ground Items
             {
                 while (client.packetSize > buffer.position)
@@ -1448,6 +1575,62 @@ public class RSCConfig {
                 int sound = buffer.getUnsignedByte();
                 break;
             }
+            case 79: // Local NPC
+            {
+                client.npcCount = npcCount;
+                for (int i = 0; i < npcCount; i++)
+                    client.npcIds[i] = npcs[i].index;
+
+                npcCount = 0;
+                buffer.initBitAccess();
+                int npcUpdateCount = buffer.readBits(8);
+
+                for (int i = 0; i < npcUpdateCount; i++)
+                {
+                    NPC npc = client.npcs[client.npcIds[i]];
+
+                    int reqUpdate = buffer.readBits(1);
+                    if (reqUpdate != 0) {
+                        int updateType = buffer.readBits(1);
+                        if (updateType != 0)
+                        {
+                            int unk = buffer.readBits(2);
+                            if (unk == 3)
+                                continue;
+                            int nextAnim = buffer.readBits(2) + (unk << 2);
+                            RSC_TurnEntityDir(npc, nextAnim);
+                        }
+                        else
+                        {
+                            int nextAnim = buffer.readBits(3);
+                            RSC_MoveEntityDir(npc, nextAnim);
+                        }
+                    }
+
+                    npcs[npcCount++] = npc;
+                }
+
+                while (buffer.bitPosition + 34 < client.packetSize * 8)
+                {
+                    int serverIndex = buffer.readBits(12);
+                    int areaX = buffer.readBits(5);
+                    if (areaX > 15)
+                        areaX -= 32;
+                    int areaY = buffer.readBits(5);
+                    if (areaY > 15)
+                        areaY -= 32;
+                    int otherAnim = buffer.readBits(4);
+                    int type = buffer.readBits(10);
+
+                    int npcX = localRegionX + areaX;
+                    int npcY = localRegionY + areaY;
+
+                    NPC npc = RSC_getNPC(client, serverIndex, npcX, npcY, otherAnim, type);
+                }
+
+                buffer.finishBitAccess();
+                break;
+            }
             case 191: // Local Player
             {
                 client.localPlayerCount = playerCount;
@@ -1473,6 +1656,7 @@ public class RSCConfig {
                 // Set local player
                 playerCount = 0;
                 Player localPlayer = RSC_getPlayer(client, localServerIndex, localX, localY, anim);
+                RSC_TurnEntityDir(localPlayer, anim);
 
                 int playerUpdateCount = buffer.readBits(8);
 
@@ -1489,11 +1673,12 @@ public class RSCConfig {
                             if (unk == 3)
                                 continue;
                             int nextAnim = buffer.readBits(2) + (unk << 2);
-
+                            RSC_TurnEntityDir(player, nextAnim);
                         }
                         else
                         {
                             int nextAnim = buffer.readBits(3);
+                            RSC_MoveEntityDir(player, nextAnim);
                         }
                     }
 
@@ -1583,18 +1768,17 @@ public class RSCConfig {
                         case 0:
                         {
                             int itemID = buffer.getUnsignedLEShort();
-                            RSC_PlayAnimation(player, itemID, 150);
+                            if (player != null)
+                                RSC_PlayAnimation(player, itemID, 150);
                             break;
                         }
                         case 1:
                         {
                             int mod = buffer.getUnsignedByte();
                             String message = buffer.RSC_cabbage();
-                            message = RSCConfig.RSC_removeChatFormatting(message);
 
-                            client.RSC_setTextMessage(player, message);
-                            if (player != Client.localPlayer)
-                                client.pushMessage(message, 2, player.name);
+                            if (player != null)
+                                client.RSC_setTextMessage(player, message, localServerIndex);
                             break;
                         }
                         case 2:
@@ -1602,12 +1786,11 @@ public class RSCConfig {
                             int damage = buffer.getUnsignedByte();
                             int hp = buffer.getUnsignedByte();
                             int hpMax = buffer.getUnsignedByte();
-
-                            // Players have red hit splats in rsc
-                            player.updateHitData(1, damage, Client.tick);
-                            player.loopCycleStatus = Client.tick + 200;
-                            player.currentHealth = hp;
-                            player.maxHealth = hpMax;
+                            if (player == Client.localPlayer) {
+                                client.skillLevel[Game.STAT_HITS] = hp;
+                                client.redrawTab = true;
+                            }
+                            RSC_HitEntity(player, damage, hp, hpMax);
                             break;
                         }
                         case 5:
@@ -1916,6 +2099,13 @@ public class RSCConfig {
                             player.visible = true;
                             break;
                         }
+                        case 6:
+                        {
+                            String message = buffer.RSC_cabbage();
+                            if (player != null)
+                                client.RSC_setTextMessage(player, message, serverIndex);
+                            break;
+                        }
                         default:
                         {
                             System.out.println("Unknown update type: " + updateType);
@@ -1967,6 +2157,10 @@ public class RSCConfig {
                 client.sendConfig(101, questPoints);
 
                 client.redrawTab = true;
+                break;
+            }
+            case 245: // Option Menu
+            {
                 break;
             }
             case 51: // Privacy Settings

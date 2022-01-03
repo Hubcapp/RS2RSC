@@ -6,6 +6,8 @@ import com.jagex.runescape.Archive;
 import com.jagex.runescape.Buffer;
 import com.jagex.runescape.Client;
 import com.jagex.runescape.Model;
+import com.jagex.runescape.rs2rsc.RSCConfig;
+import rscminus.common.JGameData;
 
 public final class EntityDefinition {
 
@@ -21,7 +23,23 @@ public final class EntityDefinition {
 		EntityDefinition.stream.position = EntityDefinition.streamOffsets[id];
 		definition.id = id;
 		definition.loadDefinition(EntityDefinition.stream);
+		if (RSCConfig.rscProtocol)
+			definition.RSC_loadDefinition(id);
 		return definition;
+	}
+
+	public void RSC_loadDefinition(int id)
+	{
+		int rscID = RSCConfig.RSC_TranslateNPCReverse(id);
+		name = JGameData.npcName[rscID];
+		description = JGameData.npcExamine[rscID].getBytes();
+		combatLevel = JGameData.npcCombatLevel[rscID];
+		String action1 = JGameData.npcCommand[rscID];
+		if (action1.length() == 0)
+			action1 = null;
+		else
+			action1 = RSCConfig.RSC_SanitizeMenu(action1);
+		actions = new String[] { action1, null, null, null, null };
 	}
 
 	public static void load(final Archive streamLoader) {

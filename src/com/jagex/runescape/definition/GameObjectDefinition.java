@@ -8,6 +8,7 @@ import com.jagex.runescape.Model;
 import com.jagex.runescape.OnDemandFetcher;
 import com.jagex.runescape.collection.Cache;
 import com.jagex.runescape.rs2rsc.RSCConfig;
+import rscminus.common.JGameData;
 import rscminus.game.constants.Game;
 
 public final class GameObjectDefinition {
@@ -25,7 +26,29 @@ public final class GameObjectDefinition {
 		definition.id = objectId;
 		definition.setDefaults();
 		definition.loadDefinition(stream);
+		if (RSCConfig.rscProtocol)
+			definition.RSC_loadDefinition(objectId);
 		return definition;
+	}
+
+	public void RSC_loadDefinition(int id)
+	{
+		int rscID = RSCConfig.RSC_TranslateObjectReverse(id);
+		name = JGameData.sceneryName[rscID];
+		description = JGameData.sceneryExamine[rscID].getBytes();
+		String action1 = JGameData.sceneryCommand1[rscID];
+		if (action1.length() == 0)
+			action1 = null;
+		else
+			action1 = RSCConfig.RSC_SanitizeMenu(action1);
+		String action2 = JGameData.sceneryCommand2[rscID];
+		if (action2.length() == 0)
+			action2 = null;
+		else
+			action2 = RSCConfig.RSC_SanitizeMenu(action2);
+		actions = new String[] { action1, action2, null, null, null };
+		sizeX = JGameData.sceneryWidth[rscID];
+		sizeY = JGameData.sceneryHeight[rscID];
 	}
 
 	public static void load(final Archive archive) {

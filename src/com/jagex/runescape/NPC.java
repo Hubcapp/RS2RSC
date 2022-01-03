@@ -8,7 +8,7 @@ public final class NPC extends Entity {
 
 	public EntityDefinition npcDefinition;
 
-	NPC() {
+	public NPC() {
 	}
 
 	private Model getChildModel() {
