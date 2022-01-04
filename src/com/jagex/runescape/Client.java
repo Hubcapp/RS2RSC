@@ -1549,7 +1549,7 @@ public final class Client extends RSApplet {
 													int itemCount = RSCConfig.bankItemAmount[slot];
 
 													if (myInventory)
-														itemCount = RSCConfig.inventoryAmount[slot];
+														itemCount = RSCConfig.RSC_CountInventoryItem(RSCConfig.inventoryID[slot]);
 
 													String optionName = "Withdraw";
 
@@ -2470,7 +2470,7 @@ public final class Client extends RSApplet {
 		if (count == -1)
 		{
 			if (depositing)
-				count = RSCConfig.inventoryAmount[slot];
+				count = RSCConfig.RSC_CountInventoryItem(rscID);
 			else
 				count = RSCConfig.bankItemAmount[slot];
 		}

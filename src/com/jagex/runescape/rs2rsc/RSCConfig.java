@@ -1544,6 +1544,17 @@ public class RSCConfig {
         npc.setPos(x, y, false);
     }
 
+    public static int RSC_CountInventoryItem(int rscID)
+    {
+        int count = 0;
+        for (int i = 0; i < inventoryCount; i++)
+        {
+            if (inventoryID[i] == rscID)
+                count += inventoryAmount[i];
+        }
+        return count;
+    }
+
     public static void RSC_HitEntity(Entity entity, int damage, int hp, int hpMax)
     {
         int type = -1;
