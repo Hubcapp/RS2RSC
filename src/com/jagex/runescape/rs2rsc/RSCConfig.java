@@ -40,6 +40,7 @@ public class RSCConfig {
     public static Player[] players = new Player[500];
     public static int npcCount;
     public static NPC[] npcs = new NPC[500];
+
     public static int[] shopItem = new int[40];
     public static int[] shopItemAmount = new int[40];
     public static int[] shopItemPrice = new int[40];
@@ -49,8 +50,15 @@ public class RSCConfig {
     public static int shopPriceMultiplier = 1;
     public static boolean showShop = false;
 
+    public static int bankItemCount = 0;
+    public static int bankItemMax = 0;
+    public static int[] bankItem = new int[256];
+    public static int[] bankItemAmount = new int[256];
+    public static boolean showBank = false;
+
     // State
     public static boolean shopOpen = false;
+    public static boolean bankOpen = false;
 
     private static int magicLoc = 128;
     public static int localRegionX;
@@ -637,6 +645,22 @@ public class RSCConfig {
         return tab;
     }
 
+    public static RSInterface getBankInterface()
+    {
+        RSInterface tab = null;
+        for (int i = 0; i < RSInterface.cache.length; i++)
+        {
+            if (RSInterface.cache[i] == null)
+                continue;
+            if (RSInterface.cache[i].inventoryItemId != null && RSInterface.cache[i].parentID == 5292)
+            {
+                tab = RSInterface.cache[i];
+                break;
+            }
+        }
+        return tab;
+    }
+
     public static void Update(Client client)
     {
         if (!rscProtocol)
@@ -677,6 +701,38 @@ public class RSCConfig {
                 }
                 showShop = false;
                 shopOpen = true;
+            }
+        }
+
+        // Update Bank
+        if (showBank) {
+            client.sendInterface(5292);
+            RSInterface bank = getBankInterface();
+            if (bank != null) {
+                int count = Math.min(bankItemCount, bankItemMax);
+
+                for (int i = 0; i < count; i++) {
+                    bank.inventoryItemId[i] = RSCConfig.RSC_TranslateItem(bankItem[i]) + 1;
+                    bank.inventoryStackSize[i] = bankItemAmount[i];
+                }
+
+                for (int i = count; i < bank.inventoryItemId.length; i++) {
+                    bank.inventoryItemId[i] = 0;
+                    bank.inventoryStackSize[i] = 0;
+                }
+                showBank = false;
+                bankOpen = true;
+            }
+        }
+
+        // Check if bank is closed
+        if (bankOpen)
+        {
+            if (client.openInterfaceId != 5292)
+            {
+                client.stream.RSC_newPacket(212);
+                client.stream.RSC_finalizePacket();
+                bankOpen = false;
             }
         }
 
@@ -1511,6 +1567,25 @@ public class RSCConfig {
 
         switch (opcode)
         {
+            case 42:
+            {
+                bankItemCount = buffer.getUnsignedByte();
+                bankItemMax = buffer.getUnsignedByte();
+                for (int i = 0; i < bankItemCount; i++)
+                {
+                    bankItem[i] = buffer.getUnsignedLEShort();
+                    bankItemAmount[i] = buffer.RSC_getUnsignedInt3();
+                }
+                showBank = true;
+                break;
+            }
+            case 203: // Close bank
+            {
+                showBank = false;
+                bankOpen = false;
+                client.clearTopInterfaces();
+                break;
+            }
             case 137: // Close shop
             {
                 showShop = false;

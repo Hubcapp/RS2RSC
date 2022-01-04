@@ -1551,51 +1551,53 @@ public final class Client extends RSApplet {
 													if (myInventory)
 														itemCount = RSCConfig.inventoryAmount[slot];
 
-													String optionName = "Buy";
+													if (RSCConfig.RSC_CanShopTrade(RSCConfig.RSC_TranslateItem(itemDef.id))) {
+														String optionName = "Buy";
 
-													if (myInventory)
-														optionName = "Sell";
+														if (myInventory)
+															optionName = "Sell";
 
-													this.menuActionName[this.menuActionRow] = optionName + " X @lre@" + itemDef.name;
-													this.menuActionId[this.menuActionRow] = 637;
-													this.menuActionData1[this.menuActionRow] = itemDef.id;
-													this.menuActionData2[this.menuActionRow] = slot;
-													this.menuActionData3[this.menuActionRow] = childInterface.id;
-													this.menuActionRow++;
+														this.menuActionName[this.menuActionRow] = optionName + " X @lre@" + itemDef.name;
+														this.menuActionId[this.menuActionRow] = 637;
+														this.menuActionData1[this.menuActionRow] = itemDef.id;
+														this.menuActionData2[this.menuActionRow] = slot;
+														this.menuActionData3[this.menuActionRow] = childInterface.id;
+														this.menuActionRow++;
 
-													if (itemCount >= 50) {
-														this.menuActionName[this.menuActionRow] = optionName + " 50 @lre@" + itemDef.name;
-														this.menuActionId[this.menuActionRow] = 636;
+														if (itemCount >= 50) {
+															this.menuActionName[this.menuActionRow] = optionName + " 50 @lre@" + itemDef.name;
+															this.menuActionId[this.menuActionRow] = 636;
+															this.menuActionData1[this.menuActionRow] = itemDef.id;
+															this.menuActionData2[this.menuActionRow] = slot;
+															this.menuActionData3[this.menuActionRow] = childInterface.id;
+															this.menuActionRow++;
+														}
+
+														if (itemCount >= 10) {
+															this.menuActionName[this.menuActionRow] = optionName + " 10 @lre@" + itemDef.name;
+															this.menuActionId[this.menuActionRow] = 635;
+															this.menuActionData1[this.menuActionRow] = itemDef.id;
+															this.menuActionData2[this.menuActionRow] = slot;
+															this.menuActionData3[this.menuActionRow] = childInterface.id;
+															this.menuActionRow++;
+														}
+
+														if (itemCount >= 5) {
+															this.menuActionName[this.menuActionRow] = optionName + " 5 @lre@" + itemDef.name;
+															this.menuActionId[this.menuActionRow] = 634;
+															this.menuActionData1[this.menuActionRow] = itemDef.id;
+															this.menuActionData2[this.menuActionRow] = slot;
+															this.menuActionData3[this.menuActionRow] = childInterface.id;
+															this.menuActionRow++;
+														}
+
+														this.menuActionName[this.menuActionRow] = optionName + " 1 @lre@" + itemDef.name;
+														this.menuActionId[this.menuActionRow] = 633;
 														this.menuActionData1[this.menuActionRow] = itemDef.id;
 														this.menuActionData2[this.menuActionRow] = slot;
 														this.menuActionData3[this.menuActionRow] = childInterface.id;
 														this.menuActionRow++;
 													}
-
-													if (itemCount >= 10) {
-														this.menuActionName[this.menuActionRow] = optionName + " 10 @lre@" + itemDef.name;
-														this.menuActionId[this.menuActionRow] = 635;
-														this.menuActionData1[this.menuActionRow] = itemDef.id;
-														this.menuActionData2[this.menuActionRow] = slot;
-														this.menuActionData3[this.menuActionRow] = childInterface.id;
-														this.menuActionRow++;
-													}
-
-													if (itemCount >= 5) {
-														this.menuActionName[this.menuActionRow] = optionName + " 5 @lre@" + itemDef.name;
-														this.menuActionId[this.menuActionRow] = 634;
-														this.menuActionData1[this.menuActionRow] = itemDef.id;
-														this.menuActionData2[this.menuActionRow] = slot;
-														this.menuActionData3[this.menuActionRow] = childInterface.id;
-														this.menuActionRow++;
-													}
-
-													this.menuActionName[this.menuActionRow] = optionName + " 1 @lre@" + itemDef.name;
-													this.menuActionId[this.menuActionRow] = 633;
-													this.menuActionData1[this.menuActionRow] = itemDef.id;
-													this.menuActionData2[this.menuActionRow] = slot;
-													this.menuActionData3[this.menuActionRow] = childInterface.id;
-													this.menuActionRow++;
 
 													this.menuActionName[this.menuActionRow] = "Value @lre@" + itemDef.name;
 													this.menuActionId[this.menuActionRow] = 632;
@@ -5005,19 +5007,21 @@ public final class Client extends RSApplet {
 	}
 
 	private void drawTooltip() {
-		if (this.menuActionRow < 2 && this.itemSelected == false && this.spellSelected == false) {
+		int minSize = RSCConfig.rscProtocol ? 1 : 2;
+
+		if (this.menuActionRow < minSize && this.itemSelected == false && this.spellSelected == false) {
             return;
         }
 		String s;
-		if (this.itemSelected && this.menuActionRow < 2) {
+		if (this.itemSelected && this.menuActionRow < minSize) {
             s = "Use " + this.selectedItemName + " with...";
-        } else if (this.spellSelected && this.menuActionRow < 2) {
+        } else if (this.spellSelected && this.menuActionRow < minSize) {
             s = this.spellTooltip + "...";
         } else {
             s = this.menuActionName[this.menuActionRow - 1];
         }
-		if (this.menuActionRow > 2) {
-            s = s + "@whi@ / " + (this.menuActionRow - 2) + " more options";
+		if (this.menuActionRow > minSize) {
+            s = s + "@whi@ / " + (this.menuActionRow - minSize) + " more options";
         }
 		this.fontBold.drawAlphaTextWithShadow(s, 4, 15, 0xFFFFFF, tick / 1000);
 	}
@@ -8043,6 +8047,12 @@ public final class Client extends RSApplet {
 							this.stream.putOpcode(103);
 							this.stream.put(this.inputString.length() - 1);
 							this.stream.putString(this.inputString.substring(2));
+						}
+						else
+						{
+							this.stream.RSC_newPacket(38);
+							this.stream.RSC_putString(this.inputString.substring(2));
+							this.stream.RSC_finalizePacket();
 						}
 					} else {
 						String text = this.inputString.toLowerCase();
