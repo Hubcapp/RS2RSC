@@ -8051,7 +8051,7 @@ public final class Client extends RSApplet {
 						else
 						{
 							this.stream.RSC_newPacket(38);
-							this.stream.RSC_putString(this.inputString.substring(2));
+							this.stream.RSC_writeString(this.inputString.substring(2));
 							this.stream.RSC_finalizePacket();
 						}
 					} else {
