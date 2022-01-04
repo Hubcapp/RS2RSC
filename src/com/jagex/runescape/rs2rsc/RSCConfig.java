@@ -44,7 +44,13 @@ public class RSCConfig {
     public static int[] shopItemAmount = new int[40];
     public static int[] shopItemPrice = new int[40];
     public static int shopItemCount = 0;
+    public static int shopSellPriceMod = 0;
+    public static int shopBuyPriceMod = 0;
+    public static int shopPriceMultiplier = 1;
     public static boolean showShop = false;
+
+    // State
+    public static boolean shopOpen = false;
 
     private static int magicLoc = 128;
     public static int localRegionX;
@@ -57,6 +63,38 @@ public class RSCConfig {
     private static Map<Integer, Integer> objectIDDirTable = new HashMap<Integer, Integer>();
     private static BiMap<Integer, Integer> npcIDTable = new BiMap<Integer, Integer>();
     private static BiMap<Integer, Integer> itemIDTable = new BiMap<Integer, Integer>();
+
+    public static int clamp(int val, int min, int max)
+    {
+        if (val < min)
+            return min;
+        else if (val > max)
+            return max;
+        return val;
+    }
+
+    public static boolean RSC_CanShopTrade(int id)
+    {
+        boolean ret = true;
+
+        if (id == 10) // Coins
+            ret = false;
+
+        return ret;
+    }
+
+    public static int RSC_CalculateShopValue(int id, boolean buying, int shopIndex)
+    {
+        int base = JGameData.itemPrice[id];
+        int mod = shopBuyPriceMod;
+        if (!buying)
+            mod = shopSellPriceMod;
+
+        int reduce = shopBuyPriceMod + clamp(shopPriceMultiplier * (-shopItemAmount[shopIndex] + shopItemPrice[shopIndex]), -100, 100);
+        if (reduce < 10)
+            reduce = 10;
+        return base * reduce / 100;
+    }
 
     public static byte[] RSC_stringToUnicode(String str) {
         int strlen = str.length();
@@ -583,6 +621,22 @@ public class RSCConfig {
         return tab;
     }
 
+    public static RSInterface getShopInterface()
+    {
+        RSInterface tab = null;
+        for (int i = 0; i < RSInterface.cache.length; i++)
+        {
+            if (RSInterface.cache[i] == null)
+                continue;
+            if (RSInterface.cache[i].inventoryItemId != null && RSInterface.cache[i].parentID == 3824)
+            {
+                tab = RSInterface.cache[i];
+                break;
+            }
+        }
+        return tab;
+    }
+
     public static void Update(Client client)
     {
         if (!rscProtocol)
@@ -609,7 +663,32 @@ public class RSCConfig {
         // Update Shop
         if (showShop) {
             client.sendInterface(3824);
-            showShop = false;
+            RSInterface shop = getShopInterface();
+            if (shop != null)
+            {
+                for (int i = 0; i < shopItemCount; i++) {
+                    shop.inventoryItemId[i] = RSCConfig.RSC_TranslateItem(shopItem[i]) + 1;
+                    shop.inventoryStackSize[i] = shopItemAmount[i];
+                }
+
+                for (int i = shopItemCount; i < shop.inventoryItemId.length; i++) {
+                    shop.inventoryItemId[i] = 0;
+                    shop.inventoryStackSize[i] = 0;
+                }
+                showShop = false;
+                shopOpen = true;
+            }
+        }
+
+        // Check if shop is closed
+        if (shopOpen)
+        {
+            if (client.openInterfaceId != 3824)
+            {
+                client.stream.RSC_newPacket(166);
+                client.stream.RSC_finalizePacket();
+                shopOpen = false;
+            }
         }
 
         // Update inventory
@@ -1414,6 +1493,13 @@ public class RSCConfig {
 
         switch (opcode)
         {
+            case 137: // Close shop
+            {
+                showShop = false;
+                shopOpen = false;
+                client.clearTopInterfaces();
+                break;
+            }
             case 104:
             {
                 int npcCount = buffer.getUnsignedLEShort();
@@ -2193,9 +2279,9 @@ public class RSCConfig {
             {
                 shopItemCount = buffer.getUnsignedByte();
                 int shopType = buffer.getUnsignedByte();
-                int shopSellPriceMod = buffer.getUnsignedByte();
-                int shopBuyPriceMod = buffer.getUnsignedByte();
-                int shopPriceMultiplier = buffer.getUnsignedByte();
+                shopSellPriceMod = buffer.getUnsignedByte();
+                shopBuyPriceMod = buffer.getUnsignedByte();
+                shopPriceMultiplier = buffer.getUnsignedByte();
 
                 for (int i = 0; i < shopItem.length; i++)
                     shopItem[i] = -1;

@@ -171,7 +171,7 @@ public final class Client extends RSApplet {
 	private Buffer loginStream;
 	private boolean effectsEnabled;
 	private int hintIconType;
-	private int openInterfaceId;
+	public int openInterfaceId;
 	private int cameraPositionX;
 	private int cameraPositionZ;
 	private int cameraPositionY;
@@ -431,7 +431,7 @@ public final class Client extends RSApplet {
 	private int cameraModificationH;
 	private int cameraModificationV;
 	public int inventoryOverlayInterfaceID;
-	private Buffer stream;
+	public Buffer stream;
 	private int lastAddress;
 	private int splitPrivateChat;
 	private IndexedImage inventoryBackgroundImage;
@@ -1296,6 +1296,14 @@ public final class Client extends RSApplet {
 		}
 	}
 
+	public static boolean isPlayerInventory(int id)
+	{
+		if (id == 3214)
+			return true;
+
+		return false;
+	}
+
 	private void buildInterfaceMenu(final int i, final RSInterface rsInterface, final int k, final int l, final int i1, final int j1) {
 		if (rsInterface.type != 0 || rsInterface.children == null || rsInterface.hoverOnly) {
             return;
@@ -1502,33 +1510,102 @@ public final class Client extends RSApplet {
 											}
 										}
 
-										if (childInterface.actions != null) {
-											for (int j4 = 4; j4 >= 0; j4--) {
-                                                if (childInterface.actions[j4] != null) {
-													this.menuActionName[this.menuActionRow] = childInterface.actions[j4]
-                                                            + " @lre@" + itemDef.name;
-                                                    if (j4 == 0) {
-														this.menuActionId[this.menuActionRow] = 632;
-                                                    }
-                                                    if (j4 == 1) {
-														this.menuActionId[this.menuActionRow] = 78;
-                                                    }
-                                                    if (j4 == 2) {
-														this.menuActionId[this.menuActionRow] = 867;
-                                                    }
-                                                    if (j4 == 3) {
-														this.menuActionId[this.menuActionRow] = 431;
-                                                    }
-                                                    if (j4 == 4) {
-														this.menuActionId[this.menuActionRow] = 53;
-                                                    }
+										if (!RSCConfig.rscProtocol) {
+											if (childInterface.actions != null) {
+												for (int j4 = 4; j4 >= 0; j4--) {
+													if (childInterface.actions[j4] != null) {
+														this.menuActionName[this.menuActionRow] = childInterface.actions[j4]
+																+ " @lre@" + itemDef.name;
+														if (j4 == 0) {
+															this.menuActionId[this.menuActionRow] = 632;
+														}
+														if (j4 == 1) {
+															this.menuActionId[this.menuActionRow] = 78;
+														}
+														if (j4 == 2) {
+															this.menuActionId[this.menuActionRow] = 867;
+														}
+														if (j4 == 3) {
+															this.menuActionId[this.menuActionRow] = 431;
+														}
+														if (j4 == 4) {
+															this.menuActionId[this.menuActionRow] = 53;
+														}
+														this.menuActionData1[this.menuActionRow] = itemDef.id;
+														this.menuActionData2[this.menuActionRow] = slot;
+														this.menuActionData3[this.menuActionRow] = childInterface.id;
+														this.menuActionRow++;
+													}
+												}
+
+											}
+										} else {
+											// Handle RSC Interfaces
+											switch (openInterfaceId)
+											{
+												case 3824: // Shop
+												{
+													boolean myInventory = isPlayerInventory(childInterface.id);
+													int itemCount = RSCConfig.shopItemAmount[slot];
+
+													if (myInventory)
+														itemCount = RSCConfig.inventoryAmount[slot];
+
+													String optionName = "Buy";
+
+													if (myInventory)
+														optionName = "Sell";
+
+													this.menuActionName[this.menuActionRow] = optionName + " X @lre@" + itemDef.name;
+													this.menuActionId[this.menuActionRow] = 637;
 													this.menuActionData1[this.menuActionRow] = itemDef.id;
 													this.menuActionData2[this.menuActionRow] = slot;
 													this.menuActionData3[this.menuActionRow] = childInterface.id;
 													this.menuActionRow++;
-                                                }
-                                            }
 
+													if (itemCount >= 50) {
+														this.menuActionName[this.menuActionRow] = optionName + " 50 @lre@" + itemDef.name;
+														this.menuActionId[this.menuActionRow] = 636;
+														this.menuActionData1[this.menuActionRow] = itemDef.id;
+														this.menuActionData2[this.menuActionRow] = slot;
+														this.menuActionData3[this.menuActionRow] = childInterface.id;
+														this.menuActionRow++;
+													}
+
+													if (itemCount >= 10) {
+														this.menuActionName[this.menuActionRow] = optionName + " 10 @lre@" + itemDef.name;
+														this.menuActionId[this.menuActionRow] = 635;
+														this.menuActionData1[this.menuActionRow] = itemDef.id;
+														this.menuActionData2[this.menuActionRow] = slot;
+														this.menuActionData3[this.menuActionRow] = childInterface.id;
+														this.menuActionRow++;
+													}
+
+													if (itemCount >= 5) {
+														this.menuActionName[this.menuActionRow] = optionName + " 5 @lre@" + itemDef.name;
+														this.menuActionId[this.menuActionRow] = 634;
+														this.menuActionData1[this.menuActionRow] = itemDef.id;
+														this.menuActionData2[this.menuActionRow] = slot;
+														this.menuActionData3[this.menuActionRow] = childInterface.id;
+														this.menuActionRow++;
+													}
+
+													this.menuActionName[this.menuActionRow] = optionName + " 1 @lre@" + itemDef.name;
+													this.menuActionId[this.menuActionRow] = 633;
+													this.menuActionData1[this.menuActionRow] = itemDef.id;
+													this.menuActionData2[this.menuActionRow] = slot;
+													this.menuActionData3[this.menuActionRow] = childInterface.id;
+													this.menuActionRow++;
+
+													this.menuActionName[this.menuActionRow] = "Value @lre@" + itemDef.name;
+													this.menuActionId[this.menuActionRow] = 632;
+													this.menuActionData1[this.menuActionRow] = itemDef.id;
+													this.menuActionData2[this.menuActionRow] = slot;
+													this.menuActionData3[this.menuActionRow] = childInterface.id;
+													this.menuActionRow++;
+													break;
+												}
+											}
 										}
 										this.menuActionName[this.menuActionRow] = "Examine @lre@" + itemDef.name;
 										if (Settings.getDebug())
@@ -2018,7 +2095,7 @@ public final class Client extends RSApplet {
 
 	}
 
-	private void clearTopInterfaces() {
+	public void clearTopInterfaces() {
 		if (!RSCConfig.rscProtocol)
 			this.stream.putOpcode(130);
 
@@ -2319,6 +2396,40 @@ public final class Client extends RSApplet {
 						objectId, z);
 			}
 		}
+	}
+
+	public void RSC_SendShopOption(int interfaceID, int itemID, int slot, int count)
+	{
+		boolean buying = !isPlayerInventory(interfaceID);
+		int packetID = 236;
+		int rscID = RSCConfig.RSC_TranslateItemReverse(itemID);
+		int shopCount = 0;
+
+		if (buying)
+		{
+			shopCount = RSCConfig.shopItemAmount[slot];
+		}
+		else
+		{
+			int inShop = -1;
+			for (int i = 0; i < RSCConfig.shopItemCount; i++)
+			{
+				if (RSCConfig.shopItem[i] == rscID)
+				{
+					inShop = i;
+					break;
+				}
+			}
+			if (inShop != -1)
+				shopCount = RSCConfig.shopItemAmount[inShop];
+			packetID = 221;
+		}
+
+		this.stream.RSC_newPacket(packetID);
+		this.stream.putShort(rscID);
+		this.stream.putShort(shopCount);
+		this.stream.putShort(count);
+		this.stream.RSC_finalizePacket();
 	}
 
 	private void doAction(final int row) {
@@ -2870,10 +2981,24 @@ public final class Client extends RSApplet {
 			}
 		}
 		if (menuAction == 632) {
-			this.stream.putOpcode(145);
-			this.stream.putShortA(actionInformation1);
-			this.stream.putShortA(actionInformation2);
-			this.stream.putShortA(actionTarget);
+			if (RSCConfig.rscProtocol) {
+				// TODO: Shop sell price
+				int rscID = RSCConfig.RSC_TranslateItemReverse(actionTarget);
+				boolean canTrade = RSCConfig.RSC_CanShopTrade(rscID);
+				boolean buying = !isPlayerInventory(actionInformation1);
+				String itemName = JGameData.itemName[rscID];
+				if (canTrade) {
+					int value = RSCConfig.RSC_CalculateShopValue(rscID, buying, actionInformation2);
+					pushMessage(itemName + ": " + (buying ? "buy" : "sell") + " for " + value + "gp each", 0, null);
+				} else {
+					pushMessage("You can't " + (buying ? "buy" : "sell") + " this item.", 0, null);
+				}
+			} else {
+				this.stream.putOpcode(145);
+				this.stream.putShortA(actionInformation1);
+				this.stream.putShortA(actionInformation2);
+				this.stream.putShortA(actionTarget);
+			}
 			this.atInventoryLoopCycle = 0;
 			this.atInventoryInterface = actionInformation1;
 			this.atInventoryIndex = actionInformation2;
@@ -2884,6 +3009,76 @@ public final class Client extends RSApplet {
 			if (RSInterface.cache[actionInformation1].parentID == this.chatboxInterfaceId) {
 				this.atInventoryInterfaceType = 3;
             }
+		}
+		if (menuAction == 633) {
+			RSC_SendShopOption(actionInformation1, actionTarget, actionInformation2, 1);
+
+			this.atInventoryLoopCycle = 0;
+			this.atInventoryInterface = actionInformation1;
+			this.atInventoryIndex = actionInformation2;
+			this.atInventoryInterfaceType = 2;
+			if (RSInterface.cache[actionInformation1].parentID == this.openInterfaceId) {
+				this.atInventoryInterfaceType = 1;
+			}
+			if (RSInterface.cache[actionInformation1].parentID == this.chatboxInterfaceId) {
+				this.atInventoryInterfaceType = 3;
+			}
+		}
+		if (menuAction == 634) {
+			RSC_SendShopOption(actionInformation1, actionTarget, actionInformation2, 5);
+
+			this.atInventoryLoopCycle = 0;
+			this.atInventoryInterface = actionInformation1;
+			this.atInventoryIndex = actionInformation2;
+			this.atInventoryInterfaceType = 2;
+			if (RSInterface.cache[actionInformation1].parentID == this.openInterfaceId) {
+				this.atInventoryInterfaceType = 1;
+			}
+			if (RSInterface.cache[actionInformation1].parentID == this.chatboxInterfaceId) {
+				this.atInventoryInterfaceType = 3;
+			}
+		}
+		if (menuAction == 635) {
+			RSC_SendShopOption(actionInformation1, actionTarget, actionInformation2, 10);
+
+			this.atInventoryLoopCycle = 0;
+			this.atInventoryInterface = actionInformation1;
+			this.atInventoryIndex = actionInformation2;
+			this.atInventoryInterfaceType = 2;
+			if (RSInterface.cache[actionInformation1].parentID == this.openInterfaceId) {
+				this.atInventoryInterfaceType = 1;
+			}
+			if (RSInterface.cache[actionInformation1].parentID == this.chatboxInterfaceId) {
+				this.atInventoryInterfaceType = 3;
+			}
+		}
+		if (menuAction == 636) {
+			RSC_SendShopOption(actionInformation1, actionTarget, actionInformation2, 50);
+
+			this.atInventoryLoopCycle = 0;
+			this.atInventoryInterface = actionInformation1;
+			this.atInventoryIndex = actionInformation2;
+			this.atInventoryInterfaceType = 2;
+			if (RSInterface.cache[actionInformation1].parentID == this.openInterfaceId) {
+				this.atInventoryInterfaceType = 1;
+			}
+			if (RSInterface.cache[actionInformation1].parentID == this.chatboxInterfaceId) {
+				this.atInventoryInterfaceType = 3;
+			}
+		}
+		if (menuAction == 637) {
+			System.out.println("TODO: X not yet implemented");
+
+			this.atInventoryLoopCycle = 0;
+			this.atInventoryInterface = actionInformation1;
+			this.atInventoryIndex = actionInformation2;
+			this.atInventoryInterfaceType = 2;
+			if (RSInterface.cache[actionInformation1].parentID == this.openInterfaceId) {
+				this.atInventoryInterfaceType = 1;
+			}
+			if (RSInterface.cache[actionInformation1].parentID == this.chatboxInterfaceId) {
+				this.atInventoryInterfaceType = 3;
+			}
 		}
 		if (menuAction == 493) {
 			this.stream.putOpcode(75);
@@ -4408,7 +4603,7 @@ public final class Client extends RSApplet {
 										if (RSCConfig.rscProtocol)
 										{
 											// Draw RSC inventory background for equipped items
-											if (RSCConfig.inventoryEquipped[item])
+											if (rsInterface.parentID == 3213 && RSCConfig.inventoryEquipped[item])
 												DrawingArea.drawFilledRectangleAlpha(0xFF0000, tileY, 32, 32, 64, tileX);
 										}
 
@@ -11285,18 +11480,23 @@ public final class Client extends RSApplet {
 		message = RSCConfig.RSC_removeChatFormatting(message);
 
 		String name = "";
-		if (entity instanceof Player)
-			name = ((Player)entity).name;
-		else if (entity instanceof NPC)
-			name = ((NPC)entity).npcDefinition.name;
+		String sendMessage = message;
+		int type = -1;
+		if (entity instanceof Player) {
+			name = ((Player) entity).name;
+			type = 2;
+		} else if (entity instanceof NPC) {
+			name = ((NPC) entity).npcDefinition.name;
+			type = 2;
+		}
 		entity.overheadTextMessage = message;
 		if (entity.overheadTextMessage.charAt(0) == '~') {
 			entity.overheadTextMessage = entity.overheadTextMessage.substring(1);
-			this.pushMessage(entity.overheadTextMessage, 2, name);
+			this.pushMessage(sendMessage, type, name);
 		}
 
 		if (playerServerIndex == RSCConfig.localServerIndex)
-			this.pushMessage(entity.overheadTextMessage, 2, name);
+			this.pushMessage(sendMessage, type, name);
 
 		entity.chatColour = 0;
 		entity.chatEffect = 0;
