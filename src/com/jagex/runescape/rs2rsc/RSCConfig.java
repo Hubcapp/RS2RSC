@@ -1567,6 +1567,28 @@ public class RSCConfig {
 
         switch (opcode)
         {
+            case 249:
+            {
+                int slot = buffer.getUnsignedByte();
+                bankItem[slot] = buffer.getUnsignedLEShort();
+                bankItemAmount[slot] = buffer.RSC_getUnsignedInt3();
+                if (bankItemAmount[slot] == 0)
+                {
+                    bankItemCount--;
+
+                    for (int index = slot; bankItemCount > index; ++index) {
+                        bankItem[index] = bankItem[index + 1];
+                        bankItemAmount[index] = bankItemAmount[index + 1];
+                    }
+                }
+                else
+                {
+                    if (slot >= bankItemCount)
+                        bankItemCount = slot + 1;
+                }
+                showBank = true;
+                break;
+            }
             case 42:
             {
                 bankItemCount = buffer.getUnsignedByte();

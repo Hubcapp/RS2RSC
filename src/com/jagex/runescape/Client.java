@@ -1543,6 +1543,68 @@ public final class Client extends RSApplet {
 											// Handle RSC Interfaces
 											switch (openInterfaceId)
 											{
+												case 5292: // Bank
+												{
+													boolean myInventory = isPlayerInventory(childInterface.id);
+													int itemCount = RSCConfig.bankItemAmount[slot];
+
+													if (myInventory)
+														itemCount = RSCConfig.inventoryAmount[slot];
+
+													String optionName = "Withdraw";
+
+													if (myInventory)
+														optionName = "Deposit";
+
+													this.menuActionName[this.menuActionRow] = optionName + " All @lre@" + itemDef.name;
+													this.menuActionId[this.menuActionRow] = 643;
+													this.menuActionData1[this.menuActionRow] = itemDef.id;
+													this.menuActionData2[this.menuActionRow] = slot;
+													this.menuActionData3[this.menuActionRow] = childInterface.id;
+													this.menuActionRow++;
+
+													this.menuActionName[this.menuActionRow] = optionName + " X @lre@" + itemDef.name;
+													this.menuActionId[this.menuActionRow] = 638;
+													this.menuActionData1[this.menuActionRow] = itemDef.id;
+													this.menuActionData2[this.menuActionRow] = slot;
+													this.menuActionData3[this.menuActionRow] = childInterface.id;
+													this.menuActionRow++;
+
+													if (itemCount >= 50) {
+														this.menuActionName[this.menuActionRow] = optionName + " 50 @lre@" + itemDef.name;
+														this.menuActionId[this.menuActionRow] = 639;
+														this.menuActionData1[this.menuActionRow] = itemDef.id;
+														this.menuActionData2[this.menuActionRow] = slot;
+														this.menuActionData3[this.menuActionRow] = childInterface.id;
+														this.menuActionRow++;
+													}
+
+													if (itemCount >= 10) {
+														this.menuActionName[this.menuActionRow] = optionName + " 10 @lre@" + itemDef.name;
+														this.menuActionId[this.menuActionRow] = 640;
+														this.menuActionData1[this.menuActionRow] = itemDef.id;
+														this.menuActionData2[this.menuActionRow] = slot;
+														this.menuActionData3[this.menuActionRow] = childInterface.id;
+														this.menuActionRow++;
+													}
+
+													if (itemCount >= 5) {
+														this.menuActionName[this.menuActionRow] = optionName + " 5 @lre@" + itemDef.name;
+														this.menuActionId[this.menuActionRow] = 641;
+														this.menuActionData1[this.menuActionRow] = itemDef.id;
+														this.menuActionData2[this.menuActionRow] = slot;
+														this.menuActionData3[this.menuActionRow] = childInterface.id;
+														this.menuActionRow++;
+													}
+
+													this.menuActionName[this.menuActionRow] = optionName + " 1 @lre@" + itemDef.name;
+													this.menuActionId[this.menuActionRow] = 642;
+													this.menuActionData1[this.menuActionRow] = itemDef.id;
+													this.menuActionData2[this.menuActionRow] = slot;
+													this.menuActionData3[this.menuActionRow] = childInterface.id;
+													this.menuActionRow++;
+													break;
+												}
 												case 3824: // Shop
 												{
 													boolean myInventory = isPlayerInventory(childInterface.id);
@@ -2400,6 +2462,37 @@ public final class Client extends RSApplet {
 		}
 	}
 
+	public void RSC_SendBankOption(int interfaceID, int itemID, int slot, int count)
+	{
+		boolean depositing = isPlayerInventory(interfaceID);
+		int rscID = RSCConfig.RSC_TranslateItemReverse(itemID);
+
+		if (count == -1)
+		{
+			if (depositing)
+				count = RSCConfig.inventoryAmount[slot];
+			else
+				count = RSCConfig.bankItemAmount[slot];
+		}
+
+		if (depositing)
+		{
+			this.stream.RSC_newPacket(23);
+			this.stream.putShort(rscID);
+			this.stream.putInt(count);
+			this.stream.putInt(-0x789abcdf);
+			this.stream.RSC_finalizePacket();
+		}
+		else
+		{
+			this.stream.RSC_newPacket(22);
+			this.stream.putShort(rscID);
+			this.stream.putInt(count);
+			this.stream.putInt(0x12345678);
+			this.stream.RSC_finalizePacket();
+		}
+	}
+
 	public void RSC_SendShopOption(int interfaceID, int itemID, int slot, int count)
 	{
 		boolean buying = !isPlayerInventory(interfaceID);
@@ -3069,7 +3162,91 @@ public final class Client extends RSApplet {
 			}
 		}
 		if (menuAction == 637) {
-			System.out.println("TODO: X not yet implemented");
+			System.out.println("TODO: Shop X not yet implemented");
+
+			this.atInventoryLoopCycle = 0;
+			this.atInventoryInterface = actionInformation1;
+			this.atInventoryIndex = actionInformation2;
+			this.atInventoryInterfaceType = 2;
+			if (RSInterface.cache[actionInformation1].parentID == this.openInterfaceId) {
+				this.atInventoryInterfaceType = 1;
+			}
+			if (RSInterface.cache[actionInformation1].parentID == this.chatboxInterfaceId) {
+				this.atInventoryInterfaceType = 3;
+			}
+		}
+		if (menuAction == 638) {
+			System.out.println("TODO: Bank X not yet implemented");
+
+			this.atInventoryLoopCycle = 0;
+			this.atInventoryInterface = actionInformation1;
+			this.atInventoryIndex = actionInformation2;
+			this.atInventoryInterfaceType = 2;
+			if (RSInterface.cache[actionInformation1].parentID == this.openInterfaceId) {
+				this.atInventoryInterfaceType = 1;
+			}
+			if (RSInterface.cache[actionInformation1].parentID == this.chatboxInterfaceId) {
+				this.atInventoryInterfaceType = 3;
+			}
+		}
+		if (menuAction == 642) {
+			RSC_SendBankOption(actionInformation1, actionTarget, actionInformation2, 1);
+
+			this.atInventoryLoopCycle = 0;
+			this.atInventoryInterface = actionInformation1;
+			this.atInventoryIndex = actionInformation2;
+			this.atInventoryInterfaceType = 2;
+			if (RSInterface.cache[actionInformation1].parentID == this.openInterfaceId) {
+				this.atInventoryInterfaceType = 1;
+			}
+			if (RSInterface.cache[actionInformation1].parentID == this.chatboxInterfaceId) {
+				this.atInventoryInterfaceType = 3;
+			}
+		}
+		if (menuAction == 641) {
+			RSC_SendBankOption(actionInformation1, actionTarget, actionInformation2, 5);
+
+			this.atInventoryLoopCycle = 0;
+			this.atInventoryInterface = actionInformation1;
+			this.atInventoryIndex = actionInformation2;
+			this.atInventoryInterfaceType = 2;
+			if (RSInterface.cache[actionInformation1].parentID == this.openInterfaceId) {
+				this.atInventoryInterfaceType = 1;
+			}
+			if (RSInterface.cache[actionInformation1].parentID == this.chatboxInterfaceId) {
+				this.atInventoryInterfaceType = 3;
+			}
+		}
+		if (menuAction == 640) {
+			RSC_SendBankOption(actionInformation1, actionTarget, actionInformation2, 10);
+
+			this.atInventoryLoopCycle = 0;
+			this.atInventoryInterface = actionInformation1;
+			this.atInventoryIndex = actionInformation2;
+			this.atInventoryInterfaceType = 2;
+			if (RSInterface.cache[actionInformation1].parentID == this.openInterfaceId) {
+				this.atInventoryInterfaceType = 1;
+			}
+			if (RSInterface.cache[actionInformation1].parentID == this.chatboxInterfaceId) {
+				this.atInventoryInterfaceType = 3;
+			}
+		}
+		if (menuAction == 638) {
+			RSC_SendBankOption(actionInformation1, actionTarget, actionInformation2, 50);
+
+			this.atInventoryLoopCycle = 0;
+			this.atInventoryInterface = actionInformation1;
+			this.atInventoryIndex = actionInformation2;
+			this.atInventoryInterfaceType = 2;
+			if (RSInterface.cache[actionInformation1].parentID == this.openInterfaceId) {
+				this.atInventoryInterfaceType = 1;
+			}
+			if (RSInterface.cache[actionInformation1].parentID == this.chatboxInterfaceId) {
+				this.atInventoryInterfaceType = 3;
+			}
+		}
+		if (menuAction == 643) {
+			RSC_SendBankOption(actionInformation1, actionTarget, actionInformation2, -1);
 
 			this.atInventoryLoopCycle = 0;
 			this.atInventoryInterface = actionInformation1;
@@ -5023,6 +5200,13 @@ public final class Client extends RSApplet {
 		if (this.menuActionRow > minSize) {
             s = s + "@whi@ / " + (this.menuActionRow - minSize) + " more options";
         }
+
+		if (RSCConfig.rscProtocol)
+		{
+			if (this.menuActionRow <= 1)
+				s = "";
+		}
+
 		this.fontBold.drawAlphaTextWithShadow(s, 4, 15, 0xFFFFFF, tick / 1000);
 	}
 
