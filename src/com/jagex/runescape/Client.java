@@ -388,7 +388,7 @@ public final class Client extends RSApplet {
 	private int selectedSpellId;
 	private int spellUsableOn;
 	private String spellTooltip;
-	private boolean inTutorialIsland;
+	public boolean inTutorialIsland;
 	private IndexedImage redStone1;
 	private IndexedImage redStone2;
 	private IndexedImage redStone3;
@@ -2019,6 +2019,15 @@ public final class Client extends RSApplet {
 	}
 
 	private void checkTutorialIsland() {
+		if (RSCConfig.rscProtocol)
+		{
+			if (this.inTutorialIsland)
+				this.inTutorial = 1;
+			else
+				this.inTutorial = 0;
+			return;
+		}
+
 		this.inTutorial = 0;
 		final int x = (localPlayer.x >> 7) + this.baseX;
 		final int y = (localPlayer.y >> 7) + this.baseY;
@@ -5436,10 +5445,6 @@ public final class Client extends RSApplet {
 		this.baseX = this.regionX;
 		this.baseY = this.regionY;
 
-		this.inTutorialIsland = (this.regionX / 8 == 48 || this.regionX / 8 == 49) && this.regionY / 8 == 48;
-		if (this.regionX / 8 == 48 && this.regionY / 8 == 148) {
-			this.inTutorialIsland = true;
-		}
 		this.loadingStage = 1;
 		this.loadRegionTime = System.currentTimeMillis();
 		this.gameScreenImageProducer.initDrawingArea();

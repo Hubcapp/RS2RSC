@@ -455,6 +455,40 @@ public final class ItemDefinition {
 		if (action1.length() == 0)
 			action1 = null;
 		actions = new String[] { action1, null, null, null, null };
+
+		if (id == 2803)
+			copyDefinition(ItemDefinition.getDefinition(1127));
+	}
+
+	public void copyDefinition(ItemDefinition otherItem)
+	{
+		modelId = otherItem.modelId;
+		modelOffset1 = otherItem.modelOffset1;
+		modelOffset2 = otherItem.modelOffset2;
+		modelRotationX = otherItem.modelRotationX;
+		modelRotationY = otherItem.modelRotationY;
+		modelRotationZ = otherItem.modelRotationZ;
+		modelScaleX = otherItem.modelScaleX;
+		modelScaleY = otherItem.modelScaleY;
+		modelScaleZ = otherItem.modelScaleZ;
+		modelZoom = otherItem.modelZoom;
+		originalModelColors = otherItem.originalModelColors;
+		modifiedModelColors = otherItem.modifiedModelColors;
+		maleEquipModelIdEmblem = otherItem.maleEquipModelIdEmblem;
+		maleEquipModelIdPrimary = otherItem.maleEquipModelIdPrimary;
+		maleEquipModelIdSecondary = otherItem.maleEquipModelIdSecondary;
+		maleDialogueHatModelId = otherItem.maleDialogueHatModelId;
+		maleDialogueModelId = otherItem.maleDialogueModelId;
+		equipModelTranslationMale = otherItem.equipModelTranslationMale;
+		femaleEquipModelIdEmblem = otherItem.femaleEquipModelIdEmblem;
+		femaleEquipModelIdPrimary = otherItem.femaleEquipModelIdPrimary;
+		femaleEquipModelIdSecondary = otherItem.femaleEquipModelIdSecondary;
+		femaleDialogueHatModelId = otherItem.femaleDialogueHatModelId;
+		femaleDialogueModelId = otherItem.femaleDialogueHatModelId;
+		equipModelTranslationFemale = otherItem.equipModelTranslationFemale;
+		shadowModifier = otherItem.shadowModifier;
+		lightModifier = otherItem.lightModifier;
+		teamId = otherItem.teamId;
 	}
 
 	private void readValues(final Buffer stream) {

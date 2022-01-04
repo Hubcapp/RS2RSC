@@ -552,6 +552,8 @@ public class RSCConfig {
         // Setup object ids directions
         objectIDDirTable.put(1097, 1); // Throne
 
+        itemIDTable.put(0, 1420); // Iron mace
+        itemIDTable.put(1, 1279); // Iron Short Sword
         itemIDTable.put(4, 1171); // Wooden Shield
         itemIDTable.put(10, 995); // Coins
         itemIDTable.put(11, 882); // Bronze Arrows
@@ -564,9 +566,11 @@ public class RSCConfig {
         itemIDTable.put(20, 526); // Bones
         itemIDTable.put(21, 1925); // Bucket
         itemIDTable.put(28, 1203); // Iron dagger
+        itemIDTable.put(71, 1293); // Iron Long Sword
         itemIDTable.put(87, 1351); // bronze Axe
         itemIDTable.put(88, 1349); // Steel Axe
         itemIDTable.put(93, 1373); // Rune battle Axe
+        itemIDTable.put(95, 1424); // Steel Mace
         itemIDTable.put(104, 1139); // Medium Bronze Helmet
         itemIDTable.put(108, 1155); // Large Bronze Helmet
         itemIDTable.put(113, 1103); // Bronze Chain Mail Body
@@ -585,13 +589,17 @@ public class RSCConfig {
         itemIDTable.put(168, 2347); // hammer
         itemIDTable.put(171, 2353); // steel bar
         itemIDTable.put(183, 1007); // Cape (red)
+        itemIDTable.put(184, 577); // Wizards robe
         itemIDTable.put(185, 579); // wizardshat
+        itemIDTable.put(187, 1011); // skirt (blue)
         itemIDTable.put(194, 1013); // skirt (pink)
+        itemIDTable.put(195, 1015); // skirt (black)
         itemIDTable.put(203, 1355); // Mithril Axe
         itemIDTable.put(204, 1357); // Adamantite Axe
         itemIDTable.put(205, 1375); // bronze battle axe
         itemIDTable.put(206, 1075); // Bronze Plate Mail Legs
         itemIDTable.put(241, 1957); // Onion
+        itemIDTable.put(280, 52); // arrow shafts
         itemIDTable.put(288, 1654); // Gold necklace
         itemIDTable.put(296, 1692); // Gold Amulet
         itemIDTable.put(319, 1985); // Cheese
@@ -602,12 +610,19 @@ public class RSCConfig {
         itemIDTable.put(377, 307); // Fishing Rod
         itemIDTable.put(378, 309); // Fly Fishing Rod
         itemIDTable.put(379, 311); // Harpoon
+        itemIDTable.put(401, 1127); // Rune Plate Mail Body
         itemIDTable.put(405, 1359); // rune Axe
+        itemIDTable.put(406, 1093); // Rune skirt
+        itemIDTable.put(407, 2803); // Rune Plate Mail top
         itemIDTable.put(420, 1540); // Anti dragon breath Shield
         itemIDTable.put(428, 1261); // Black Axe
         itemIDTable.put(548, 305); // Big Net
+        itemIDTable.put(594, 1377); // Dragon axe
+        itemIDTable.put(597, 1712); // Charged Dragonstone Amulet
+        itemIDTable.put(795, 1149); // Dragon medium Helmet
         itemIDTable.put(971, 1050); // Santa's hat
         itemIDTable.put(1263, 0); // Sleeping Bag
+        itemIDTable.put(1278, 1187); // Dragon Square Shield
         itemIDTable.put(1288, 1052); // Cape of legends
 
         System.out.println("using rsc protocol");
@@ -1048,8 +1063,6 @@ public class RSCConfig {
                 return -1;
             case 4:
                 return -6;
-            case 5:
-                return -5;
             case 7: // Head, with beard
                 return -3;
             case 8: // Head, without beard and bald
@@ -1063,20 +1076,36 @@ public class RSCConfig {
                 return RSC_TranslateItem(113);
             case 28: // Bronze Plate Mail Body
                 return RSC_TranslateItem(117);
+            case 34: // Rune Plate Mail Body
+                return RSC_TranslateItem(401);
             case 37: // Bronze Plate Mail Legs
                 return RSC_TranslateItem(206);
             case 47: // Leather Gloves
                 return RSC_TranslateItem(16);
+            case 49: // Iron Sword
+                return RSC_TranslateItem(71);
+            case 60: // Rune Plate Mail top
+                return RSC_TranslateItem(407);
             case 63: // Cape (red)
                 return RSC_TranslateItem(183);
             case 70: // Medium Bronze Helmet
                 return RSC_TranslateItem(104);
+            case 77: // Wizards robe
+                return RSC_TranslateItem(184);
+            case 78: // wizardshat
+                return RSC_TranslateItem(185);
             case 80: // Silver amulet
                 return 1796;
             case 81: // Gold amulet
                 return RSC_TranslateItem(288);
+            case 82: // skirt
+                return RSC_TranslateItem(187);
+            case 89: // skirt
+                return RSC_TranslateItem(195);
             case 90: // skirt (pink)
                 return RSC_TranslateItem(194);
+            case 97: // Rune skirt
+                return RSC_TranslateItem(406);
             case 98: // Bronze Square Shield
                 return RSC_TranslateItem(124);
             case 105: // Anti dragon breath Shield
@@ -1087,10 +1116,20 @@ public class RSCConfig {
                 return RSC_TranslateItem(205);
             case 114: // rune Axe
                 return RSC_TranslateItem(93);
+            case 117: // Iron Mace
+                return RSC_TranslateItem(0);
+            case 118: // Steel Mace
+                return RSC_TranslateItem(95);
+            case 162: // Dragon axe
+                return RSC_TranslateItem(594);
             case 172: // Black amulet
                 return 4677;
+            case 179: // Dragon medium Helmet
+                return RSC_TranslateItem(795);
             case 209: // Santa's hat
                 return RSC_TranslateItem(971);
+            case 225: // Dragon Square Shield
+                return RSC_TranslateItem(1278);
             case 226: // Cape of legends
                 return RSC_TranslateItem(1288);
 
@@ -1103,10 +1142,26 @@ public class RSCConfig {
         return -1;
     }
 
+    public static boolean RSC_isFemaleEquipment(int id)
+    {
+        switch(id)
+        {
+            case 60:
+            case 5:
+                return true;
+        }
+
+        return false;
+    }
+
     public static boolean RSC_isWeapon(int itemID)
     {
         switch (itemID)
         {
+            case 1279: // Iron Short Sword
+            case 1424: // Steel Mace
+            case 1420: // Iron Mace
+            case 1377: // Dragon axe
             case 1351: // bronze Axe
             case 1349: // Iron Axe
             case 1353: // Steel Axe
@@ -1116,6 +1171,8 @@ public class RSCConfig {
             case 1359: // rune Axe
             case 1375: // bronze battle Axe
             case 1373: // Rune battle Axe
+            case 1203: // Iron Dagger
+            case 1293: // Iron Long Sword
                 return true;
         }
 
@@ -1179,6 +1236,7 @@ public class RSCConfig {
     {
         switch (itemID)
         {
+            case 1187: // Dragon Square Shield
             case 1173: // Bronze Square Shield
             case 1540: // Anti dragon breath Shield
             case 1171: // Wooden Shield
@@ -1193,6 +1251,7 @@ public class RSCConfig {
         switch (itemID)
         {
             case 1139: // Medium Bronze Helmet
+            case 1149: // Dragon medium Helmet
                 return true;
         }
 
@@ -1203,6 +1262,9 @@ public class RSCConfig {
     {
         switch (itemID)
         {
+            case 1093: // Rune skirt
+            case 1015: // skirt (black)
+            case 1011: // skirt (blue)
             case 1013: // skirt (pink)
             case 1075: // Bronze Plate Mail Legs
                 return true;
@@ -1216,6 +1278,7 @@ public class RSCConfig {
         switch (itemID)
         {
             case 1050: // Santa's hat
+            case 579: // wizardshat
                 return true;
         }
 
@@ -1226,7 +1289,10 @@ public class RSCConfig {
     {
         switch (itemID)
         {
+            case 2803: // Rune Plate Mail top
+            case 1127: // Rune platebody
             case 1117: // Bronze Plate Mail Body
+            case 577: // Wizards robe
                 return true;
         }
 
@@ -1753,7 +1819,7 @@ public class RSCConfig {
             case 111:
             {
                 boolean tutorial = buffer.getUnsignedByte() != 0;
-                // TODO: What to do with this...
+                client.inTutorialIsland = tutorial;
                 break;
             }
             case 53: // Inventory
@@ -2069,6 +2135,18 @@ public class RSCConfig {
                                 int id = buffer.getUnsignedByte();
                                 if (id == 0)
                                     continue;
+
+                                // Female
+                                if (RSC_isFemaleEquipment(id))
+                                {
+                                    genderID = 1;
+                                    legID = 70;
+                                    feetID = 79;
+                                    chestID = 56;
+                                    handID = 68;
+                                    armID = 61;
+                                }
+
                                 id = RSC_TranslateEquipment(id);
                                 if (id == -1)
                                     continue;
@@ -2092,17 +2170,6 @@ public class RSCConfig {
                                 {
                                     hairID = 5;
                                     beardID = 14;
-                                }
-
-                                // Female
-                                if (id == -5)
-                                {
-                                    genderID = 1;
-                                    legID = 70;
-                                    feetID = 79;
-                                    chestID = 56;
-                                    handID = 68;
-                                    armID = 61;
                                 }
 
                                 if (RSC_isWeapon(id))
