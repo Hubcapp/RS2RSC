@@ -38,7 +38,6 @@ public class Settings
         if (Objects.equals(protocol, "jar")) {
             try {
                 Dir.JAR = Settings.class.getProtectionDomain().getCodeSource().getLocation().getFile();
-                System.out.println(Dir.JAR);
                 Dir.JAR = Settings.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath();
                 int indexFileSep1 = Dir.JAR.lastIndexOf('/');
                 int indexFileSep2 = Dir.JAR.lastIndexOf('\\');
@@ -50,8 +49,6 @@ public class Settings
 
         Dir.CACHE = Dir.JAR + "/cache";
         Dir.RSC_CACHE = Dir.JAR + "/rsc_cache";
-
-        System.out.println(Dir.JAR);
 
         // Get settings file
         settingsFile = new File(Dir.JAR + "/settings.ini");

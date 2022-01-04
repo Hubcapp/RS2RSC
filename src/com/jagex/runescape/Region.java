@@ -62,6 +62,7 @@ final class Region {
 				animable = new GameObject(objectId, face, 10, vertexHeightSE, vertexHeightNE, vertexHeightSW,
 						vertexHeightNW, definition.animationId, true);
 			}
+
 			if (animable != null) {
 				int rotation = 0;
 				if (type == 11) {

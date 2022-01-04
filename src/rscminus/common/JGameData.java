@@ -124,13 +124,9 @@ public class JGameData {
         npcAttackable = new int[npcCount];
         npcCommand = new String[npcCount];
         npcCombatLevel = new int[npcCount];
-        System.out.println("NPC Names:");
         for (int i = 0; i < npcCount; i++) {
             npcName[i] = string.readString();
-            System.out.print(npcName[i]);
-            System.out.print(",");
         }
-        System.out.println();
         for (int i = 0; i < npcCount; i++)
             npcExamine[i] = string.readString();
         for (int i = 0; i < npcCount; i++)
@@ -172,13 +168,9 @@ public class JGameData {
 
         // Read texture data
         int textureCount = integer.readUnsignedShort();
-        System.out.println("TextureNames:");
         for (int i = 0; i < textureCount; i++) {
             String textureName = string.readString(); // Name
-            System.out.print(textureName);
-            System.out.print(",");
         }
-        System.out.println();
 
         for (int i = 0; i < textureCount; i++)
             string.readString(); // Subtype name
@@ -187,13 +179,9 @@ public class JGameData {
         animationCount = integer.readUnsignedShort();
         animationName = new String[animationCount];
         animationIndex = new int[animationCount];
-        System.out.println("Animation Names:");
         for (int i = 0; i < animationCount; i++) {
             animationName[i] = string.readString();
-            System.out.print(animationName[i]);
-            System.out.print(",");
         }
-        System.out.println();
 
         for (int i = 0; i < animationCount; i++)
             integer.skip(4); // CharacterColour
@@ -213,13 +201,9 @@ public class JGameData {
         sceneryExamine = new String[sceneryCount];
         sceneryCommand1 = new String[sceneryCount];
         sceneryCommand2 = new String[sceneryCount];
-        System.out.print("Scenery Names:");
         for (int i = 0; i < sceneryCount; i++) {
             sceneryName[i] = string.readString(); // Name
-            System.out.print(sceneryName[i]);
-            System.out.print(",");
         }
-        System.out.println();
 
         for (int i = 0; i < sceneryCount; i++)
             sceneryExamine[i] = string.readString(); // Examine
@@ -241,13 +225,9 @@ public class JGameData {
         boundaryCount = integer.readUnsignedShort();
         boundaryAdjacent = new boolean[boundaryCount];
         boundaryPassable = new boolean[boundaryCount];
-        System.out.println("Boundary Names:");
         for (int i = 0; i < boundaryCount; i++) {
             String boundaryName = string.readString(); // Name
-            System.out.print(boundaryName);
-            System.out.print(",");
         }
-        System.out.println();
 
         for (int i = 0; i < boundaryCount; i++)
             string.readString(); // Examine
@@ -301,15 +281,6 @@ public class JGameData {
             }
         }
 
-        for (int i = 0; i < itemCount; i++)
-            System.out.println("id: " + i + ", name: '" + itemName[i] + "', examine: '" + itemExamine[i] + "', command: '" + itemCommand[i] + "', price: '" + itemPrice[i] + "gp', stackable: " + itemStackable[i] + ", wearable: " + itemWearable[i] + ", tradable: " + itemTradable[i] + ", members: " + itemMembers[i]);
-        for (int i = 0; i < npcCount; i++) {
-            System.out.println("id: " + i + ", name: '" + npcName[i] + "', examine: '" + npcExamine[i] + "', attack: " + npcAttack[i] + ", strength: " + npcStrength[i] + ", hits: " + npcHits[i] + ", defense: " + npcDefense[i] + ", attackable: " + npcAttackable[i] + ", command: '" + npcCommand[i] + "'");
-        }
-        for (int i = 0; i < animationCount; i++) {
-            System.out.println("id: " + i + ", name: '" + animationName[i] + "', index: " + animationIndex[i]);
-        }
-
         int maxRegionWidth = Game.WORLD_WIDTH / Game.REGION_WIDTH;
         int maxRegionHeight = Game.WORLD_HEIGHT / Game.REGION_HEIGHT;
         regionCollisionMask = new byte[maxRegionWidth][maxRegionHeight][Game.REGION_FLOORS][Game.REGION_SIZE];
@@ -344,8 +315,6 @@ public class JGameData {
                 regionCollisionMask[x][y][floor][i] = Game.COLLISION_TILE;
             return false;
         }
-
-        System.out.println("Loaded map: " + x + ", " + y);
 
         // Clear collisions
         for (int i = 0; i < Game.REGION_SIZE; i++)
@@ -419,8 +388,6 @@ public class JGameData {
                 regionDirection[x][y][floor][i] = (byte)tileDirection;
             }
         }
-
-        System.out.println(mapName);
 
         map.close();
 

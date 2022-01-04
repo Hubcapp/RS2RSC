@@ -455,6 +455,7 @@ public final class ItemDefinition {
 		if (action1.length() == 0)
 			action1 = null;
 		actions = new String[] { action1, null, null, null, null };
+		groundActions = new String[] { null, null, null, null, null };
 
 		if (id == 2803)
 			copyDefinition(ItemDefinition.getDefinition(1127));

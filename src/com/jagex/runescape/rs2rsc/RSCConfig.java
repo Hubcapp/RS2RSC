@@ -1739,7 +1739,7 @@ public class RSCConfig {
                             int rs2ID = RSCConfig.RSC_TranslateItem(mod);
                             if (rs2ID != -1)
                             {
-                                System.out.println("SPAWN GROUND ITEM: " + mod + ", " + x + ", " + y);
+                                System.out.println("SPAWN GROUND ITEM: " + mod + ", " + rs2ID + ", " + x + ", " + y);
                                 client.RSC_spawnGroundItem(x, y, rs2ID);
                             }
                         } else {

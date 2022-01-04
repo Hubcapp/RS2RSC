@@ -1172,7 +1172,7 @@ public final class Client extends RSApplet {
 							{
 								int itemID = item.itemId;
 								if (RSCConfig.rscProtocol)
-									itemID = RSCConfig.RSC_TranslateItem(itemID);
+									itemID = RSCConfig.RSC_TranslateItemReverse(itemID);
 								this.menuActionName[this.menuActionRow] += " @gre@(@whi@" + itemID + "@gre@)";
 							}
 							this.menuActionId[this.menuActionRow] = 1448;
@@ -1613,7 +1613,7 @@ public final class Client extends RSApplet {
 													if (myInventory)
 														itemCount = RSCConfig.inventoryAmount[slot];
 
-													if (RSCConfig.RSC_CanShopTrade(RSCConfig.RSC_TranslateItem(itemDef.id))) {
+													if (RSCConfig.RSC_CanShopTrade(RSCConfig.RSC_TranslateItemReverse(itemDef.id))) {
 														String optionName = "Buy";
 
 														if (myInventory)
@@ -1676,7 +1676,7 @@ public final class Client extends RSApplet {
 										{
 											int itemID = childInterface.inventoryItemId[slot] - 1;
 											if (RSCConfig.rscProtocol)
-												itemID = RSCConfig.RSC_TranslateItem(itemID);
+												itemID = RSCConfig.RSC_TranslateItemReverse(itemID);
 											this.menuActionName[this.menuActionRow] += " @gre@(@whi@" + itemID + "@gre@)";
 										}
 										this.menuActionId[this.menuActionRow] = 1125;
@@ -2621,10 +2621,19 @@ public final class Client extends RSApplet {
 			this.crossY = super.clickY;
 			this.crossType = 2;
 			this.crossIndex = 0;
-			this.stream.putOpcode(236);
-			this.stream.putLEShort(actionInformation1 + this.baseY);
-			this.stream.putShort(actionTarget);
-			this.stream.putLEShort(actionInformation2 + this.baseX);
+			if (RSCConfig.rscProtocol) {
+				System.out.println(actionInformation1 + ", " + actionInformation2);
+				this.stream.RSC_newPacket(247);
+				this.stream.putShort(regionX + actionInformation2);
+				this.stream.putShort(regionY + actionInformation1);
+				this.stream.putShort(RSCConfig.RSC_TranslateItemReverse(actionTarget));
+				this.stream.RSC_finalizePacket();
+			} else {
+				this.stream.putOpcode(236);
+				this.stream.putLEShort(actionInformation1 + this.baseY);
+				this.stream.putShort(actionTarget);
+				this.stream.putLEShort(actionInformation2 + this.baseX);
+			}
 		}
 		if (menuAction == 62 && this.clickInteractiveObject(actionTarget, actionInformation1, actionInformation2)) {
 			if (RSCConfig.rscProtocol)
@@ -2663,13 +2672,24 @@ public final class Client extends RSApplet {
 			this.crossY = super.clickY;
 			this.crossType = 2;
 			this.crossIndex = 0;
-			this.stream.putOpcode(25);
-			this.stream.putLEShort(this.lastItemSelectedInterface);
-			this.stream.putShortA(this.useItemId);
-			this.stream.putShort(actionTarget);
-			this.stream.putShortA(actionInformation1 + this.baseY);
-			this.stream.putLEShortA(this.lastItemSelectedSlot);
-			this.stream.putShort(actionInformation2 + this.baseX);
+			if (RSCConfig.rscProtocol) {
+				int src = RSCConfig.RSC_TranslateItemReverse(actionTarget);
+				int dst = this.lastItemSelectedSlot;
+				this.stream.RSC_newPacket(53);
+				this.stream.putShort(actionInformation2 - -regionX);
+				this.stream.putShort(regionY + actionInformation1);
+				this.stream.putShort(src);
+				this.stream.putShort(dst);
+				this.stream.RSC_finalizePacket();
+			} else {
+				this.stream.putOpcode(25);
+				this.stream.putLEShort(this.lastItemSelectedInterface);
+				this.stream.putShortA(this.useItemId);
+				this.stream.putShort(actionTarget);
+				this.stream.putShortA(actionInformation1 + this.baseY);
+				this.stream.putLEShortA(this.lastItemSelectedSlot);
+				this.stream.putShort(actionInformation2 + this.baseX);
+			}
 		}
 		if (menuAction == 74) {
 			if (RSCConfig.rscProtocol)
@@ -5435,10 +5455,8 @@ public final class Client extends RSApplet {
 
 		this.loadGeneratedMap = false;
 
-		if (this.regionX == playerRegionX && this.regionY == playerRegionY && this.loadingStage == 2) {
-			this.packetOpcode = -1;
+		if (this.regionX == playerRegionX && this.regionY == playerRegionY && this.loadingStage == 2)
 			return;
-		}
 
 		this.regionX = playerRegionX;
 		this.regionY = playerRegionY;
@@ -5468,17 +5486,12 @@ public final class Client extends RSApplet {
 				for (int y = (this.regionY - 6) / 8; y <= (this.regionY + 6) / 8; y++) {
 					this.mapCoordinates[r] = (x << 8) + y;
 					this.objectDataIds[r] = -1;
-					if (this.inTutorialIsland
-							&& (y == 49 || y == 149 || y == 147 || x == 50 || x == 49 && y == 47)) {
-						this.terrainDataIds[r] = -1;
-						r++;
-					} else {
-						final int terrainId = this.terrainDataIds[r] = this.onDemandFetcher.getMapId(0, x, y);
-						if (terrainId != -1) {
-							this.onDemandFetcher.request(3, terrainId);
-						}
-						r++;
+
+					final int terrainId = this.terrainDataIds[r] = this.onDemandFetcher.getMapId(0, x, y);
+					if (terrainId != -1) {
+						this.onDemandFetcher.request(3, terrainId);
 					}
+					r++;
 				}
 			}
 		final int _x = this.baseX - this.anInt1036;
@@ -6753,14 +6766,16 @@ public final class Client extends RSApplet {
 		} catch (final IOException _ex) {
 			this.dropClient();
 		} catch (final Exception exception) {
-			StringBuilder s2 = new StringBuilder("T2 - " + this.packetOpcode + "," + this.secondMostRecentOpcode + "," + this.thirdMostRecentOpcode + " - "
-					+ this.packetSize + "," + (this.baseX + localPlayer.waypointX[0]) + "," + (this.baseY + localPlayer.waypointY[0])
-					+ " - ");
-			for (int j15 = 0; j15 < this.packetSize && j15 < 50; j15++) {
-                s2.append(this.inStream.buffer[j15]).append(",");
-            }
+			if (!Settings.getDebug()) {
+				StringBuilder s2 = new StringBuilder("T2 - " + this.packetOpcode + "," + this.secondMostRecentOpcode + "," + this.thirdMostRecentOpcode + " - "
+						+ this.packetSize + "," + (this.baseX + localPlayer.waypointX[0]) + "," + (this.baseY + localPlayer.waypointY[0])
+						+ " - ");
+				for (int j15 = 0; j15 < this.packetSize && j15 < 50; j15++) {
+					s2.append(this.inStream.buffer[j15]).append(",");
+				}
 
-			signlink.reporterror(s2.toString());
+				signlink.reporterror(s2.toString());
+			}
 			this.logout();
 		}
 		return true;
@@ -7229,6 +7244,7 @@ public final class Client extends RSApplet {
 				if (RSCConfig.rscProtocol)
 					this.stream.putOpcode(150);
 			}
+			// TODO: Look at this, done for now... COME BACK TO THIS
 			this.clearObjectSpawnRequests();
 		} catch (final Exception exception) {
 		}
@@ -10580,6 +10596,7 @@ public final class Client extends RSApplet {
 
 						if (RSCConfig.rscProtocol)
 						{
+							System.out.println("Spawn: " + spawnRequest.id2);
 							spawnRequest.unlink();
 						}
 						else {
@@ -10604,20 +10621,11 @@ public final class Client extends RSApplet {
 			final Item item = new Item();
 			item.itemId = id;
 			item.itemCount = 1;
+
 			if (this.groundArray[this.plane][x][y] == null)
 				this.groundArray[this.plane][x][y] = new DoubleEndedQueue();
 			this.groundArray[this.plane][x][y].pushBack(item);
 			this.spawnGroundItem(x, y);
-
-			for (GameObjectSpawnRequest spawnRequest = (GameObjectSpawnRequest) this.spawnObjectList
-					.peekFront(); spawnRequest != null; spawnRequest = (GameObjectSpawnRequest) this.spawnObjectList
-					.getPrevious()) {
-				if (spawnRequest.x >= this.playerPositionX && spawnRequest.x < this.playerPositionX + 8
-						&& spawnRequest.y >= this.playerPositionY && spawnRequest.y < this.playerPositionY + 8
-						&& spawnRequest.z == this.plane) {
-					spawnRequest.delayUntilRespawn = 0;
-				}
-			}
 		}
 	}
 
@@ -10647,16 +10655,6 @@ public final class Client extends RSApplet {
 					this.groundArray[this.plane][x][y] = null;
 
 				this.spawnGroundItem(x, y);
-
-				for (GameObjectSpawnRequest spawnRequest = (GameObjectSpawnRequest) this.spawnObjectList
-						.peekFront(); spawnRequest != null; spawnRequest = (GameObjectSpawnRequest) this.spawnObjectList
-						.getPrevious()) {
-					if (spawnRequest.x >= this.playerPositionX && spawnRequest.x < this.playerPositionX + 8
-							&& spawnRequest.y >= this.playerPositionY && spawnRequest.y < this.playerPositionY + 8
-							&& spawnRequest.z == this.plane) {
-						spawnRequest.delayUntilRespawn = 0;
-					}
-				}
 			}
 		}
 	}

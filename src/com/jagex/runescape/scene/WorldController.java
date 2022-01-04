@@ -1,6 +1,7 @@
 package com.jagex.runescape.scene;
 
 import com.jagex.runescape.collection.DoubleEndedQueue;
+import com.jagex.runescape.rs2rsc.RSCConfig;
 import com.jagex.runescape.scene.object.GroundDecoration;
 import com.jagex.runescape.scene.object.GroundItemTile;
 import com.jagex.runescape.scene.object.Wall;
@@ -143,9 +144,9 @@ public final class WorldController {
 
 	private final int mapSizeY;
 
-	private final int[][][] heightMap;
+	public final int[][][] heightMap;
 
-	private final Tile[][][] groundArray;
+	public final Tile[][][] groundArray;
 
 	private int currentPositionZ;
 
@@ -1374,7 +1375,29 @@ public final class WorldController {
 		}
 	}
 
+	public void RSC_loadChunk() {
+		for (int z = 0; z < this.mapSizeZ; z++) {
+			final Tile[][] tiles = this.groundArray[z];
+			for (int x = 0; x < mapBoundsX; x++) {
+				for (int y = 0; y < mapBoundsY; y++) {
+					Tile tile = tiles[x][y];
+					if (RSCConfig.rscProtocol) {
+						if (tiles[x][y] == null)
+							tiles[x][y] = new Tile(0, 0, 0);
+						tile = tiles[x][y];
+						tile.plainTile = new PlainTile(0, 0, 0, 0, 0, 2, false);
+					}
+				}
+			}
+		}
+	}
+
 	public void render(int cameraPosX, int cameraPosY, final int curveX, final int cameraPosZ, final int plane, final int curveY) {
+		if (RSCConfig.rscProtocol)
+		{
+			RSC_loadChunk();
+		}
+
 		if (cameraPosX < 0) {
 			cameraPosX = 0;
 		} else if (cameraPosX >= this.mapSizeX * 128) {
@@ -1419,6 +1442,7 @@ public final class WorldController {
 			final Tile[][] tiles = this.groundArray[z];
 			for (int x = currentPositionX; x < mapBoundsX; x++) {
 				for (int y = currentPositionY; y < mapBoundsY; y++) {
+
 					final Tile tile = tiles[x][y];
 					if (tile != null) {
 						if (tile.logicHeight > plane
