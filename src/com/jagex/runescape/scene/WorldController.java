@@ -17,6 +17,7 @@ import com.jagex.runescape.Model;
 import com.jagex.runescape.Animable;
 import com.jagex.runescape.VertexNormal;
 import com.jagex.runescape.DrawingArea;
+import rscminus.common.JGameData;
 
 public final class WorldController {
 
@@ -1375,28 +1376,49 @@ public final class WorldController {
 		}
 	}
 
-	public void RSC_loadChunk() {
+	public void RSC_loadLandscape()
+	{
+		System.out.println("RSC_LOAD_LANDSCAPE");
+
 		for (int z = 0; z < this.mapSizeZ; z++) {
 			final Tile[][] tiles = this.groundArray[z];
+			final int[][] height = this.heightMap[z];
 			for (int x = 0; x < mapBoundsX; x++) {
 				for (int y = 0; y < mapBoundsY; y++) {
+					if (z != 0)
+						continue;
+
+					int localX = RSCConfig.regionX + x;
+					int localY = RSCConfig.regionY + y;
+
+					int terrainHeightNW = JGameData.getTileHeight(localX, localY);
+					int terrainHeightNE = JGameData.getTileHeight(localX + 1, localY);
+					int terrainHeightSW = JGameData.getTileHeight(localX, localY + 1);
+					int terrainHeightSE = JGameData.getTileHeight(localX + 1, localY + 1);
+					int terrainColor = JGameData.getTileColor(localX, localY);
+
+					if (tiles[x][y] == null)
+						tiles[x][y] = new Tile(z, x, y);
 					Tile tile = tiles[x][y];
-					if (RSCConfig.rscProtocol) {
-						if (tiles[x][y] == null)
-							tiles[x][y] = new Tile(0, 0, 0);
-						tile = tiles[x][y];
-						tile.plainTile = new PlainTile(0, 0, 0, 0, 0, 2, false);
-					}
+
+					tile.shapedTile = new ShapedTile(x, terrainHeightNW, terrainHeightNE, terrainHeightSW, terrainHeightSE, y, 0, 1, 10, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2);
+					//tile.plainTile = new PlainTile(0, 0, 0, 0, 0, -1, false);
+
+					height[x][y] = terrainHeightNW;
 				}
 			}
 		}
 	}
 
+	public void RSC_initChunk() {
+		final Tile[][] tiles = this.groundArray[RSCConfig.planeIndex];
+		if (tiles[0][0].plainTile == null)
+			RSC_loadLandscape();
+	}
+
 	public void render(int cameraPosX, int cameraPosY, final int curveX, final int cameraPosZ, final int plane, final int curveY) {
 		if (RSCConfig.rscProtocol)
-		{
-			RSC_loadChunk();
-		}
+			RSC_initChunk();
 
 		if (cameraPosX < 0) {
 			cameraPosX = 0;
@@ -2260,10 +2282,10 @@ public final class WorldController {
 	}
 
 	public void renderTile(final int plane, final int x, final int y, final int clippingPath, final int clippingPathRotation, final int textureId,
-						   final int vertexHeightSW, final int vertexHeightSE, final int vertexHeightNE, final int vertexHeightNW, final int k2, final int l2, final int i3,
+						   final int vertexHeightSW, final int vertexHeightSE, final int vertexHeightNE, final int vertexHeightNW, final int unk1, final int l2, final int i3,
 						   final int j3, final int k3, final int l3, final int i4, final int j4, final int k4, final int l4) {
 		if (clippingPath == 0) {
-			final PlainTile tile = new PlainTile(k2, l2, j3, i3, k4, -1, false);
+			final PlainTile tile = new PlainTile(unk1, l2, j3, i3, k4, -1, false);
 			for (int _z = plane; _z >= 0; _z--) {
 				if (this.groundArray[_z][x][y] == null) {
 					this.groundArray[_z][x][y] = new Tile(_z, x, y);
@@ -2286,7 +2308,7 @@ public final class WorldController {
 			return;
 		}
 		final ShapedTile tile = new ShapedTile(x, vertexHeightSW, vertexHeightSE, vertexHeightNW, vertexHeightNE, y,
-				clippingPathRotation, textureId, clippingPath, k2, k3, l2, l3, j3, j4, i3, i4, l4, k4);
+				clippingPathRotation, textureId, clippingPath, unk1, k3, l2, l3, j3, j4, i3, i4, l4, k4);
 		for (int _z = plane; _z >= 0; _z--) {
 			if (this.groundArray[_z][x][y] == null) {
 				this.groundArray[_z][x][y] = new Tile(_z, x, y);

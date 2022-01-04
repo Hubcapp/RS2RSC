@@ -2,7 +2,6 @@ package com.jagex.runescape.rs2rsc;
 
 import com.jagex.runescape.*;
 import com.jagex.runescape.definition.EntityDefinition;
-import com.jagex.runescape.definition.GameObjectDefinition;
 import rscminus.common.JGameData;
 import rscminus.game.constants.Game;
 
@@ -63,6 +62,8 @@ public class RSCConfig {
     private static int magicLoc = 128;
     public static int localRegionX;
     public static int localRegionY;
+    public static int regionX;
+    public static int regionY;
     public static int planeWidth;
     public static int planeHeight;
     public static int planeIndex;
@@ -71,6 +72,8 @@ public class RSCConfig {
     private static Map<Integer, Integer> objectIDDirTable = new HashMap<Integer, Integer>();
     private static BiMap<Integer, Integer> npcIDTable = new BiMap<Integer, Integer>();
     private static BiMap<Integer, Integer> itemIDTable = new BiMap<Integer, Integer>();
+
+    public static int[] colorConversion = new int[256];
 
     public static int clamp(int val, int min, int max)
     {
@@ -414,6 +417,14 @@ public class RSCConfig {
         return (7 + var8 >> 3) - var6;
     }
 
+    static int generateColor(int var0, int var1, int var2, int var3) {
+        if (var1 >= -106) {
+            generateColor(-105, -46, -65, -106);
+        }
+
+        return -(var0 / 8) + -(var2 / 8 * 1024) + (-1 - var3 / 8 * 32);
+    }
+
     public static void Start(Client client)
     {
         if (!rscProtocol)
@@ -588,6 +599,7 @@ public class RSCConfig {
         itemIDTable.put(167, 1755); // chisel
         itemIDTable.put(168, 2347); // hammer
         itemIDTable.put(171, 2353); // steel bar
+        itemIDTable.put(181, 592); // Ashes
         itemIDTable.put(183, 1007); // Cape (red)
         itemIDTable.put(184, 577); // Wizards robe
         itemIDTable.put(185, 579); // wizardshat
@@ -624,6 +636,18 @@ public class RSCConfig {
         itemIDTable.put(1263, 0); // Sleeping Bag
         itemIDTable.put(1278, 1187); // Dragon Square Shield
         itemIDTable.put(1288, 1052); // Cape of legends
+
+        for (int var7 = 0; var7 < 64; ++var7)
+            colorConversion[var7] = generateColor(-(4 * var7) + 255, -114, 255 - var7 * 4, -((int) ((double) var7 * 1.75D)) + 255);
+
+        for (int var8 = 0; var8 < 64; ++var8)
+            colorConversion[var8 + 64] = generateColor(0, -124, var8 * 3, 144);
+
+        for (int var5 = 0; var5 < 64; ++var5)
+            colorConversion[128 + var5] = generateColor(0, -108, 192 - (int) ((double) var5 * 1.5D), 144 - (int) ((double) var5 * 1.5D));
+
+        for (int var6 = 0; var6 < 64; ++var6)
+            colorConversion[192 + var6] = generateColor(0, -112, -((int) (1.5D * (double) var6)) + 96, 48 + (int) (1.5D * (double) var6));
 
         System.out.println("using rsc protocol");
     }
@@ -1028,6 +1052,24 @@ public class RSCConfig {
             return 100;
         }
         return val.intValue();
+    }
+
+    public static int RSC_TranslateTexture(int id)
+    {
+        switch (id)
+        {
+            case 2: // Water
+                return 1;
+            case 3: // Wood
+                return 3;
+            case 0: // No texture
+                return -1;
+            default:
+                System.out.println("Unhandled texture conversion: " + id);
+                break;
+        }
+
+        return -1;
     }
 
     public static int RSC_TranslateItem(int itemID)
@@ -1952,6 +1994,8 @@ public class RSCConfig {
 
                 // Load region
                 client.RSC_loadRegion(localRegionX, localRegionY);
+                regionX = client.regionX;
+                regionY = client.regionY;
                 localRegionX -= client.regionX;
                 localRegionY -= client.regionY;
 
@@ -2047,7 +2091,7 @@ public class RSCConfig {
                             continue;
 
                         int rs2ID = RSC_TranslateObject(id);
-                        if (rs2ID != -1 && Math.abs(x) <= 8 && Math.abs(y) <= 8)
+                        if (rs2ID != -1)
                         {
                             int localX = Client.localPlayer.waypointX[0] + x;
                             int localY = Client.localPlayer.waypointY[0] + y;

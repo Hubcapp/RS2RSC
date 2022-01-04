@@ -64,6 +64,9 @@ public class JGameData {
 
     public static byte regionCollisionMask[][][][];
     public static byte regionDirection[][][][];
+    public static byte regionHeight[][][][];
+    public static byte regionColor[][][][];
+    public static byte regionDecoration[][][][];
 
     public static boolean init(boolean member) {
         JContent content = new JContent();
@@ -163,8 +166,8 @@ public class JGameData {
         for (int i = 0; i < npcCount; i++)
             npcCommand[i] = string.readString();
         for (int i = 0; i < npcCount; i++)
-            npcCombatLevel[i] = (int)RSCMath.combatFormulaRSC(npcAttack[i], npcStrength[i], npcDefense[i], npcHits[i],
-                                                        0, 0, 0);
+            if (npcAttackable[i] > 0)
+                npcCombatLevel[i] = (int) RSCMath.combatFormulaRSC(npcAttack[i], npcStrength[i], npcDefense[i], npcHits[i], 0, 0, 0);
 
         // Read texture data
         int textureCount = integer.readUnsignedShort();
@@ -285,6 +288,9 @@ public class JGameData {
         int maxRegionHeight = Game.WORLD_HEIGHT / Game.REGION_HEIGHT;
         regionCollisionMask = new byte[maxRegionWidth][maxRegionHeight][Game.REGION_FLOORS][Game.REGION_SIZE];
         regionDirection = new byte[maxRegionWidth][maxRegionHeight][Game.REGION_FLOORS][Game.REGION_SIZE];
+        regionHeight = new byte[maxRegionWidth][maxRegionHeight][Game.REGION_FLOORS][Game.REGION_SIZE];
+        regionColor = new byte[maxRegionWidth][maxRegionHeight][Game.REGION_FLOORS][Game.REGION_SIZE];
+        regionDecoration = new byte[maxRegionWidth][maxRegionHeight][Game.REGION_FLOORS][Game.REGION_SIZE];
 
         // Read content6 (landscape)
         if (!content.open("rsc_cache/content4_ffffffffaaca2b0d"))
@@ -301,6 +307,106 @@ public class JGameData {
         }
         content.close();
         contentMembers.close();
+
+        // Read content6 (landscape)
+        if (!content.open("rsc_cache/content4_ffffffffaaca2b0d"))
+            return false;
+        if (!contentMembers.open("rsc_cache/content5_6a1d6b00"))
+            return false;
+        for (int x = 0; x < maxRegionWidth; x++) {
+            for (int y = 0; y < maxRegionHeight; y++) {
+                for (int floor = 0; floor < Game.REGION_FLOORS; floor++) {
+                    if(!loadLandscape(content, x, y, floor) && member)
+                        loadLandscape(contentMembers, x, y, floor);
+                }
+            }
+        }
+        content.close();
+        contentMembers.close();
+
+        // Read content6 (landscape)
+        if (!content.open("rsc_cache/content6_ffffffffe997514b"))
+            return false;
+        if (!contentMembers.open("rsc_cache/content7_3fc5d9e3"))
+            return false;
+        for (int x = 0; x < maxRegionWidth; x++) {
+            for (int y = 0; y < maxRegionHeight; y++) {
+                for (int floor = 0; floor < Game.REGION_FLOORS; floor++) {
+                    if(!loadTerrain(content, x, y, floor) && member)
+                        loadTerrain(contentMembers, x, y, floor);
+                }
+            }
+        }
+        content.close();
+        contentMembers.close();
+
+        return true;
+    }
+
+    private static boolean loadTerrain(JContent content, int x, int y, int floor) {
+        String mapName = "m" + floor + x / 10 + x % 10 + y / 10 + y % 10;
+
+        JContentFile height = content.unpack(mapName + ".hei");
+        if (height == null) {
+            for (int i = 0; i < Game.REGION_SIZE; i++)
+                regionHeight[x][y][floor][i] = 0;
+            return false;
+        }
+
+        // Height
+        int prevValue = 0;
+        for (int i = 0; i < Game.REGION_SIZE; i++) {
+            int h = height.readUnsignedByte();
+            if (h >= 128) {
+                for (int i2 = 0; i2 < h - 128; i2++) {
+                    regionHeight[x][y][floor][i++] = (byte)prevValue;
+                }
+                i--;
+            } else {
+                regionHeight[x][y][floor][i] = (byte)h;
+                prevValue = h;
+            }
+        }
+
+        prevValue = 64;
+        for (int _x = 0; _x < 48; _x++)
+        {
+            for (int _y = 0; _y < 48; _y++)
+            {
+                int i = 48 * _y + _x;
+                prevValue = 127 & regionHeight[x][y][floor][i] + prevValue;
+                regionHeight[x][y][floor][i] = (byte)(prevValue * 2);
+            }
+        }
+
+        // Color
+        prevValue = 0;
+        for (int i = 0; i < Game.REGION_SIZE; i++) {
+            int c = height.readUnsignedByte();
+            if (c >= 128) {
+                for (int i2 = 0; i2 < c - 128; i2++) {
+                    regionColor[x][y][floor][i++] = (byte)prevValue;
+                }
+                i--;
+            } else {
+                regionColor[x][y][floor][i] = (byte)c;
+                prevValue = c;
+            }
+        }
+
+        prevValue = 35;
+
+        for (int _x = 0; _x < 48; _x++)
+        {
+            for (int _y = 0; _y < 48; _y++)
+            {
+                int i = 48 * _y + _x;
+                prevValue = 127 & regionColor[x][y][floor][i] + prevValue;
+                regionColor[x][y][floor][i] = (byte)(prevValue * 2);
+            }
+        }
+
+        height.close();
 
         return true;
     }
@@ -365,6 +471,7 @@ public class JGameData {
                         // Two floors?
                         //regionCollisionMask[x][y][floor][i] |= (JGameData.tileType[prevValue - 1] == 2) ? Game.COLLISION_TILE : Game.COLLISION_NONE;
                     }
+                    regionDecoration[x][y][floor][i] = (byte)prevValue;
                     i++;
                 }
                 i--;
@@ -374,6 +481,7 @@ public class JGameData {
                     // Two floors?
                     //regionCollisionMask[x][y][floor][i] |= (JGameData.tileType[tileDecoration - 1] == 2) ? Game.COLLISION_TILE : Game.COLLISION_NONE;
                 }
+                regionDecoration[x][y][floor][i] = (byte)tileDecoration;
                 prevValue = tileDecoration;
             }
         }
@@ -407,5 +515,50 @@ public class JGameData {
         int index = (localX * Game.REGION_HEIGHT) + localY;
         int direction = JGameData.regionDirection[chunkX][chunkY][RSCConfig.planeIndex][index];
         return direction;
+    }
+
+    public static int getTileHeight(int x, int y)
+    {
+        int floor = y / Game.WORLD_Y_OFFSET;
+        int floorOffset = floor * Game.WORLD_Y_OFFSET;
+        int worldX = Game.WORLD_PLANE_X + x;
+        int worldY = Game.WORLD_PLANE_Y - floorOffset + y;
+        int chunkX = worldX / Game.REGION_WIDTH;
+        int chunkY = worldY / Game.REGION_HEIGHT;
+        int localX = worldX - (chunkX * Game.REGION_WIDTH);
+        int localY = worldY - (chunkY * Game.REGION_HEIGHT);
+        int index = (localX * Game.REGION_HEIGHT) + localY;
+        int height = 3 * (0xFF & JGameData.regionHeight[chunkX][chunkY][RSCConfig.planeIndex][index]);
+        return -height;
+    }
+
+    public static int getTileColor(int x, int y)
+    {
+        int floor = y / Game.WORLD_Y_OFFSET;
+        int floorOffset = floor * Game.WORLD_Y_OFFSET;
+        int worldX = Game.WORLD_PLANE_X + x;
+        int worldY = Game.WORLD_PLANE_Y - floorOffset + y;
+        int chunkX = worldX / Game.REGION_WIDTH;
+        int chunkY = worldY / Game.REGION_HEIGHT;
+        int localX = worldX - (chunkX * Game.REGION_WIDTH);
+        int localY = worldY - (chunkY * Game.REGION_HEIGHT);
+        int index = (localX * Game.REGION_HEIGHT) + localY;
+        byte color = JGameData.regionColor[chunkX][chunkY][RSCConfig.planeIndex][index];
+        return RSCConfig.colorConversion[color & 0xFF];
+    }
+
+    public static byte getTileDecoration(int x, int y)
+    {
+        int floor = y / Game.WORLD_Y_OFFSET;
+        int floorOffset = floor * Game.WORLD_Y_OFFSET;
+        int worldX = Game.WORLD_PLANE_X + x;
+        int worldY = Game.WORLD_PLANE_Y - floorOffset + y;
+        int chunkX = worldX / Game.REGION_WIDTH;
+        int chunkY = worldY / Game.REGION_HEIGHT;
+        int localX = worldX - (chunkX * Game.REGION_WIDTH);
+        int localY = worldY - (chunkY * Game.REGION_HEIGHT);
+        int index = (localX * Game.REGION_HEIGHT) + localY;
+        byte decoration = JGameData.regionDecoration[chunkX][chunkY][RSCConfig.planeIndex][index];
+        return decoration;
     }
 }

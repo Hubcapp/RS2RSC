@@ -482,7 +482,7 @@ public final class Client extends RSApplet {
 	private int minimapRandomisationCounter;
 	private boolean messagePromptRaised;
 	private int songStartOffset;
-	private byte[][][] tileFlags;
+	public byte[][][] tileFlags;
 	private int prevSong;
 	private int destinationX;
 	private int destinationY;
@@ -7245,7 +7245,8 @@ public final class Client extends RSApplet {
 					this.stream.putOpcode(150);
 			}
 			// TODO: Look at this, done for now... COME BACK TO THIS
-			this.clearObjectSpawnRequests();
+			if (!RSCConfig.rscProtocol)
+				this.clearObjectSpawnRequests();
 		} catch (final Exception exception) {
 		}
 		GameObjectDefinition.modelCache.clear();
@@ -10596,7 +10597,6 @@ public final class Client extends RSApplet {
 
 						if (RSCConfig.rscProtocol)
 						{
-							System.out.println("Spawn: " + spawnRequest.id2);
 							spawnRequest.unlink();
 						}
 						else {
