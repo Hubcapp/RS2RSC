@@ -830,10 +830,15 @@ public class RSCConfig {
                 break;
             }
             case 2461: // Dialogue Option 1
+            case 2471:
                 RSC_selectDialogueOption(client, buffer, 0);
                 break;
             case 2462: // Dialogue Option 2
+            case 2472:
                 RSC_selectDialogueOption(client, buffer, 1);
+                break;
+            case 2473: // Dialogue Option 3
+                RSC_selectDialogueOption(client, buffer, 2);
                 break;
             default:
             {
@@ -2311,12 +2316,22 @@ public class RSCConfig {
                 int interfaceID = -1;
                 int interfaceOption1 = -1;
                 int interfaceOption2 = -1;
+                int interfaceOption3 = -1;
                 switch (optionCount)
                 {
                     case 2:
                         interfaceID = 2459;
                         interfaceOption1 = 2461;
                         interfaceOption2 = 2462;
+                        break;
+                    case 3:
+                        interfaceID = 2469;
+                        interfaceOption1 = 2471;
+                        interfaceOption2 = 2472;
+                        interfaceOption3 = 2473;
+                        break;
+                    default:
+                        System.out.println("Unsupported option count: " + optionCount);
                         break;
                 }
 
@@ -2326,6 +2341,8 @@ public class RSCConfig {
                     client.sendInterfaceString(interfaceOption1, options[0]);
                 if (interfaceOption2 != -1)
                     client.sendInterfaceString(interfaceOption2, options[1]);
+                if (interfaceOption3 != -1)
+                    client.sendInterfaceString(interfaceOption3, options[2]);
                 break;
             }
             case 51: // Privacy Settings
