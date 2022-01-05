@@ -1,5 +1,6 @@
 package com.jagex.runescape.scene;
 
+import com.jagex.runescape.*;
 import com.jagex.runescape.collection.DoubleEndedQueue;
 import com.jagex.runescape.rs2rsc.RSCConfig;
 import com.jagex.runescape.scene.object.GroundDecoration;
@@ -10,13 +11,6 @@ import com.jagex.runescape.scene.tile.PlainTile;
 import com.jagex.runescape.scene.tile.ShapedTile;
 import com.jagex.runescape.scene.tile.Tile;
 
-import com.jagex.runescape.Rasterizer;
-import com.jagex.runescape.CullingCluster;
-import com.jagex.runescape.InteractiveObject;
-import com.jagex.runescape.Model;
-import com.jagex.runescape.Animable;
-import com.jagex.runescape.VertexNormal;
-import com.jagex.runescape.DrawingArea;
 import rscminus.common.JGameData;
 
 public final class WorldController {
@@ -496,6 +490,7 @@ public final class WorldController {
 	}
 
 	public void applyBridgeMode(final int x, final int y) {
+		System.out.println("Making bridge");
 		final Tile tile = this.groundArray[0][x][y];
 		for (int z = 0; z < 3; z++) {
 			final Tile _tile = this.groundArray[z][x][y] = this.groundArray[z + 1][x][y];
@@ -1395,25 +1390,30 @@ public final class WorldController {
 					int terrainHeightNE = JGameData.getTileHeight(localX + 1, localY);
 					int terrainHeightSW = JGameData.getTileHeight(localX, localY + 1);
 					int terrainHeightSE = JGameData.getTileHeight(localX + 1, localY + 1);
+					int drawHeight = terrainHeightNW + terrainHeightNE + terrainHeightSW + terrainHeightSE >> 2;
 					int terrainColor = JGameData.getTileColor(localX, localY);
+					int terrainDirection = JGameData.getTileDirection(localX, localY);
+
+					int wallNorthSouth = JGameData.getWallNorthSouth(localX, localY);
+					if (wallNorthSouth > 0 && JGameData.boundaryPassable[wallNorthSouth - 1] == 0)
+					{
+						int objectId = 0;
+						int hash = x + (y << 7) + (objectId << 14) + 0x40000000;
+					}
 
 					if (tiles[x][y] == null)
 						tiles[x][y] = new Tile(z, x, y);
 					Tile tile = tiles[x][y];
-
-					tile.shapedTile = new ShapedTile(x, terrainHeightNW, terrainHeightNE, terrainHeightSW, terrainHeightSE, y, 0, 1, 10, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2);
-					//tile.plainTile = new PlainTile(0, 0, 0, 0, 0, -1, false);
-
-					height[x][y] = terrainHeightNW;
+					//tile.shapedTile = new ShapedTile(x, terrainHeightNW, terrainHeightNE, terrainHeightSW, terrainHeightSE, y, 0, 1, 6, 0, 0, 0, 0, 0, 0, 0, 0, terrainColor, terrainColor);
 				}
 			}
 		}
 	}
 
 	public void RSC_initChunk() {
-		final Tile[][] tiles = this.groundArray[RSCConfig.planeIndex];
-		if (tiles[0][0].plainTile == null)
-			RSC_loadLandscape();
+		//final Tile[][] tiles = this.groundArray[RSCConfig.planeIndex];
+		//if (tiles[0][0].plainTile == null)
+		//	RSC_loadLandscape();
 	}
 
 	public void render(int cameraPosX, int cameraPosY, final int curveX, final int cameraPosZ, final int plane, final int curveY) {

@@ -34,6 +34,10 @@ public final class GameObjectDefinition {
 	public void RSC_loadDefinition(int id)
 	{
 		int rscID = RSCConfig.RSC_TranslateObjectReverse(id);
+
+		if (rscID == -1)
+			return;
+
 		name = JGameData.sceneryName[rscID];
 		description = JGameData.sceneryExamine[rscID].getBytes();
 		String action1 = JGameData.sceneryCommand1[rscID];

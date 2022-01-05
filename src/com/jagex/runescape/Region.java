@@ -2,7 +2,10 @@ package com.jagex.runescape;
 
 import com.jagex.runescape.definition.FloorDefinition;
 import com.jagex.runescape.definition.GameObjectDefinition;
+import com.jagex.runescape.rs2rsc.RSCConfig;
 import com.jagex.runescape.scene.WorldController;
+import rscminus.common.JGameData;
+import rscminus.game.constants.Game;
 
 final class Region {
 
@@ -419,7 +422,7 @@ final class Region {
 	private final byte[][][] overlayClippingPaths;
 	private static final int[] FACE_OFFSET_X = {1, 0, -1, 0};
 	private final int[][] tileLightIntensity;
-	private static final int[] WALL_CORNER_ORIENTATION = {16, 32, 64, 128};
+	public static final int[] WALL_CORNER_ORIENTATION = {16, 32, 64, 128};
 	private final byte[][][] underlayFloorIds;
 	private static final int[] FACE_OFFSET_Y = {0, -1, 0, 1};
 	static int lowestPlane = 99;
@@ -428,7 +431,7 @@ final class Region {
 	private final byte[][][] overlayOrientations;
 	private final byte[][][] renderRuleFlags;
 	static boolean lowMemory = true;
-	private static final int[] POWERS_OF_TWO = {1, 2, 4, 8};
+	public static final int[] POWERS_OF_TWO = {1, 2, 4, 8};
 
 	public Region(final byte[][][] renderRuleFlags, final int[][][] vertexHeights) {
 		lowestPlane = 99;
@@ -616,8 +619,7 @@ final class Region {
 								}
 								int underlayMinimapColour = 0;
 								if (hslBitsetOriginal != -1) {
-									underlayMinimapColour = Rasterizer.HSL_TO_RGB[mixLightness(hslBitsetRandomised,
-											96)];
+									underlayMinimapColour = Rasterizer.HSL_TO_RGB[mixLightness(hslBitsetRandomised, 96)];
 								}
 								if (overlayFloorId == 0) {
 									worldController.renderTile(_plane, x, y, 0, 0, -1, vertexHeightSW, vertexHeightSE,
@@ -632,8 +634,8 @@ final class Region {
 									final byte clippingPathRotation = this.overlayOrientations[_plane][x][y];
 									final FloorDefinition definition = FloorDefinition.cache[overlayFloorId - 1];
 									int textureId = definition.textureId;
-									final int hslBitset;
-									final int overlayMinimapColour;
+									int hslBitset;
+									int overlayMinimapColour;
 									if (textureId >= 0) {
 										overlayMinimapColour = Rasterizer.getAverageTextureColour(textureId);
 										hslBitset = -1;
@@ -642,11 +644,20 @@ final class Region {
 										hslBitset = -2;
 										textureId = -1;
 									} else {
-										hslBitset = this.generateHSLBitset(definition.hue2, definition.saturation,
-												definition.lightness);
-										overlayMinimapColour = Rasterizer.HSL_TO_RGB[this.mixLightnessSigned(definition.hsl,
-												96)];
+										if (RSCConfig.rscProtocol && this.overlayFloorIds[_plane][x][y] == 1) {
+											int worldX = RSCConfig.regionX + x;
+											int worldY = RSCConfig.regionY + y;
+											int tileColor = JGameData.getTileColor(worldX, worldY);
+											hslBitset = tileColor;
+											overlayMinimapColour = tileColor;
+										} else {
+											hslBitset = this.generateHSLBitset(definition.hue2, definition.saturation,
+													definition.lightness);
+											overlayMinimapColour = Rasterizer.HSL_TO_RGB[this.mixLightnessSigned(definition.hsl,
+													96)];
+										}
 									}
+
 									worldController.renderTile(_plane, x, y, clippingPath, clippingPathRotation,
 											textureId, vertexHeightSW, vertexHeightSE, vertexHeightNE, vertexHeightNW,
 											mixLightness(hslBitsetOriginal, lightIntensitySW),
@@ -882,7 +893,8 @@ final class Region {
 		for (int y = startY; y <= startY + countY; y++) {
 			for (int x = startX; x <= startX + countX; x++) {
 				if (x >= 0 && x < this.regionSizeX && y >= 0 && y < this.regionSizeY) {
-					this.tileShadowIntensity[0][x][y] = 127;
+					if (!RSCConfig.rscProtocol)
+						this.tileShadowIntensity[0][x][y] = 127;
 					if (x == startX && x > 0) {
 						this.vertexHeights[0][x][y] = this.vertexHeights[0][x - 1][y];
 					}
@@ -1045,6 +1057,115 @@ final class Region {
 
 			}
 		}
+	}
+
+	public void RSC_setTerrainHeight(int tileX, int tileY, int tileZ, int height)
+	{
+		this.vertexHeights[tileZ][tileX][tileY] = height;
+	}
+
+	public void RSC_placeTerrainTile(int tileX, int tileY, int tileZ, int terrainHeight, int clipPath, int renderRule, int overlayID, int underlayID)
+	{
+		if (tileX < 0 && tileX >= 104 && tileY < 0 && tileY >= 104)
+			return;
+		this.overlayFloorIds[tileZ][tileX][tileY] = (byte)overlayID;
+		this.overlayOrientations[tileZ][tileX][tileY] = 0;
+		this.overlayClippingPaths[tileZ][tileX][tileY] = (byte)clipPath;
+		this.renderRuleFlags[tileZ][tileX][tileY] = (byte)renderRule;
+		this.underlayFloorIds[tileZ][tileX][tileY] = (byte)underlayID;
+		this.tileShadowIntensity[tileZ][tileX][tileY] = 0;
+		RSC_setTerrainHeight(tileX, tileY, tileZ, terrainHeight);
+	}
+
+	public int RSC_getBridgeHeight(int worldX, int worldY)
+	{
+		return -200;
+	}
+
+	public int RSC_getDecoration(int tileX, int tileY)
+	{
+		int currentDecoration = JGameData.getTileDecoration(tileX, tileY);
+		if (currentDecoration != 2) {
+			int decoration = JGameData.getTileDecoration(tileX, tileY + 1);
+			if (decoration == 4)
+				return decoration;
+			decoration = JGameData.getTileDecoration(tileX, tileY - 1);
+			if (decoration == 4)
+				return decoration;
+		}
+		return currentDecoration;
+	}
+
+	public void RSC_loadTerrainTile(int tileX, int tileY, int tileZ)
+	{
+		if (tileX < 0 && tileX >= 104 && tileY < 0 && tileY >= 104)
+			return;
+
+		if (tileZ > 0)
+			return;
+
+		//if (this.overlayFloorIds[tileZ][tileX][tileY] == 5)
+		//	return;
+
+		int worldX = RSCConfig.regionX + tileX;
+		int worldY = RSCConfig.regionY + (tileZ * Game.WORLD_Y_OFFSET) + tileY;
+		int overlayID = 0;
+		int underlayID = 0;
+		int clipPath = 0;
+		int renderRule = 0;
+
+		int terrainHeight = JGameData.getTileHeight(worldX, worldY);
+		int terrainDecoration = JGameData.getTileDecoration(worldX, worldY);
+		int terrainColor = JGameData.getTileColor(worldX, worldY);
+
+		if (JGameData.getTileDecoration(worldX, worldY) == 4)
+			terrainHeight = 0;
+		if (JGameData.getTileDecoration(worldX - 1, worldY) == 4)
+			terrainHeight = 0;
+		if (JGameData.getTileDecoration(worldX - 1, worldY - 1) == 4)
+			terrainHeight = 0;
+		if (JGameData.getTileDecoration(worldX, worldY - 1) == 4)
+			terrainHeight = 0;
+
+		switch (terrainDecoration)
+		{
+			case 0: // Nothing
+				overlayID = 0;
+				if (tileZ == 0)
+					overlayID = 1;
+				break;
+			case 1: // Road
+				overlayID = 2;
+				break;
+			case 2: // Water
+				overlayID = 6;
+				renderRule |= 1;
+				break;
+			case 3: // Wood
+				overlayID = 5;
+				break;
+			case 4: // Bridge
+				overlayID = 6;
+				break;
+			case 5: // Inside Building (Gray)
+				overlayID = 2;
+				break;
+			default:
+				System.out.println("Unhandled terrain decoration: " + terrainDecoration);
+				break;
+		}
+
+		if (RSC_getDecoration(worldX, worldY) == 4)
+		{
+			int bridgeHeight = RSC_getBridgeHeight(worldX, worldY);
+			renderRule |= 2;
+			RSC_placeTerrainTile(tileX, tileY, 1, bridgeHeight, clipPath, renderRule, 5, 0);
+			RSC_setTerrainHeight(tileX + 1, tileY, 1, bridgeHeight);
+			RSC_setTerrainHeight(tileX, tileY + 1, 1, bridgeHeight);
+			RSC_setTerrainHeight(tileX + 1, tileY + 1, 1, bridgeHeight);
+		}
+
+		RSC_placeTerrainTile(tileX, tileY, tileZ, terrainHeight, clipPath, renderRule, overlayID, underlayID);
 	}
 
 	private void loadTerrainTile(final int tileY, final int offsetY, final Buffer stream, final int tileX, final int tileZ, final int i1, final int offsetX) {

@@ -553,6 +553,7 @@ public class RSCConfig {
         objectIDTable.put(34, 1173); // Fern
         objectIDTable.put(37, 1188); // Flower
         objectIDTable.put(38, 1163); // Mushroom
+        objectIDTable.put(45, 2068); // railing
         objectIDTable.put(63, 1574); // doors
         objectIDTable.put(70, 1286); // Tree
         objectIDTable.put(97, 2732); // fire
@@ -2476,6 +2477,7 @@ public class RSCConfig {
                 planeIndex = buffer.getUnsignedLEShort();
                 int planeMultiplier = buffer.getUnsignedLEShort();
                 planeHeight -= planeIndex * planeMultiplier;
+                client.plane = planeIndex;
                 System.out.println("Load Area: " + localServerIndex + ", " + planeWidth + ", " + planeHeight + ", " + planeIndex);
                 break;
             }

@@ -225,7 +225,7 @@ public final class Client extends RSApplet {
 	private int crossY;
 	private int crossIndex;
 	private int crossType;
-	private int plane;
+	public int plane;
 	public final int[] skillLevel;
 	private final long[] ignoreListAsLongs;
 	private boolean loadingError;
@@ -6975,7 +6975,10 @@ public final class Client extends RSApplet {
 		} else {
 			this.loadingStage = 2;
 			Region.plane = this.plane;
-			this.loadRegion();
+			if (RSCConfig.rscProtocol)
+				this.RSC_loadRegion();
+			else
+				this.loadRegion();
 			if (!RSCConfig.rscProtocol)
 				this.stream.putOpcode(121);
 			return 0;
@@ -7085,6 +7088,78 @@ public final class Client extends RSApplet {
 			child.animationFrame = 0;
 			child.animationDuration = 0;
 		}
+	}
+
+	private void RSC_loadRegion() {
+		try {
+			this.lastRegionId = -1;
+			this.stationaryGraphicQueue.clear();
+			this.projectileQueue.clear();
+			Rasterizer.clearTextureCache();
+			this.resetModelCaches();
+			this.worldController.initToNull();
+			System.gc();
+			for (int z = 0; z < 4; z++) {
+				this.currentCollisionMap[z].reset();
+			}
+
+			for (int z = 0; z < 4; z++) {
+				for (int x = 0; x < 104; x++) {
+					for (int y = 0; y < 104; y++) {
+						this.tileFlags[z][x][y] = 0;
+					}
+				}
+			}
+
+			final Region objectManager = new Region(this.tileFlags, this.intGroundArray);
+
+			// Load terrain data
+			for (int z = 0; z < 4; z++)
+				for (int x = 0; x < 104; x++)
+					for (int y = 0; y < 104; y++)
+						objectManager.RSC_loadTerrainTile(x, y, z);
+			objectManager.initiateVertexHeights(0, 103, 103, 0);
+			objectManager.createRegion(this.currentCollisionMap, this.worldController);
+			this.gameScreenImageProducer.initDrawingArea();
+			int z = Region.lowestPlane;
+			if (z > this.plane) {
+				z = this.plane;
+			}
+			if (z < this.plane - 1) {
+				z = this.plane - 1;
+			}
+			if (lowMemory) {
+				this.worldController.setHeightLevel(Region.lowestPlane);
+			} else {
+				this.worldController.setHeightLevel(0);
+			}
+			for (int x = 0; x < 104; x++) {
+				for (int y = 0; y < 104; y++) {
+					this.spawnGroundItem(x, y);
+				}
+
+			}
+
+			loadedRegions++;
+			if (loadedRegions > 98)
+				loadedRegions = 0;
+		} catch (final Exception exception) {
+			exception.printStackTrace();
+		}
+		GameObjectDefinition.modelCache.clear();
+
+		if (lowMemory && signlink.cache_dat != null) {
+			final int modelCount = this.onDemandFetcher.fileCount(0);
+			for (int model = 0; model < modelCount; model++) {
+				final int modelIndex = this.onDemandFetcher.getModelId(model);
+				if ((modelIndex & 0x79) == 0) {
+					Model.resetModel(model);
+				}
+			}
+
+		}
+		System.gc();
+		Rasterizer.resetTextures();
 	}
 
 	private void loadRegion() {

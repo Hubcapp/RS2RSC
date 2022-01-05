@@ -56,7 +56,7 @@ public class JGameData {
     public static String sceneryCommand2[];
     public static int boundaryCount;
     public static boolean boundaryAdjacent[];
-    public static boolean boundaryPassable[];
+    public static byte boundaryPassable[];
     public static int tileCount;
     public static int tileDecoration[];
     public static int tileType[];
@@ -67,6 +67,7 @@ public class JGameData {
     public static byte regionHeight[][][][];
     public static byte regionColor[][][][];
     public static byte regionDecoration[][][][];
+    public static byte regionWallsNorthSouth[][][][];
 
     public static boolean init(boolean member) {
         JContent content = new JContent();
@@ -227,7 +228,7 @@ public class JGameData {
 
         boundaryCount = integer.readUnsignedShort();
         boundaryAdjacent = new boolean[boundaryCount];
-        boundaryPassable = new boolean[boundaryCount];
+        boundaryPassable = new byte[boundaryCount];
         for (int i = 0; i < boundaryCount; i++) {
             String boundaryName = string.readString(); // Name
         }
@@ -247,7 +248,7 @@ public class JGameData {
         for (int i = 0; i < boundaryCount; i++)
             boundaryAdjacent[i] = (integer.readUnsignedByte() != 0); // Adjacent
         for (int i = 0; i < boundaryCount; i++)
-            boundaryPassable[i] = (integer.readUnsignedByte() == 0); // Collidable
+            boundaryPassable[i] = integer.readByte(); // Collidable
 
         int roofCount = integer.readUnsignedShort();
         for (int i = 0; i < roofCount; i++)
@@ -291,6 +292,7 @@ public class JGameData {
         regionHeight = new byte[maxRegionWidth][maxRegionHeight][Game.REGION_FLOORS][Game.REGION_SIZE];
         regionColor = new byte[maxRegionWidth][maxRegionHeight][Game.REGION_FLOORS][Game.REGION_SIZE];
         regionDecoration = new byte[maxRegionWidth][maxRegionHeight][Game.REGION_FLOORS][Game.REGION_SIZE];
+        regionWallsNorthSouth = new byte[maxRegionWidth][maxRegionHeight][Game.REGION_FLOORS][Game.REGION_SIZE];
 
         // Read content6 (landscape)
         if (!content.open("rsc_cache/content4_ffffffffaaca2b0d"))
@@ -428,11 +430,12 @@ public class JGameData {
 
         for (int i = 0; i < Game.REGION_SIZE; i++) {
             int id = map.readUnsignedByte();
-            regionCollisionMask[x][y][floor][i] |= (id > 0 && JGameData.boundaryPassable[id - 1] && JGameData.boundaryAdjacent[id - 1]) ? Game.COLLISION_EASTWEST : Game.COLLISION_NONE;
+            //regionCollisionMask[x][y][floor][i] |= (id > 0 && JGameData.boundaryPassable[id - 1] && JGameData.boundaryAdjacent[id - 1]) ? Game.COLLISION_EASTWEST : Game.COLLISION_NONE;
+            regionWallsNorthSouth[x][y][floor][i] = (byte)id;
         }
         for (int i = 0; i < Game.REGION_SIZE; i++) {
             int id = map.readUnsignedByte();
-            regionCollisionMask[x][y][floor][i] |= (id > 0 && JGameData.boundaryPassable[id - 1] && JGameData.boundaryAdjacent[id - 1]) ? Game.COLLISION_NORTHSOUTH : Game.COLLISION_NONE;
+            //regionCollisionMask[x][y][floor][i] |= (id > 0 && JGameData.boundaryPassable[id - 1] && JGameData.boundaryAdjacent[id - 1]) ? Game.COLLISION_NORTHSOUTH : Game.COLLISION_NONE;
         }
 
         int data[] = new int[Game.REGION_SIZE];
@@ -444,8 +447,8 @@ public class JGameData {
                 data[i] = 12000 + val;
 
             int id = data[i];
-            regionCollisionMask[x][y][floor][i] |= (id > 0 && id < 12000 && JGameData.boundaryPassable[id - 1] && JGameData.boundaryAdjacent[id - 1]) ? Game.COLLISION_TILE : Game.COLLISION_NONE;
-            regionCollisionMask[x][y][floor][i] |= (id >= 12000 && JGameData.boundaryPassable[id - 12001] && JGameData.boundaryAdjacent[id - 12001]) ? Game.COLLISION_TILE : Game.COLLISION_NONE;
+            //regionCollisionMask[x][y][floor][i] |= (id > 0 && id < 12000 && JGameData.boundaryPassable[id - 1] && JGameData.boundaryAdjacent[id - 1]) ? Game.COLLISION_TILE : Game.COLLISION_NONE;
+            //regionCollisionMask[x][y][floor][i] |= (id >= 12000 && JGameData.boundaryPassable[id - 12001] && JGameData.boundaryAdjacent[id - 12001]) ? Game.COLLISION_TILE : Game.COLLISION_NONE;
         }
 
         // Unknown
@@ -513,7 +516,7 @@ public class JGameData {
         int localX = worldX - (chunkX * Game.REGION_WIDTH);
         int localY = worldY - (chunkY * Game.REGION_HEIGHT);
         int index = (localX * Game.REGION_HEIGHT) + localY;
-        int direction = JGameData.regionDirection[chunkX][chunkY][RSCConfig.planeIndex][index];
+        int direction = JGameData.regionDirection[chunkX][chunkY][floor][index];
         return direction;
     }
 
@@ -528,7 +531,7 @@ public class JGameData {
         int localX = worldX - (chunkX * Game.REGION_WIDTH);
         int localY = worldY - (chunkY * Game.REGION_HEIGHT);
         int index = (localX * Game.REGION_HEIGHT) + localY;
-        int height = 3 * (0xFF & JGameData.regionHeight[chunkX][chunkY][RSCConfig.planeIndex][index]);
+        int height = 3 * (0xFF & JGameData.regionHeight[chunkX][chunkY][floor][index]);
         return -height;
     }
 
@@ -543,11 +546,12 @@ public class JGameData {
         int localX = worldX - (chunkX * Game.REGION_WIDTH);
         int localY = worldY - (chunkY * Game.REGION_HEIGHT);
         int index = (localX * Game.REGION_HEIGHT) + localY;
-        byte color = JGameData.regionColor[chunkX][chunkY][RSCConfig.planeIndex][index];
+        byte color = JGameData.regionColor[chunkX][chunkY][floor][index];
+
         return RSCConfig.colorConversion[color & 0xFF];
     }
 
-    public static byte getTileDecoration(int x, int y)
+    public static int getTileDecoration(int x, int y)
     {
         int floor = y / Game.WORLD_Y_OFFSET;
         int floorOffset = floor * Game.WORLD_Y_OFFSET;
@@ -558,7 +562,22 @@ public class JGameData {
         int localX = worldX - (chunkX * Game.REGION_WIDTH);
         int localY = worldY - (chunkY * Game.REGION_HEIGHT);
         int index = (localX * Game.REGION_HEIGHT) + localY;
-        byte decoration = JGameData.regionDecoration[chunkX][chunkY][RSCConfig.planeIndex][index];
-        return decoration;
+        byte decoration = JGameData.regionDecoration[chunkX][chunkY][floor][index];
+        return decoration & 0xFF;
+    }
+
+    public static byte getWallNorthSouth(int x, int y)
+    {
+        int floor = y / Game.WORLD_Y_OFFSET;
+        int floorOffset = floor * Game.WORLD_Y_OFFSET;
+        int worldX = Game.WORLD_PLANE_X + x;
+        int worldY = Game.WORLD_PLANE_Y - floorOffset + y;
+        int chunkX = worldX / Game.REGION_WIDTH;
+        int chunkY = worldY / Game.REGION_HEIGHT;
+        int localX = worldX - (chunkX * Game.REGION_WIDTH);
+        int localY = worldY - (chunkY * Game.REGION_HEIGHT);
+        int index = (localX * Game.REGION_HEIGHT) + localY;
+        byte wall = JGameData.regionWallsNorthSouth[chunkX][chunkY][floor][index];
+        return wall;
     }
 }
