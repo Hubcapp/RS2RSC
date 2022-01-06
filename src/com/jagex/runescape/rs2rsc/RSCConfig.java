@@ -526,6 +526,7 @@ public class RSCConfig {
         npcIDTable.put(7, 278); // cook
         npcIDTable.put(9, 31); // Priest
         npcIDTable.put(11, 1); // Man
+        npcIDTable.put(15, 103); // Ghost
         npcIDTable.put(23, 59); // Giant Spider
         npcIDTable.put(29, 47); // Rat
         npcIDTable.put(34, 61); // spider
@@ -562,6 +563,9 @@ public class RSCConfig {
         objectIDTable.put(7, 1088); // Chair
         objectIDTable.put(9, 596); // Longtable
         objectIDTable.put(10, 1097); // Throne
+        objectIDTable.put(12, 404); // Gravestone
+        objectIDTable.put(13, 400); // Gravestone
+        objectIDTable.put(19, 409); // Altar
         //objectIDTable.put(20, 2440); // Post
         objectIDTable.put(25, 203); // candles
         objectIDTable.put(26, 879); // fountain
