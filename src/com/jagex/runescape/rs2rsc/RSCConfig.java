@@ -519,24 +519,35 @@ public class RSCConfig {
         }
 
         // Setup npc ids
+        npcIDTable.put(0, 89); // Unicorn
         npcIDTable.put(1, 519); // Bob
         npcIDTable.put(2, 43); // Sheep
+        npcIDTable.put(3, 41); // Chicken
+        npcIDTable.put(4, 101); // Goblin
         npcIDTable.put(5, 0); // Hans
         npcIDTable.put(6, 81); // cow
         npcIDTable.put(7, 278); // cook
         npcIDTable.put(9, 31); // Priest
         npcIDTable.put(11, 1); // Man
+        npcIDTable.put(13, 80); // Camel
+        npcIDTable.put(14, 882); // Gypsy
         npcIDTable.put(15, 103); // Ghost
         npcIDTable.put(23, 59); // Giant Spider
+        npcIDTable.put(28, 11); // Tramp
         npcIDTable.put(29, 47); // Rat
         npcIDTable.put(34, 61); // spider
+        npcIDTable.put(35, 879); // Delrith
         npcIDTable.put(55, 520); // Shopkeeper
         npcIDTable.put(57, 172); // Darkwizard
+        npcIDTable.put(60, 174); // Darkwizard
         npcIDTable.put(62, 100); // Goblin
+        npcIDTable.put(63, 7); // farmer
+        npcIDTable.put(65, 9); // Guard
         npcIDTable.put(66, 178); // Black Knight
         npcIDTable.put(67, 122); // Hobgoblin
         npcIDTable.put(81, 13); // Wizard
         npcIDTable.put(83, 521); // Shop Assistant
+        npcIDTable.put(89, 180); // Highwayman
         npcIDTable.put(95, 494); // Banker
         npcIDTable.put(97, 755); // Morgan
         npcIDTable.put(114, 708); // Imp
@@ -544,6 +555,8 @@ public class RSCConfig {
         npcIDTable.put(122, 915); // Leela
         npcIDTable.put(124, 743); // Ned
         npcIDTable.put(125, 922); // Aggie
+        npcIDTable.put(161, 925); // Border Guard
+        npcIDTable.put(162, 926); // Border Guard
         npcIDTable.put(225, 2538); // Giles
         npcIDTable.put(226, 2537); // Miles
         npcIDTable.put(227, 2536); // Niles
@@ -570,10 +583,12 @@ public class RSCConfig {
         objectIDTable.put(25, 203); // candles
         objectIDTable.put(26, 879); // fountain
         objectIDTable.put(29, 612); // Counter
-        //objectIDTable.put(27, 888); // landscape
+        objectIDTable.put(30, 634); // Stall
         objectIDTable.put(34, 1173); // Fern
         objectIDTable.put(37, 1188); // Flower
         objectIDTable.put(38, 1163); // Mushroom
+        //objectIDTable.put(54, 306); // cart
+        objectIDTable.put(55, 23); // sacks
         objectIDTable.put(63, 1574); // doors
         objectIDTable.put(70, 1286); // Tree
         objectIDTable.put(72, 313); // Wheat
@@ -597,6 +612,7 @@ public class RSCConfig {
         itemIDTable.put(16, 1059); // Leather Gloves
         itemIDTable.put(17, 1061); // Boots
         itemIDTable.put(18, 1965); // Cabbage
+        itemIDTable.put(19, 1944); // Egg
         itemIDTable.put(20, 526); // Bones
         itemIDTable.put(21, 1925); // Bucket
         itemIDTable.put(28, 1203); // Iron dagger
@@ -611,6 +627,7 @@ public class RSCConfig {
         itemIDTable.put(117, 1117); // Bronze Plate Mail Body
         itemIDTable.put(124, 1173); // Bronze Square Shield
         itemIDTable.put(132, 2142); // cookedmeat
+        itemIDTable.put(133, 2138); // raw chicken
         itemIDTable.put(135, 1931); // pot
         itemIDTable.put(136, 1933); // flour
         itemIDTable.put(140, 1935); // jug
@@ -645,6 +662,7 @@ public class RSCConfig {
         itemIDTable.put(377, 307); // Fishing Rod
         itemIDTable.put(378, 309); // Fly Fishing Rod
         itemIDTable.put(379, 311); // Harpoon
+        itemIDTable.put(381, 314); // Feather
         itemIDTable.put(401, 1127); // Rune Plate Mail Body
         itemIDTable.put(405, 1359); // rune Axe
         itemIDTable.put(406, 1093); // Rune skirt

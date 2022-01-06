@@ -1133,8 +1133,10 @@ final class Region {
 		if (tileX < 0 && tileX >= 104 && tileY < 0 && tileY >= 104)
 			return;
 
-		//if (this.overlayFloorIds[tileZ][tileX][tileY] == 5)
+		//if (tileZ > 0 && (this.renderRuleFlags[tileZ][tileX][tileY] & 2) == 2 && (this.renderRuleFlags[tileZ - 1][tileX][tileY] & 2) == 2)
 		//	return;
+		if (tileZ > 0)
+			return;
 
 		int worldX = RSCConfig.regionX + tileX;
 		int worldY = RSCConfig.regionY + (tileZ * Game.WORLD_Y_OFFSET) + tileY;
