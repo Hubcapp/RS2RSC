@@ -9947,6 +9947,9 @@ public final class Client extends RSApplet {
 		this.chatTypes[0] = type;
 		this.chatNames[0] = name;
 		this.chatMessages[0] = message;
+
+		if (name == null)
+			RSCConfig.RSC_PlayChatAnimation(localPlayer, message);
 	}
 
 	@Override
@@ -10709,8 +10712,11 @@ public final class Client extends RSApplet {
 		y += RSCConfig.localRegionY;
 		if (x >= 0 && y >= 0 && x < 104 && y < 104) {
 			final Item item = new Item();
+			int rscID = RSCConfig.RSC_TranslateItemReverse(id);
 			item.itemId = id;
 			item.itemCount = 1;
+			if (JGameData.itemStackable[rscID])
+				item.itemCount = 100;
 
 			if (this.groundArray[this.plane][x][y] == null)
 				this.groundArray[this.plane][x][y] = new DoubleEndedQueue();

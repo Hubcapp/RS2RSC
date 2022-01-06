@@ -160,7 +160,7 @@ public final class GameObjectDefinition {
 			final int modelCount = this.modelIds.length;
 			for (int m = 0; m < modelCount; m++) {
 				int subModelId = this.modelIds[m];
-				if (mirror) {
+				if (!RSCConfig.rscProtocol && mirror) {
                     subModelId += 0x10000;
                 }
 				subModel = (Model) modelCache.get(subModelId);
@@ -169,7 +169,7 @@ public final class GameObjectDefinition {
 					if (subModel == null) {
                         return null;
                     }
-					if (mirror) {
+					if (!RSCConfig.rscProtocol && mirror) {
                         subModel.mirror();
                     }
 					modelCache.put(subModel, subModelId);
@@ -202,7 +202,7 @@ public final class GameObjectDefinition {
             }
 			int modelId = this.modelIds[modelType];
 			final boolean mirror = this.rotated ^ (face > 3);
-			if (mirror) {
+			if (!RSCConfig.rscProtocol && mirror) {
                 modelId += 0x10000;
             }
 			subModel = (Model) modelCache.get(modelId);
@@ -211,7 +211,7 @@ public final class GameObjectDefinition {
 				if (subModel == null) {
                     return null;
                 }
-				if (mirror) {
+				if (!RSCConfig.rscProtocol && mirror) {
                     subModel.mirror();
                 }
 				modelCache.put(subModel, modelId);
@@ -229,8 +229,39 @@ public final class GameObjectDefinition {
 			animatedModel.triangleSkin = null;
 			animatedModel.vertexSkin = null;
 		}
-		while (face-- > 0) {
-			animatedModel.rotate90Degrees();
+		switch (face)
+		{
+			case 0: // Do nothing
+				break;
+			case 1:
+				animatedModel.rotate(45);
+				break;
+			case 2:
+				animatedModel.rotate90Degrees();
+				break;
+			case 3:
+				animatedModel.rotate(135);
+				break;
+			case 4:
+				animatedModel.rotate90Degrees();
+				animatedModel.rotate90Degrees();
+				break;
+			case 5:
+				animatedModel.rotate(225);
+				break;
+			case 6:
+				animatedModel.rotate90Degrees();
+				animatedModel.rotate90Degrees();
+				animatedModel.rotate90Degrees();
+				break;
+			case 7:
+				animatedModel.rotate(315);
+				break;
+		}
+		if (!RSCConfig.rscProtocol) {
+			while (face-- > 0) {
+				animatedModel.rotate90Degrees();
+			}
 		}
 		if (this.modifiedModelColors != null) {
 			for (int c = 0; c < this.modifiedModelColors.length; c++) {

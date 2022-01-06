@@ -25,6 +25,7 @@ public class Settings
     private static String rememberUsername = "<disabled>";
     private static String rememberPassword = "<disabled>";
     private static boolean enterToLogin = false;
+    private static boolean localAnimations = true;
 
     private static String baseDir;
     private static File settingsFile;
@@ -69,6 +70,7 @@ public class Settings
         props.setProperty("RememberUsername", rememberUsername);
         props.setProperty("RememberPassword", rememberPassword);
         props.setProperty("EnterToLogin", Boolean.toString(enterToLogin));
+        props.setProperty("LocalAnimations", Boolean.toString(localAnimations));
 
         try {
             FileOutputStream out = new FileOutputStream(settingsFile);
@@ -102,6 +104,7 @@ public class Settings
         rememberUsername = getPropString(props, "RememberUsername", rememberUsername);
         rememberPassword = getPropString(props, "RememberPassword", rememberPassword);
         enterToLogin = getPropBoolean(props, "EnterToLogin", enterToLogin);
+        localAnimations = getPropBoolean(props, "LocalAnimations", localAnimations);
 
         sanitizeConfigValues();
     }
@@ -163,6 +166,11 @@ public class Settings
     public static boolean getEnterToLogin()
     {
         return enterToLogin;
+    }
+
+    public static boolean getLocalAnimations()
+    {
+        return localAnimations;
     }
 
     public static int getBrightness()

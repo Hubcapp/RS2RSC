@@ -7,6 +7,7 @@ import rscminus.game.constants.Game;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 public class RSCConfig {
     public static boolean rscProtocol = true;
@@ -578,7 +579,9 @@ public class RSCConfig {
         objectIDTable.put(10, 1097); // Throne
         objectIDTable.put(12, 404); // Gravestone
         objectIDTable.put(13, 400); // Gravestone
+        objectIDTable.put(15, 417); // Bed
         objectIDTable.put(19, 409); // Altar
+        objectIDTable.put(23, 1106); // Bench
         //objectIDTable.put(20, 2440); // Post
         objectIDTable.put(25, 203); // candles
         objectIDTable.put(26, 879); // fountain
@@ -598,8 +601,9 @@ public class RSCConfig {
         objectIDTable.put(193, 44); // fish (Net/Bait)
 
         // Setup object ids directions
-        objectIDDirTable.put(1097, 1); // Throne
-        objectIDDirTable.put(891, 3);
+        objectIDDirTable.put(1097, 2); // Throne
+        objectIDDirTable.put(400, 2);
+        //objectIDDirTable.put(891, 3); // 0-3 rotation only!!!
 
         itemIDTable.put(0, 1420); // Iron mace
         itemIDTable.put(1, 1279); // Iron Short Sword
@@ -618,7 +622,10 @@ public class RSCConfig {
         itemIDTable.put(28, 1203); // Iron dagger
         itemIDTable.put(71, 1293); // Iron Long Sword
         itemIDTable.put(87, 1351); // bronze Axe
-        itemIDTable.put(88, 1349); // Steel Axe
+        itemIDTable.put(88, 1353); // Steel Axe
+        itemIDTable.put(89, 1363); // Iron battle Axe
+        itemIDTable.put(90, 1365); // Steel battle Axe
+        itemIDTable.put(91, 1369); // Mithril battle Axe
         itemIDTable.put(93, 1373); // Rune battle Axe
         itemIDTable.put(95, 1424); // Steel Mace
         itemIDTable.put(104, 1139); // Medium Bronze Helmet
@@ -635,6 +642,7 @@ public class RSCConfig {
         itemIDTable.put(142, 1993); // wine
         itemIDTable.put(144, 1735); // shears
         itemIDTable.put(145, 1737); // wool
+        itemIDTable.put(156, 1265); // Bronze Pickaxe
         itemIDTable.put(166, 590); // tinderbox
         itemIDTable.put(167, 1755); // chisel
         itemIDTable.put(168, 2347); // hammer
@@ -1207,6 +1215,8 @@ public class RSCConfig {
                 return RSC_TranslateItem(4);
             case 109: // bronze Axe
                 return RSC_TranslateItem(205);
+            case 110: // iron Axe
+                return RSC_TranslateItem(89);
             case 114: // rune Axe
                 return RSC_TranslateItem(93);
             case 117: // Iron Mace
@@ -1263,6 +1273,9 @@ public class RSCConfig {
             case 1357: // Adamantite Axe
             case 1359: // rune Axe
             case 1375: // bronze battle Axe
+            case 1363: // Iron battle Axe
+            case 1365: // Steel battle Axe
+            case 1369: // Mithril battle Axe
             case 1373: // Rune battle Axe
             case 1203: // Iron Dagger
             case 1293: // Iron Long Sword
@@ -1528,7 +1541,27 @@ public class RSCConfig {
         return direction;
     }
 
-    public static void RSC_PlayAnimation(Player player, int itemID, int length)
+    public static void RSC_PlayChatAnimation(Player player, String message)
+    {
+        if (!Settings.getLocalAnimations())
+            return;
+
+        // Reset Animation
+        int animation = -1;
+
+        // Thieving
+        if (message.toLowerCase().startsWith("you attempt to pick") && message.toLowerCase().endsWith("pocket"))
+            animation = 881;
+
+        // Set Animation
+        if (animation != -1)
+        {
+            player.RSC_queuedAnimation = animation;
+            player.RSC_queuedAnimationEnd = Client.tick + 150;
+        }
+    }
+
+    public static void RSC_PlayItemAnimation(Player player, int itemID, int length)
     {
         int rscItemID = itemID;
         itemID = RSC_TranslateItem(itemID);
@@ -2172,7 +2205,7 @@ public class RSCConfig {
                         {
                             int itemID = buffer.getUnsignedLEShort();
                             if (player != null)
-                                RSC_PlayAnimation(player, itemID, 150);
+                                RSC_PlayItemAnimation(player, itemID, 150);
                             break;
                         }
                         case 1:
