@@ -653,9 +653,12 @@ final class Region {
 											int r = (tileColor >> 16) & 0xFF;
 											int g = (tileColor >> 8) & 0xFF;
 											int b = tileColor & 0xFF;
-											float hsbVals[] = new float[3];
-											Color.RGBtoHSB(r, g, b, hsbVals);
-											hslBitset = this.generateHSLBitset((int)(hsbVals[0] * 255.0f), (int)(hsbVals[1] * 255.0f), (int)(hsbVals[2] * 255.0f));
+											float hsbVals[] = Color.RGBtoHSB(r, g, b, null);
+											int h = (int)(hsbVals[0] * 255.0f);
+											int s = (int)(hsbVals[1] * 255.0f);
+											int l = (int)(hsbVals[2] * 127.0f);
+											tileColor = Color.HSBtoRGB(hsbVals[0], hsbVals[1], hsbVals[2] * 0.5f);
+											hslBitset = this.generateHSLBitset(h, s, l);
 											overlayMinimapColour = tileColor;
 										} else {
 											hslBitset = this.generateHSLBitset(definition.hue2, definition.saturation,
@@ -672,9 +675,12 @@ final class Region {
 										int r = (tileColor >> 16) & 0xFF;
 										int g = (tileColor >> 8) & 0xFF;
 										int b = tileColor & 0xFF;
-										float hsbVals[] = new float[3];
-										Color.RGBtoHSB(r, g, b, hsbVals);
-										hslBitsetOriginal = this.generateHSLBitset((int)(hsbVals[0] * 255.0f), (int)(hsbVals[1] * 255.0f), (int)(hsbVals[2] * 255.0f));
+										float hsbVals[] = Color.RGBtoHSB(r, g, b, null);
+										int h = (int)(hsbVals[0] * 255.0f);
+										int s = (int)(hsbVals[1] * 255.0f);
+										int l = (int)(hsbVals[2] * 127.0f);
+										tileColor = Color.HSBtoRGB(hsbVals[0], hsbVals[1], hsbVals[2] * 0.5f);
+										hslBitsetOriginal = this.generateHSLBitset(h, s, l);
 										underlayMinimapColour = tileColor;
 									}
 
@@ -1093,7 +1099,7 @@ final class Region {
 		this.overlayClippingPaths[tileZ][tileX][tileY] = (byte)clipPath;
 		this.renderRuleFlags[tileZ][tileX][tileY] = (byte)renderRule;
 		this.underlayFloorIds[tileZ][tileX][tileY] = (byte)underlayID;
-		this.tileShadowIntensity[tileZ][tileX][tileY] = 0;
+		this.tileShadowIntensity[tileZ][tileX][tileY] = 23;
 		RSC_setTerrainHeight(tileX, tileY, tileZ, terrainHeight);
 	}
 
@@ -1122,12 +1128,9 @@ final class Region {
 		return currentDecoration;
 	}
 
-	public void RSC_loadTerrainTile(int tileX, int tileY, int tileZ)
+	public void RSC_loadTerrainTile(Client client, int tileX, int tileY, int tileZ)
 	{
 		if (tileX < 0 && tileX >= 104 && tileY < 0 && tileY >= 104)
-			return;
-
-		if (tileZ > 0)
 			return;
 
 		//if (this.overlayFloorIds[tileZ][tileX][tileY] == 5)
@@ -1162,7 +1165,7 @@ final class Region {
 					overlayID = 1;
 				break;
 			case 1: // Road
-				overlayID = 2;
+				overlayID = 3;
 				break;
 			case 2: // Water
 				overlayID = 6;
@@ -1174,18 +1177,23 @@ final class Region {
 				overlayID = 6;
 				break;
 			case 5: // Inside Building (Gray)
-				overlayID = 2;
+				overlayID = 3;
 				break;
 			default:
 				System.out.println("Unhandled terrain decoration: " + terrainDecoration);
 				break;
 		}
 
+		// Smooth water edges
 		int waterCount = 0;
 		int decN = JGameData.getTileDecoration(worldX, worldY + 1);
 		int decS = JGameData.getTileDecoration(worldX, worldY - 1);
 		int decW = JGameData.getTileDecoration(worldX - 1, worldY);
 		int decE = JGameData.getTileDecoration(worldX + 1, worldY);
+		int decNE = JGameData.getTileDecoration(worldX + 1, worldY + 1);
+		int decSE = JGameData.getTileDecoration(worldX + 1, worldY - 1);
+		int decNW = JGameData.getTileDecoration(worldX - 1, worldY + 1);
+		int decSW = JGameData.getTileDecoration(worldX - 1, worldY - 1);
 		if (terrainDecoration == 2)
 		{
 			// 6 - Skinny west
@@ -1217,19 +1225,114 @@ final class Region {
 				//System.out.println("Unhandled water blend: " + decN + ", " + decE + ", " + decS + ", " + decW);
 			}
 		}
+		// Smooth road edges
+		else if (terrainDecoration == 1)
+		{
+			// 6 - Skinny west
+			if ((decW != 1 && decW != 4) && (decN != 1 && decN != 4) && decSW == 1) {
+				underlayID = 1;
+				clipPath = 1;
+				direction = 3;
+			}
+			// SW Corner
+			else if (decN == 0 && decE == 0) {
+				underlayID = 1;
+				clipPath = 1;
+			}
+			// SE Corner
+			else if (decN == 0 && decW == 0) {
+				underlayID = 1;
+				clipPath = 1;
+				direction = 3;
+			}
+			// NW Corner
+			else if (decS == 0 && decE == 0) {
+				underlayID = 1;
+				clipPath = 1;
+				direction = 1;
+			}
+			// NE Corner
+			else if (decS == 0 && decW == 0) {
+				underlayID = 1;
+				clipPath = 1;
+				direction = 2;
+			}
+			// Unhandled
+			else {
+				//System.out.println("Unhandled water blend: " + decN + ", " + decE + ", " + decS + ", " + decW);
+			}
+		}
 
 		// Handle walls
+		int northSouthWall = JGameData.getWallNorthSouth(worldX, worldY);
+		int eastWestWall = JGameData.getWallEastWest(worldX, worldY);
 		int diagonalWall = JGameData.getWallDiagonal(worldX, worldY);
-		if (diagonalWall > 0)
+		if (northSouthWall > 0)
+		{
+			int wallID = RSCConfig.RSC_TranslateWall(northSouthWall);
+			//if (wallID != -1)
+			//	client.RSC_spawnGameObject(tileX, tileY, 0, wallID);
+		}
+		else if (eastWestWall > 0)
+		{
+			int wallID = RSCConfig.RSC_TranslateWall(eastWestWall);
+			//if (wallID != -1)
+			//	client.RSC_spawnGameObject(tileX, tileY, 3, wallID);
+		}
+		else if (diagonalWall > 0)
 		{
 			if (diagonalWall > 12000)
 			{
-				diagonalWall -= 12000;
-				int adjacent = JGameData.boundaryAdjacent[diagonalWall - 1];
+				int id = diagonalWall - 12001;
+				int adjacent = JGameData.boundaryAdjacent[id];
+
+				if (decS != terrainDecoration && decW != terrainDecoration) {
+					underlayID = 1;
+					direction = 2;
+					clipPath = 1;
+				}
+				else if (decN != terrainDecoration && decE != terrainDecoration) {
+					underlayID = 1;
+					clipPath = 1;
+				}
+				else if (decN != terrainDecoration && decW != terrainDecoration) {
+					underlayID = 1;
+					direction = 3;
+					clipPath = 1;
+				}
+				else if (decS != terrainDecoration && decE != terrainDecoration) {
+					underlayID = 1;
+					direction = 1;
+					clipPath = 1;
+				}
 			}
 			else
 			{
+				if (decS != terrainDecoration && decW != terrainDecoration) {
+					underlayID = 1;
+					direction = 2;
+					clipPath = 1;
+				}
+				else if (decN != terrainDecoration && decE != terrainDecoration) {
+					underlayID = 1;
+					clipPath = 1;
+				}
+				else if (decN != terrainDecoration && decW != terrainDecoration) {
+					underlayID = 1;
+					direction = 3;
+					clipPath = 1;
+				}
+				else if (decS != terrainDecoration && decE != terrainDecoration) {
+					underlayID = 1;
+					direction = 1;
+					clipPath = 1;
+				}
 			}
+
+			// Default isn't ground when above ground
+			if (underlayID == 1 && tileZ > 0)
+				underlayID = 0;
+
 			System.out.println(diagonalWall + ": WALL");
 		}
 

@@ -69,6 +69,7 @@ public class RSCConfig {
     public static int planeIndex;
 
     private static BiMap<Integer, Integer> objectIDTable = new BiMap<Integer, Integer>();
+    public static BiMap<Integer, Integer> objectWallIDTable = new BiMap<Integer, Integer>();
     private static Map<Integer, Integer> objectIDDirTable = new HashMap<Integer, Integer>();
     private static BiMap<Integer, Integer> npcIDTable = new BiMap<Integer, Integer>();
     private static BiMap<Integer, Integer> itemIDTable = new BiMap<Integer, Integer>();
@@ -423,9 +424,11 @@ public class RSCConfig {
         }
 
         //return -(var0 / 8) + -(var2 / 8 * 1024) + (-1 - var3 / 8 * 32);
-        int r = (var2) & 0xFF;
+        //return -(var0 / 8) + -(var2 / 8 * 1024) + (-1 - var3 / 8 * 32);
+        int r = var2 & 0xFF;//(var2) & 0xFF;
         int g = (var3) & 0xFF;
-        int b = (var0) & 0xFF;
+        int b = var0 & 0xFF;//(var0) & 0xFF;
+        System.out.println("rgb: " + r + ", " + g + ", " + b);
         return (r << 16) | (g << 8) | b;
     }
 
@@ -516,9 +519,12 @@ public class RSCConfig {
         }
 
         // Setup npc ids
+        npcIDTable.put(1, 519); // Bob
         npcIDTable.put(2, 43); // Sheep
         npcIDTable.put(5, 0); // Hans
         npcIDTable.put(6, 81); // cow
+        npcIDTable.put(7, 278); // cook
+        npcIDTable.put(9, 31); // Priest
         npcIDTable.put(11, 1); // Man
         npcIDTable.put(23, 59); // Giant Spider
         npcIDTable.put(29, 47); // Rat
@@ -528,6 +534,7 @@ public class RSCConfig {
         npcIDTable.put(62, 100); // Goblin
         npcIDTable.put(66, 178); // Black Knight
         npcIDTable.put(67, 122); // Hobgoblin
+        npcIDTable.put(81, 13); // Wizard
         npcIDTable.put(83, 521); // Shop Assistant
         npcIDTable.put(95, 494); // Banker
         npcIDTable.put(97, 755); // Morgan
@@ -540,6 +547,9 @@ public class RSCConfig {
         npcIDTable.put(226, 2537); // Miles
         npcIDTable.put(227, 2536); // Niles
         npcIDTable.put(231, 805); // Master Crafter
+
+        // Setup wall object ids
+        objectWallIDTable.put(27, 891);
 
         // Setup object ids
         objectIDTable.put(0, 1279); // Tree
@@ -560,9 +570,9 @@ public class RSCConfig {
         objectIDTable.put(34, 1173); // Fern
         objectIDTable.put(37, 1188); // Flower
         objectIDTable.put(38, 1163); // Mushroom
-        objectIDTable.put(45, 2068); // railing
         objectIDTable.put(63, 1574); // doors
         objectIDTable.put(70, 1286); // Tree
+        objectIDTable.put(72, 313); // Wheat
         objectIDTable.put(97, 2732); // fire
         objectIDTable.put(119, 2728); // Cook's Range
         objectIDTable.put(192, 42); // fish (Lure/Bait)
@@ -570,6 +580,7 @@ public class RSCConfig {
 
         // Setup object ids directions
         objectIDDirTable.put(1097, 1); // Throne
+        objectIDDirTable.put(891, 3);
 
         itemIDTable.put(0, 1420); // Iron mace
         itemIDTable.put(1, 1279); // Iron Short Sword
@@ -1023,8 +1034,12 @@ public class RSCConfig {
         Integer val = objectIDTable.get(objectID);
         if (val == null)
         {
-            System.out.println("Unhandled object id: " + objectID);
-            return -1;
+            val = objectWallIDTable.get(objectID);
+            if (val == null)
+            {
+                System.out.println("Unhandled object id: " + objectID);
+                return -1;
+            }
         }
         return val.intValue();
     }
@@ -1034,8 +1049,12 @@ public class RSCConfig {
         Integer val = objectIDTable.getKey(objectID);
         if (val == null)
         {
-            System.out.println("Unhandled reverse object id: " + objectID);
-            return -1;
+            val = objectWallIDTable.getKey(objectID);
+            if (val == null)
+            {
+                System.out.println("Unhandled reverse object id: " + objectID);
+                return -1;
+            }
         }
         return val.intValue();
     }
@@ -1062,18 +1081,20 @@ public class RSCConfig {
         return val.intValue();
     }
 
-    public static int RSC_TranslateTexture(int id)
+    public static int RSC_TranslateWall(int id)
     {
         switch (id)
         {
-            case 2: // Water
-                return 1;
-            case 3: // Wood
-                return 3;
-            case 0: // No texture
-                return -1;
+            case 1: // Stone Wall
+                return 1902;
+            case 4: // Stone Wall Window
+                return 1902;
+            case 15: // White Wall
+                return 2855;
+            case 16: // White Wall Window
+                return 2855;
             default:
-                System.out.println("Unhandled texture conversion: " + id);
+                System.out.println("Unhandled wall conversion: " + id);
                 break;
         }
 
@@ -2107,7 +2128,7 @@ public class RSCConfig {
                             int posY = client.regionY + localY;
                             int orientation = JGameData.getTileDirection(posX, posY);
                             orientation = RSC_fixObjectDirection(rs2ID, orientation);
-                            client.RSC_spawnGameObject(x, y, orientation, rs2ID);
+                            client.RSC_spawnGameObject(localX, localY, orientation, rs2ID);
                             System.out.println("Spawning " + rs2ID + " at " + x + ", " + y);
                         }
                     }

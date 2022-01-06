@@ -7117,7 +7117,7 @@ public final class Client extends RSApplet {
 			for (int z = 0; z < 4; z++)
 				for (int x = 0; x < 104; x++)
 					for (int y = 0; y < 104; y++)
-						objectManager.RSC_loadTerrainTile(x, y, z);
+						objectManager.RSC_loadTerrainTile(this, x, y, z);
 			objectManager.initiateVertexHeights(0, 103, 103, 0);
 			objectManager.createRegion(this.currentCollisionMap, this.worldController);
 			this.gameScreenImageProducer.initDrawingArea();
@@ -8291,6 +8291,16 @@ public final class Client extends RSApplet {
 					this.redrawChatbox = true;
 				}
 				if ((c == 13 || c == 10) && this.inputString.length() > 0) {
+					if (Settings.getDebug())
+					{
+						String[] args = inputString.split(" ");
+						if (args[0].equals("::addobject")) {
+							int id = Integer.parseInt(args[1]);
+							System.out.println("Spawn Obj: " + id + ", ");
+							this.RSC_spawnGameObject(0, 0, 0, id);
+						}
+					}
+
 					if (this.playerRights == 2) {
 						if (this.inputString.equals("::clientdrop")) {
 							this.dropClient();
@@ -8445,9 +8455,14 @@ public final class Client extends RSApplet {
 
 	public void RSC_spawnGameObject(int objectX, int objectY, int orientation, int objectId)
 	{
-		int x = localPlayer.waypointX[0] + objectX;
-		int y = localPlayer.waypointY[0] + objectY;
-		final int objectType = 10;
+		GameObjectDefinition def = GameObjectDefinition.getDefinition(objectId);
+		int x = objectX;
+		int y = objectY;
+		int objectType = 10;
+		if (RSCConfig.objectWallIDTable.containsValue(objectId))
+			objectType = 4;
+		if (def.wall)
+			objectType = 0;
 		final int type = this.objectTypes[objectType];
 		if (x >= 0 && y >= 0 && x < 104 && y < 104) {
 			this.createObjectSpawnRequest(-1, objectId, orientation, type, y, objectType, RSCConfig.planeIndex, x, 0);
