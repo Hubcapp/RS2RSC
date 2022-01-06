@@ -55,7 +55,7 @@ public class JGameData {
     public static String sceneryCommand1[];
     public static String sceneryCommand2[];
     public static int boundaryCount;
-    public static boolean boundaryAdjacent[];
+    public static byte boundaryAdjacent[];
     public static byte boundaryPassable[];
     public static int tileCount;
     public static int tileDecoration[];
@@ -68,6 +68,7 @@ public class JGameData {
     public static byte regionColor[][][][];
     public static byte regionDecoration[][][][];
     public static byte regionWallsNorthSouth[][][][];
+    public static short regionWallsDiagonal[][][][];
 
     public static boolean init(boolean member) {
         JContent content = new JContent();
@@ -227,7 +228,7 @@ public class JGameData {
             integer.skip(1); // Elevation
 
         boundaryCount = integer.readUnsignedShort();
-        boundaryAdjacent = new boolean[boundaryCount];
+        boundaryAdjacent = new byte[boundaryCount];
         boundaryPassable = new byte[boundaryCount];
         for (int i = 0; i < boundaryCount; i++) {
             String boundaryName = string.readString(); // Name
@@ -246,7 +247,7 @@ public class JGameData {
         for (int i = 0; i < boundaryCount; i++)
             integer.skip(4); // Texture 2
         for (int i = 0; i < boundaryCount; i++)
-            boundaryAdjacent[i] = (integer.readUnsignedByte() != 0); // Adjacent
+            boundaryAdjacent[i] = integer.readByte(); // Adjacent
         for (int i = 0; i < boundaryCount; i++)
             boundaryPassable[i] = integer.readByte(); // Collidable
 
@@ -293,6 +294,7 @@ public class JGameData {
         regionColor = new byte[maxRegionWidth][maxRegionHeight][Game.REGION_FLOORS][Game.REGION_SIZE];
         regionDecoration = new byte[maxRegionWidth][maxRegionHeight][Game.REGION_FLOORS][Game.REGION_SIZE];
         regionWallsNorthSouth = new byte[maxRegionWidth][maxRegionHeight][Game.REGION_FLOORS][Game.REGION_SIZE];
+        regionWallsDiagonal = new short[maxRegionWidth][maxRegionHeight][Game.REGION_FLOORS][Game.REGION_SIZE];
 
         // Read content6 (landscape)
         if (!content.open("rsc_cache/content4_ffffffffaaca2b0d"))
@@ -440,13 +442,12 @@ public class JGameData {
 
         int data[] = new int[Game.REGION_SIZE];
         for (int i = 0; i < Game.REGION_SIZE; i++)
-            data[i] = map.readUnsignedByte();
+            regionWallsDiagonal[x][y][floor][i] = (short)map.readUnsignedByte();
         for (int i = 0; i < Game.REGION_SIZE; i++) {
-            int val = map.readUnsignedByte();
+            short val = (short)map.readUnsignedByte();
             if (val > 0)
-                data[i] = 12000 + val;
+                regionWallsDiagonal[x][y][floor][i] = (short)(val + 12000);
 
-            int id = data[i];
             //regionCollisionMask[x][y][floor][i] |= (id > 0 && id < 12000 && JGameData.boundaryPassable[id - 1] && JGameData.boundaryAdjacent[id - 1]) ? Game.COLLISION_TILE : Game.COLLISION_NONE;
             //regionCollisionMask[x][y][floor][i] |= (id >= 12000 && JGameData.boundaryPassable[id - 12001] && JGameData.boundaryAdjacent[id - 12001]) ? Game.COLLISION_TILE : Game.COLLISION_NONE;
         }
@@ -578,6 +579,21 @@ public class JGameData {
         int localY = worldY - (chunkY * Game.REGION_HEIGHT);
         int index = (localX * Game.REGION_HEIGHT) + localY;
         byte wall = JGameData.regionWallsNorthSouth[chunkX][chunkY][floor][index];
+        return wall;
+    }
+
+    public static int getWallDiagonal(int x, int y)
+    {
+        int floor = y / Game.WORLD_Y_OFFSET;
+        int floorOffset = floor * Game.WORLD_Y_OFFSET;
+        int worldX = Game.WORLD_PLANE_X + x;
+        int worldY = Game.WORLD_PLANE_Y - floorOffset + y;
+        int chunkX = worldX / Game.REGION_WIDTH;
+        int chunkY = worldY / Game.REGION_HEIGHT;
+        int localX = worldX - (chunkX * Game.REGION_WIDTH);
+        int localY = worldY - (chunkY * Game.REGION_HEIGHT);
+        int index = (localX * Game.REGION_HEIGHT) + localY;
+        short wall = JGameData.regionWallsDiagonal[chunkX][chunkY][floor][index];
         return wall;
     }
 }

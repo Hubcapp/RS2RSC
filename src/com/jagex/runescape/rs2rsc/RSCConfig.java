@@ -422,7 +422,11 @@ public class RSCConfig {
             generateColor(-105, -46, -65, -106);
         }
 
-        return -(var0 / 8) + -(var2 / 8 * 1024) + (-1 - var3 / 8 * 32);
+        //return -(var0 / 8) + -(var2 / 8 * 1024) + (-1 - var3 / 8 * 32);
+        int r = (var2) & 0xFF;
+        int g = (var3) & 0xFF;
+        int b = (var0) & 0xFF;
+        return (r << 16) | (g << 8) | b;
     }
 
     public static void Start(Client client)
@@ -514,6 +518,7 @@ public class RSCConfig {
         // Setup npc ids
         npcIDTable.put(2, 43); // Sheep
         npcIDTable.put(5, 0); // Hans
+        npcIDTable.put(6, 81); // cow
         npcIDTable.put(11, 1); // Man
         npcIDTable.put(23, 59); // Giant Spider
         npcIDTable.put(29, 47); // Rat
@@ -522,6 +527,7 @@ public class RSCConfig {
         npcIDTable.put(57, 172); // Darkwizard
         npcIDTable.put(62, 100); // Goblin
         npcIDTable.put(66, 178); // Black Knight
+        npcIDTable.put(67, 122); // Hobgoblin
         npcIDTable.put(83, 521); // Shop Assistant
         npcIDTable.put(95, 494); // Banker
         npcIDTable.put(97, 755); // Morgan
@@ -533,6 +539,7 @@ public class RSCConfig {
         npcIDTable.put(225, 2538); // Giles
         npcIDTable.put(226, 2537); // Miles
         npcIDTable.put(227, 2536); // Niles
+        npcIDTable.put(231, 805); // Master Crafter
 
         // Setup object ids
         objectIDTable.put(0, 1279); // Tree

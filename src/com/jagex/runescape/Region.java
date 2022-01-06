@@ -7,6 +7,8 @@ import com.jagex.runescape.scene.WorldController;
 import rscminus.common.JGameData;
 import rscminus.game.constants.Game;
 
+import java.awt.*;
+
 final class Region {
 
 	private static int calculateNoise(final int x, final int seed) {
@@ -648,7 +650,12 @@ final class Region {
 											int worldX = RSCConfig.regionX + x;
 											int worldY = RSCConfig.regionY + y;
 											int tileColor = JGameData.getTileColor(worldX, worldY);
-											hslBitset = tileColor;
+											int r = (tileColor >> 16) & 0xFF;
+											int g = (tileColor >> 8) & 0xFF;
+											int b = tileColor & 0xFF;
+											float hsbVals[] = new float[3];
+											Color.RGBtoHSB(r, g, b, hsbVals);
+											hslBitset = this.generateHSLBitset((int)(hsbVals[0] * 255.0f), (int)(hsbVals[1] * 255.0f), (int)(hsbVals[2] * 255.0f));
 											overlayMinimapColour = tileColor;
 										} else {
 											hslBitset = this.generateHSLBitset(definition.hue2, definition.saturation,
@@ -656,6 +663,19 @@ final class Region {
 											overlayMinimapColour = Rasterizer.HSL_TO_RGB[this.mixLightnessSigned(definition.hsl,
 													96)];
 										}
+									}
+
+									if (RSCConfig.rscProtocol && this.underlayFloorIds[_plane][x][y] == 1) {
+										int worldX = RSCConfig.regionX + x;
+										int worldY = RSCConfig.regionY + y;
+										int tileColor = JGameData.getTileColor(worldX, worldY);
+										int r = (tileColor >> 16) & 0xFF;
+										int g = (tileColor >> 8) & 0xFF;
+										int b = tileColor & 0xFF;
+										float hsbVals[] = new float[3];
+										Color.RGBtoHSB(r, g, b, hsbVals);
+										hslBitsetOriginal = this.generateHSLBitset((int)(hsbVals[0] * 255.0f), (int)(hsbVals[1] * 255.0f), (int)(hsbVals[2] * 255.0f));
+										underlayMinimapColour = tileColor;
 									}
 
 									worldController.renderTile(_plane, x, y, clippingPath, clippingPathRotation,
@@ -1064,12 +1084,12 @@ final class Region {
 		this.vertexHeights[tileZ][tileX][tileY] = height;
 	}
 
-	public void RSC_placeTerrainTile(int tileX, int tileY, int tileZ, int terrainHeight, int clipPath, int renderRule, int overlayID, int underlayID)
+	public void RSC_placeTerrainTile(int tileX, int tileY, int tileZ, int terrainHeight, int clipPath, int renderRule, int overlayID, int underlayID, int terrainDirection)
 	{
 		if (tileX < 0 && tileX >= 104 && tileY < 0 && tileY >= 104)
 			return;
 		this.overlayFloorIds[tileZ][tileX][tileY] = (byte)overlayID;
-		this.overlayOrientations[tileZ][tileX][tileY] = 0;
+		this.overlayOrientations[tileZ][tileX][tileY] = (byte)terrainDirection;
 		this.overlayClippingPaths[tileZ][tileX][tileY] = (byte)clipPath;
 		this.renderRuleFlags[tileZ][tileX][tileY] = (byte)renderRule;
 		this.underlayFloorIds[tileZ][tileX][tileY] = (byte)underlayID;
@@ -1090,6 +1110,12 @@ final class Region {
 			if (decoration == 4)
 				return decoration;
 			decoration = JGameData.getTileDecoration(tileX, tileY - 1);
+			if (decoration == 4)
+				return decoration;
+			decoration = JGameData.getTileDecoration(tileX + 1, tileY);
+			if (decoration == 4)
+				return decoration;
+			decoration = JGameData.getTileDecoration(tileX - 1, tileY);
 			if (decoration == 4)
 				return decoration;
 		}
@@ -1113,6 +1139,7 @@ final class Region {
 		int underlayID = 0;
 		int clipPath = 0;
 		int renderRule = 0;
+		int direction = 0;
 
 		int terrainHeight = JGameData.getTileHeight(worldX, worldY);
 		int terrainDecoration = JGameData.getTileDecoration(worldX, worldY);
@@ -1139,7 +1166,6 @@ final class Region {
 				break;
 			case 2: // Water
 				overlayID = 6;
-				renderRule |= 1;
 				break;
 			case 3: // Wood
 				overlayID = 5;
@@ -1155,17 +1181,73 @@ final class Region {
 				break;
 		}
 
+		int waterCount = 0;
+		int decN = JGameData.getTileDecoration(worldX, worldY + 1);
+		int decS = JGameData.getTileDecoration(worldX, worldY - 1);
+		int decW = JGameData.getTileDecoration(worldX - 1, worldY);
+		int decE = JGameData.getTileDecoration(worldX + 1, worldY);
+		if (terrainDecoration == 2)
+		{
+			// 6 - Skinny west
+			// SW Corner
+			if ((decN != 2 && decN != 4) && (decE != 2 && decE != 4)) {
+				underlayID = 1;
+				clipPath = 1;
+			}
+			// SE Corner
+			else if ((decN != 2 && decN != 4) && (decW != 2 && decW != 4)) {
+				underlayID = 1;
+				clipPath = 1;
+				direction = 3;
+			}
+			// NW Corner
+			else if ((decS != 2 && decS != 4) && (decE != 2 && decE != 4)) {
+				underlayID = 1;
+				clipPath = 1;
+				direction = 1;
+			}
+			// NE Corner
+			else if ((decS != 2 && decS != 4) && (decW != 2 && decW != 4)) {
+				underlayID = 1;
+				clipPath = 1;
+				direction = 2;
+			}
+			// Unhandled
+			else {
+				//System.out.println("Unhandled water blend: " + decN + ", " + decE + ", " + decS + ", " + decW);
+			}
+		}
+
+		// Handle walls
+		int diagonalWall = JGameData.getWallDiagonal(worldX, worldY);
+		if (diagonalWall > 0)
+		{
+			if (diagonalWall > 12000)
+			{
+				diagonalWall -= 12000;
+				int adjacent = JGameData.boundaryAdjacent[diagonalWall - 1];
+			}
+			else
+			{
+			}
+			System.out.println(diagonalWall + ": WALL");
+		}
+
+		// Block water and diagonal walls
+		if (RSC_getDecoration(worldX, worldY) == 2 || diagonalWall > 0)
+			renderRule |= 1;
+
 		if (RSC_getDecoration(worldX, worldY) == 4)
 		{
 			int bridgeHeight = RSC_getBridgeHeight(worldX, worldY);
 			renderRule |= 2;
-			RSC_placeTerrainTile(tileX, tileY, 1, bridgeHeight, clipPath, renderRule, 5, 0);
+			RSC_placeTerrainTile(tileX, tileY, 1, bridgeHeight, clipPath, renderRule, 5, 0, direction);
 			RSC_setTerrainHeight(tileX + 1, tileY, 1, bridgeHeight);
 			RSC_setTerrainHeight(tileX, tileY + 1, 1, bridgeHeight);
 			RSC_setTerrainHeight(tileX + 1, tileY + 1, 1, bridgeHeight);
 		}
 
-		RSC_placeTerrainTile(tileX, tileY, tileZ, terrainHeight, clipPath, renderRule, overlayID, underlayID);
+		RSC_placeTerrainTile(tileX, tileY, tileZ, terrainHeight, clipPath, renderRule, overlayID, underlayID, direction);
 	}
 
 	private void loadTerrainTile(final int tileY, final int offsetY, final Buffer stream, final int tileX, final int tileZ, final int i1, final int offsetX) {
