@@ -690,6 +690,61 @@ public final class WorldController {
 		}
 	}
 
+	public void initToMove() {
+		int moveX = RSCConfig.regionX - RSCConfig.prevRegionX;
+		int moveY = RSCConfig.regionY - RSCConfig.prevRegionY;
+
+		Tile[][] copyArea = new Tile[mapSizeX][mapSizeY];
+
+		for (int z = 0; z < this.mapSizeZ; z++) {
+			for (int x = 0; x < this.mapSizeX; x++) {
+				for (int y = 0; y < this.mapSizeY; y++) {
+					if (z == RSCConfig.planeIndex)
+						copyArea[x][y] = this.groundArray[z][x][y];
+					this.groundArray[z][x][y] = null;
+				}
+			}
+		}
+
+		for (int x = 0; x < this.mapSizeX; x++) {
+			for (int y = 0; y < this.mapSizeY; y++) {
+				int srcX = x + moveX;
+				int srcY = y + moveY;
+				if (srcX >= 0 && srcY >= 0 && srcX < 104 && srcY < 104) {
+					System.out.println("cam: " + cameraPosX + ", " + cameraPosY + ", " + cameraPosZ);
+					Tile srcTile = copyArea[srcX][srcY];
+					if (srcTile.entityCount > 0) {
+						for (int i = 0; i < srcTile.entityCount; i++)
+						{
+							InteractiveObject obj = srcTile.interactiveObjects[i];
+							int sizeX = obj.tileRight - obj.tileLeft;
+							int sizeY = obj.tileBottom - obj.tileTop;
+							int posX = x - sizeX;
+							int posY = y - sizeY;
+							obj.worldX = (posX * 128) + ((sizeX + 1) * 64);
+							obj.worldY = (posY * 128) + ((sizeY + 1) * 64);
+							obj.tileLeft = posX;
+							obj.tileTop = posY;
+							obj.tileRight = x;
+							obj.tileBottom = y;
+						}
+						srcTile.x = x;
+						srcTile.y = y;
+						this.groundArray[RSCConfig.planeIndex][x][y] = srcTile;
+					}
+				}
+			}
+		}
+
+		// TODO: We probably need to move culling clusters... for now, init to null
+		for (int l = 0; l < anInt472; l++) {
+			for (int j1 = 0; j1 < cullingClusterPointer[l]; j1++)
+				cullingClusters[l][j1] = null;
+
+			cullingClusterPointer[l] = 0;
+		}
+	}
+
 	public void initToNull() {
 		for (int z = 0; z < this.mapSizeZ; z++) {
 			for (int x = 0; x < this.mapSizeX; x++) {

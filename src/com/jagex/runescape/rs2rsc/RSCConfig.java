@@ -63,6 +63,8 @@ public class RSCConfig {
     private static int magicLoc = 128;
     public static int localRegionX;
     public static int localRegionY;
+    public static int prevRegionX;
+    public static int prevRegionY;
     public static int regionX;
     public static int regionY;
     public static int planeWidth;
@@ -635,6 +637,7 @@ public class RSCConfig {
         itemIDTable.put(124, 1173); // Bronze Square Shield
         itemIDTable.put(132, 2142); // cookedmeat
         itemIDTable.put(133, 2138); // raw chicken
+        itemIDTable.put(134, 2146); // burntmeat
         itemIDTable.put(135, 1931); // pot
         itemIDTable.put(136, 1933); // flour
         itemIDTable.put(140, 1935); // jug
@@ -642,6 +645,7 @@ public class RSCConfig {
         itemIDTable.put(142, 1993); // wine
         itemIDTable.put(144, 1735); // shears
         itemIDTable.put(145, 1737); // wool
+        itemIDTable.put(147, 1739); // cow hide
         itemIDTable.put(156, 1265); // Bronze Pickaxe
         itemIDTable.put(166, 590); // tinderbox
         itemIDTable.put(167, 1755); // chisel
@@ -677,6 +681,7 @@ public class RSCConfig {
         itemIDTable.put(407, 2803); // Rune Plate Mail top
         itemIDTable.put(420, 1540); // Anti dragon breath Shield
         itemIDTable.put(428, 1261); // Black Axe
+        itemIDTable.put(504, 2132); // raw beef
         itemIDTable.put(548, 305); // Big Net
         itemIDTable.put(594, 1377); // Dragon axe
         itemIDTable.put(597, 1712); // Charged Dragonstone Amulet
@@ -1161,6 +1166,7 @@ public class RSCConfig {
                 return -2;
             case 2:
             case 3: // Legs, but they're always the same
+            case 5:
                 return -1;
             case 4:
                 return -6;
@@ -1553,6 +1559,10 @@ public class RSCConfig {
         if (message.toLowerCase().startsWith("you attempt to pick") && message.toLowerCase().endsWith("pocket"))
             animation = 881;
 
+        // Prayer
+        if (message.toLowerCase().startsWith("you dig a hole in the ground"))
+            animation = 827;
+
         // Set Animation
         if (animation != -1)
         {
@@ -1572,6 +1582,16 @@ public class RSCConfig {
 
         // Reset Animation
         int animation = -1;
+
+        // Cooking
+        switch (itemID)
+        {
+            // TODO: Ok, so, if you're cooking on a range it plays 883
+            case 2138: // raw chicken
+            case 2132: // raw beef
+                animation = 897;
+                break;
+        }
 
         // Fishing
         switch (itemID)
@@ -2078,8 +2098,6 @@ public class RSCConfig {
 
                 // Load region
                 client.RSC_loadRegion(localRegionX, localRegionY);
-                regionX = client.regionX;
-                regionY = client.regionY;
                 localRegionX -= client.regionX;
                 localRegionY -= client.regionY;
 

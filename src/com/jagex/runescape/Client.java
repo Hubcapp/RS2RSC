@@ -5463,6 +5463,11 @@ public final class Client extends RSApplet {
 		this.baseX = this.regionX;
 		this.baseY = this.regionY;
 
+		RSCConfig.prevRegionX = RSCConfig.regionX;
+		RSCConfig.prevRegionY = RSCConfig.regionY;
+		RSCConfig.regionX = this.regionX;
+		RSCConfig.regionY = this.regionY;
+
 		this.loadingStage = 1;
 		this.loadRegionTime = System.currentTimeMillis();
 		this.gameScreenImageProducer.initDrawingArea();
@@ -6775,6 +6780,8 @@ public final class Client extends RSApplet {
 				}
 
 				signlink.reporterror(s2.toString());
+			} else {
+				exception.printStackTrace();
 			}
 			this.logout();
 		}
@@ -7097,7 +7104,7 @@ public final class Client extends RSApplet {
 			this.projectileQueue.clear();
 			Rasterizer.clearTextureCache();
 			this.resetModelCaches();
-			this.worldController.initToNull();
+			this.worldController.initToMove();
 			System.gc();
 			for (int z = 0; z < 4; z++) {
 				this.currentCollisionMap[z].reset();
@@ -10732,22 +10739,14 @@ public final class Client extends RSApplet {
 		if (x >= 0 && y >= 0 && x < 104 && y < 104) {
 			DoubleEndedQueue list = this.groundArray[this.plane][x][y];
 			if (list != null) {
-				Linkable start = list.peekFront();
-				int count = 0;
-				boolean found = false;
-				while (start != null) {
-					Item item = (Item)start;
-					if (item.itemId == id) {
-						start.unlink();
-						found = true;
-						break;
-					}
-
-					count++;
-					start = start.next;
+				for (Item item = (Item)list.peekFront(); item != null; item = (Item)list.getPrevious()) {
+					if (item.itemId != id)
+						continue;
+					item.unlink();
+					break;
 				}
 
-				if (count == 0 && found)
+				if (list.peekFront() == null)
 					this.groundArray[this.plane][x][y] = null;
 
 				this.spawnGroundItem(x, y);
