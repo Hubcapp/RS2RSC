@@ -10718,13 +10718,12 @@ public final class Client extends RSApplet {
 		x += RSCConfig.localRegionX;
 		y += RSCConfig.localRegionY;
 		if (x >= 0 && y >= 0 && x < 104 && y < 104) {
-			final Item item = new Item();
 			int rscID = RSCConfig.RSC_TranslateItemReverse(id);
+			final Item item = new Item();
 			item.itemId = id;
 			item.itemCount = 1;
 			if (JGameData.itemStackable[rscID])
 				item.itemCount = 100;
-
 			if (this.groundArray[this.plane][x][y] == null)
 				this.groundArray[this.plane][x][y] = new DoubleEndedQueue();
 			this.groundArray[this.plane][x][y].pushBack(item);
@@ -10739,7 +10738,7 @@ public final class Client extends RSApplet {
 		if (x >= 0 && y >= 0 && x < 104 && y < 104) {
 			DoubleEndedQueue list = this.groundArray[this.plane][x][y];
 			if (list != null) {
-				for (Item item = (Item)list.peekFront(); item != null; item = (Item)list.getPrevious()) {
+				for (Item item = (Item)list.peekFront(); item != null; item = (Item)list.getNext()) {
 					if (item.itemId != id)
 						continue;
 					item.unlink();
