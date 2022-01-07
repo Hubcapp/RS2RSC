@@ -658,6 +658,7 @@ public class RSCConfig {
         itemIDTable.put(187, 1011); // skirt (blue)
         itemIDTable.put(194, 1013); // skirt (pink)
         itemIDTable.put(195, 1015); // skirt (black)
+        itemIDTable.put(201, 956); // flier
         itemIDTable.put(203, 1355); // Mithril Axe
         itemIDTable.put(204, 1357); // Adamantite Axe
         itemIDTable.put(205, 1375); // bronze battle axe
