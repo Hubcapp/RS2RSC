@@ -1371,55 +1371,7 @@ public final class WorldController {
 		}
 	}
 
-	public void RSC_loadLandscape()
-	{
-		System.out.println("RSC_LOAD_LANDSCAPE");
-
-		for (int z = 0; z < this.mapSizeZ; z++) {
-			final Tile[][] tiles = this.groundArray[z];
-			final int[][] height = this.heightMap[z];
-			for (int x = 0; x < mapBoundsX; x++) {
-				for (int y = 0; y < mapBoundsY; y++) {
-					if (z != 0)
-						continue;
-
-					int localX = RSCConfig.regionX + x;
-					int localY = RSCConfig.regionY + y;
-
-					int terrainHeightNW = JGameData.getTileHeight(localX, localY);
-					int terrainHeightNE = JGameData.getTileHeight(localX + 1, localY);
-					int terrainHeightSW = JGameData.getTileHeight(localX, localY + 1);
-					int terrainHeightSE = JGameData.getTileHeight(localX + 1, localY + 1);
-					int drawHeight = terrainHeightNW + terrainHeightNE + terrainHeightSW + terrainHeightSE >> 2;
-					int terrainColor = JGameData.getTileColor(localX, localY);
-					int terrainDirection = JGameData.getTileDirection(localX, localY);
-
-					int wallNorthSouth = JGameData.getWallNorthSouth(localX, localY);
-					if (wallNorthSouth > 0 && JGameData.boundaryPassable[wallNorthSouth - 1] == 0)
-					{
-						int objectId = 0;
-						int hash = x + (y << 7) + (objectId << 14) + 0x40000000;
-					}
-
-					if (tiles[x][y] == null)
-						tiles[x][y] = new Tile(z, x, y);
-					Tile tile = tiles[x][y];
-					//tile.shapedTile = new ShapedTile(x, terrainHeightNW, terrainHeightNE, terrainHeightSW, terrainHeightSE, y, 0, 1, 6, 0, 0, 0, 0, 0, 0, 0, 0, terrainColor, terrainColor);
-				}
-			}
-		}
-	}
-
-	public void RSC_initChunk() {
-		//final Tile[][] tiles = this.groundArray[RSCConfig.planeIndex];
-		//if (tiles[0][0].plainTile == null)
-		//	RSC_loadLandscape();
-	}
-
 	public void render(int cameraPosX, int cameraPosY, final int curveX, final int cameraPosZ, final int plane, final int curveY) {
-		if (RSCConfig.rscProtocol)
-			RSC_initChunk();
-
 		if (cameraPosX < 0) {
 			cameraPosX = 0;
 		} else if (cameraPosX >= this.mapSizeX * 128) {

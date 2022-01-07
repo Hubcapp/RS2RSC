@@ -4,6 +4,7 @@ import com.jagex.runescape.*;
 import com.jagex.runescape.collection.DoubleEndedQueue;
 import com.jagex.runescape.definition.EntityDefinition;
 import com.jagex.runescape.definition.GameObjectDefinition;
+import com.jagex.runescape.rs2rsc.RSCConfig;
 import com.jagex.runescape.scene.WorldController;
 
 import java.awt.*;
@@ -267,6 +268,11 @@ public class Minimap {
             final int tick
     ) {
         this.minimapImageProducer.initDrawingArea();
+
+        int rotate = Client.cameraHorizontal;
+        if (RSCConfig.rscProtocol)
+            rotate = (rotate + 1024) % 2048;
+
         if (this.state == 2) {
             final byte[] backgroundPixels = this.minimapBackgroundImage.pixels;
             final int[] rasterPixels = DrawingArea.pixels;
@@ -277,14 +283,14 @@ public class Minimap {
                 }
             }
 
-            this.minimapCompassImage.rotate(33, Client.cameraHorizontal, this.compassWidthMap, 256, this.compassHingeSize, 25, 0, 0, 33, 25);
+            this.minimapCompassImage.rotate(33, rotate, this.compassWidthMap, 256, this.compassHingeSize, 25, 0, 0, 33, 25);
             return;
         }
         final int angle = Client.cameraHorizontal + this.rotation & 0x7FF;
         final int centreX = 48 + Client.localPlayer.x / 32;
         final int centreY = 464 - Client.localPlayer.y / 32;
         this.minimapImage.rotate(151, angle, this.minimapLineWidth, 256 + this.zoom, this.minimapLeft, centreY, 5, 25, 146, centreX);
-        this.minimapCompassImage.rotate(33, Client.cameraHorizontal, this.compassWidthMap, 256, this.compassHingeSize, 25, 0, 0, 33, 25);
+        this.minimapCompassImage.rotate(33, rotate, this.compassWidthMap, 256, this.compassHingeSize, 25, 0, 0, 33, 25);
         for (int icon = 0; icon < this.minimapHintCount; icon++) {
             final int mapX = (this.minimapHintX[icon] * 4 + 2) - Client.localPlayer.x / 32;
             final int mapY = (this.minimapHintY[icon] * 4 + 2) - Client.localPlayer.y / 32;
