@@ -75,7 +75,8 @@ public final class Region {
 				}
 				final int sizeX;
 				final int sizeY;
-				if (face == 1 || face == 3) {
+				// TODO: This needs to support new direction system
+				if (face == 2 || face == 6) {
 					sizeX = definition.sizeY;
 					sizeY = definition.sizeX;
 				} else {
@@ -1269,19 +1270,7 @@ public final class Region {
 		int northSouthWall = JGameData.getWallNorthSouth(worldX, worldY);
 		int eastWestWall = JGameData.getWallEastWest(worldX, worldY);
 		int diagonalWall = JGameData.getWallDiagonal(worldX, worldY);
-		if (northSouthWall > 0)
-		{
-			int wallID = RSCConfig.RSC_TranslateWall(northSouthWall);
-			if (wallID != -1)
-				client.RSC_spawnGameObject(tileX, tileY, 0, wallID);
-		}
-		else if (eastWestWall > 0)
-		{
-			int wallID = RSCConfig.RSC_TranslateWall(eastWestWall);
-			if (wallID != -1)
-				client.RSC_spawnGameObject(tileX, tileY, 6, wallID);
-		}
-		else if (diagonalWall > 0)
+		if (diagonalWall > 0)
 		{
 			if (diagonalWall > 12000)
 			{

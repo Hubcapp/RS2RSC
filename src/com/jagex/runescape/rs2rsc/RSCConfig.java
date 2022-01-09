@@ -604,7 +604,7 @@ public class RSCConfig {
         objectIDTable.put(193, 44); // fish (Net/Bait)
 
         // Setup wall object ids
-        objectWallIDTable.put(45, 2068);
+        //objectWallIDTable.put(45, 2068);
         objectWallIDTable.put(59, 1551);
         objectWallIDTable.put(60, 1552);
 
@@ -1138,16 +1138,18 @@ public class RSCConfig {
     {
         switch (id)
         {
-            //case 1: // Stone Wall
-            //    return 1902;
-            //case 4: // Stone Wall Window
-            //    return 1902;
+            case 1: // Stone Wall
+                return 1902;
+            case 6: // Metal Fence
+                return 2068;
+            case 4: // Stone Wall Window
+                return 1902;
             case 5: // Wooden Fence
-                return 2618;
-            //case 15: // White Wall
-            //    return 2855;
-            //case 16: // White Wall Window
-            //    return 2855;
+                return 65;
+            case 15: // White Wall
+                return 2855;
+            case 16: // White Wall Window
+                return 2855;
             default:
                 System.out.println("Unhandled wall conversion: " + id);
                 break;

@@ -2,6 +2,7 @@ package com.jagex.runescape.scene;
 
 import com.jagex.runescape.*;
 import com.jagex.runescape.collection.DoubleEndedQueue;
+import com.jagex.runescape.definition.GameObjectDefinition;
 import com.jagex.runescape.rs2rsc.RSCConfig;
 import com.jagex.runescape.scene.object.GroundDecoration;
 import com.jagex.runescape.scene.object.GroundItemTile;
@@ -746,6 +747,53 @@ public final class WorldController {
 					srcTile.x = x;
 					srcTile.y = y;
 					this.groundArray[RSCConfig.planeIndex][x][y] = srcTile;
+				}
+
+				Tile tile = this.groundArray[RSCConfig.planeIndex][x][y];
+
+				int worldX = RSCConfig.regionX + x;
+				int worldY = RSCConfig.regionY + y;
+				int eastWestWall = JGameData.getWallEastWest(worldX, worldY);
+				int northSouthWall = JGameData.getWallNorthSouth(worldX, worldY);
+				int diagonalWall = JGameData.getWallDiagonal(worldX, worldY);
+				int wallID = -1;
+				int face = 0;
+
+				if (eastWestWall > 0) {
+					wallID = RSCConfig.RSC_TranslateWall(eastWestWall);
+					face = 6;
+				} else if (northSouthWall > 0) {
+					wallID = RSCConfig.RSC_TranslateWall(northSouthWall);
+					face = 0;
+				} else if (diagonalWall > 0) {
+					if (diagonalWall > 12000) {
+						diagonalWall -= 12001;
+						face = 1;
+					} else {
+						face = 1;
+					}
+					wallID = RSCConfig.RSC_TranslateWall(diagonalWall);
+				}
+
+				if (wallID != -1) {
+					int vertexHeightSE = JGameData.getTileHeight(worldX + 1, worldY + 1);
+					int vertexHeightSW = JGameData.getTileHeight(worldX, worldY + 1);
+					int vertexHeightNE = JGameData.getTileHeight(worldX + 1, worldY);
+					int vertexHeightNW = JGameData.getTileHeight(worldX, worldY);
+					int hash = x + (y << 7) + (wallID << 14) + 0x40000000;
+					int type = 0;
+					byte config = (byte) ((face << 6) + type);
+					GameObjectDefinition definition = GameObjectDefinition.getDefinition(wallID);
+					final Animable animable;
+					if (definition.animationId == -1 && definition.childIds == null) {
+						animable = definition.getModelAt(0, face, vertexHeightSW, vertexHeightSE, vertexHeightNE,
+								vertexHeightNW, -1);
+					} else {
+						animable = new GameObject(wallID, face, 0, vertexHeightSE, vertexHeightNE, vertexHeightSW,
+								vertexHeightNW, definition.animationId, true);
+					}
+
+					addWall(x, y, RSCConfig.planeIndex, vertexHeightNW, Region.POWERS_OF_TWO[face], 0, hash, animable, null, config);
 				}
 			}
 		}
