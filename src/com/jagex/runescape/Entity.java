@@ -1,6 +1,8 @@
 package com.jagex.runescape;
 
 import com.jagex.runescape.definition.AnimationSequence;
+import com.jagex.runescape.rs2rsc.RSCConfig;
+import rscminus.game.constants.Game;
 
 public class Entity extends Animable {
 
@@ -100,16 +102,28 @@ public class Entity extends Animable {
 		return false;
 	}
 
+	public boolean RSC_inCombat = false;
+
 	public int RSC_queuedAnimation = -1;
 	public int RSC_turnDirection = -1;
 	public int RSC_queuedAnimationEnd = -1;
+	public int RSC_combatMode = -1;
+	public int RSC_modelOffsetX = 0;
+	public int RSC_modelOffsetY = 0;
+	public int RSC_attackAnimationId = -1;
+	public boolean RSC_forceTurn = false;
 
 	public void RSC_update()
 	{
-		if (queuedAnimationId == standAnimationId)
+		if (!RSC_inCombat && queuedAnimationId == standAnimationId)
 		{
 			if (RSC_turnDirection != -1) {
 				turnDirection = RSC_turnDirection;
+				if (RSC_forceTurn)
+				{
+					currentRotation = turnDirection;
+					RSC_forceTurn = false;
+				}
 				RSC_turnDirection = -1;
 			}
 			if (RSC_queuedAnimation != -1) {
@@ -119,6 +133,44 @@ public class Entity extends Animable {
 				currentAnimationDuration = 0;
 				animationDelay = 0;
 				RSC_queuedAnimation = -1;
+			}
+
+			if (RSC_combatMode != -1)
+				RSC_inCombat = true;
+		}
+
+		if (RSC_inCombat)
+		{
+			if (RSC_combatMode == 1) {
+				RSC_modelOffsetX = -48;
+				currentRotation = turnDirection = RSCConfig.RSC_ConvertDirection(Game.DIRECTION_WEST);
+			} else {
+				RSC_modelOffsetX = 48;
+				currentRotation = turnDirection = RSCConfig.RSC_ConvertDirection(Game.DIRECTION_EAST);
+			}
+
+			// Exit combat
+			if (RSC_combatMode == -1) {
+				RSC_inCombat = false;
+			} else {
+				if (animation == -1) {
+					animation = RSC_attackAnimationId;
+					currentAnimationFrame = 0;
+					currentAnimationLoopCount = 0;
+					currentAnimationDuration = 0;
+					animationDelay = 0;
+				}
+			}
+		}
+
+		if (!RSC_inCombat) {
+			RSC_modelOffsetX = 0;
+			if (animation == RSC_attackAnimationId) {
+				animation = -1;
+				currentAnimationFrame = 0;
+				currentAnimationLoopCount = 0;
+				currentAnimationDuration = 0;
+				animationDelay = 0;
 			}
 		}
 

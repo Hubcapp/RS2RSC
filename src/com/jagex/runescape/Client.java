@@ -1966,7 +1966,7 @@ public final class Client extends RSApplet {
 
 
 	private void calculateEntityScreenPosition(final Entity entity, final int height) {
-		this.calculateScreenPosition(entity.x, height, entity.y);
+		this.calculateScreenPosition(entity.x + entity.RSC_modelOffsetX, height, entity.y + entity.RSC_modelOffsetY);
 
 		// aryan entity.entScreenX = spriteDrawX; entity.entScreenY =
 		// spriteDrawY;
@@ -10081,12 +10081,15 @@ public final class Client extends RSApplet {
 			if (npc == null || !npc.isVisible() || npc.npcDefinition.visible != flag) {
                 continue;
             }
-			final int npcWidth = npc.x >> 7;
-			final int npcHeight = npc.y >> 7;
+
+			int x = npc.x + npc.RSC_modelOffsetX;
+			int y = npc.y + npc.RSC_modelOffsetY;
+			final int npcWidth = x >> 7;
+			final int npcHeight = y >> 7;
 			if (npcWidth < 0 || npcWidth >= 104 || npcHeight < 0 || npcHeight >= 104) {
                 continue;
             }
-			if (npc.boundaryDimension == 1 && (npc.x & 0x7F) == 64 && (npc.y & 0x7F) == 64) {
+			if (npc.RSC_combatMode == -1 && npc.boundaryDimension == 1 && (x & 0x7F) == 64 && (y & 0x7F) == 64) {
 				if (this.tileRenderCount[npcWidth][npcHeight] == this.renderCount) {
                     continue;
                 }
@@ -10095,7 +10098,7 @@ public final class Client extends RSApplet {
 			if (!npc.npcDefinition.clickable) {
                 hash += 0x80000000;
             }
-			this.worldController.addEntity(this.plane, npc.x, npc.y, this.getFloorDrawHeight(this.plane, npc.y, npc.x),
+			this.worldController.addEntity(this.plane, x, y, this.getFloorDrawHeight(this.plane, y, x),
 					npc.currentRotation, npc, hash, (npc.boundaryDimension - 1) * 64 + 60, npc.dynamic);
 		}
 	}
@@ -10128,27 +10131,30 @@ public final class Client extends RSApplet {
 
 			player.preventRotation = (lowMemory && this.localPlayerCount > 50 || this.localPlayerCount > 200) && !localPlayerOnly
 					&& player.queuedAnimationId == player.standAnimationId;
-			final int x = player.x >> 7;
-			final int y = player.y >> 7;
+			int drawX = player.x + player.RSC_modelOffsetX;
+			int drawY = player.y + player.RSC_modelOffsetY;
+
+			final int x = drawX >> 7;
+			final int y = drawY >> 7;
 			if (x < 0 || x >= 104 || y < 0 || y >= 104) {
                 continue;
             }
 			if (player.playerModel != null && tick >= player.modifiedAppearanceStartTime
 					&& tick < player.modifiedAppearanceEndTime) {
 				player.preventRotation = false;
-				player.drawHeight2 = this.getFloorDrawHeight(this.plane, player.y, player.x);
-				this.worldController.addEntity(player.localX, player.localY, this.plane, player.x, player.y, player.drawHeight2,
+				player.drawHeight2 = this.getFloorDrawHeight(this.plane, drawY, drawX);
+				this.worldController.addEntity(player.localX, player.localY, this.plane, drawX, drawY, player.drawHeight2,
 						player.currentRotation, player.playerTileWidth, player.playerTileHeight, player, hash);
 				continue;
 			}
-			if ((player.x & 0x7F) == 64 && (player.y & 0x7F) == 64) {
+			if (player.RSC_combatMode == -1 && (player.x & 0x7F) == 64 && (player.y & 0x7F) == 64) {
 				if (this.tileRenderCount[x][y] == this.renderCount) {
                     continue;
                 }
 				this.tileRenderCount[x][y] = this.renderCount;
 			}
-			player.drawHeight2 = this.getFloorDrawHeight(this.plane, player.y, player.x);
-			this.worldController.addEntity(this.plane, player.x, player.y, player.drawHeight2, player.currentRotation, player,
+			player.drawHeight2 = this.getFloorDrawHeight(this.plane, drawY, drawX);
+			this.worldController.addEntity(this.plane, drawX, drawY, player.drawHeight2, player.currentRotation, player,
 					hash, 60, player.dynamic);
 		}
 

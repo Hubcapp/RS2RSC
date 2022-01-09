@@ -1022,6 +1022,33 @@ public class RSCConfig {
         }
     }
 
+    public static void RSC_loadEntityAnimation(Entity npc, int id)
+    {
+        switch (id)
+        {
+            // Humanoid animation set
+            case 63: // farmer
+            case -1: // Player
+                npc.standAnimationId = 0x328;
+                npc.standTurnAnimationId = 0x337;
+                npc.walkAnimationId = 0x333;
+                npc.turnAboutAnimationId = 0x334;
+                npc.turnRightAnimationId = 0x335;
+                npc.turnLeftAnimationId = 0x336;
+                npc.RSC_attackAnimationId = 451;
+                return;
+            default: // None
+                npc.standAnimationId = -1;
+                npc.standTurnAnimationId = -1;
+                npc.walkAnimationId = -1;
+                npc.turnAboutAnimationId = -1;
+                npc.turnRightAnimationId = -1;
+                npc.turnLeftAnimationId = -1;
+                npc.RSC_attackAnimationId = -1;
+                return;
+        }
+    }
+
     public static NPC RSC_getNPC(Client client, int serverIndex, int areaX, int areaY, int direction, int id)
     {
         // Add player if it doesn't exist
@@ -1033,6 +1060,7 @@ public class RSCConfig {
             client.npcs[serverIndex].turnDirection = RSC_ConvertDirection(direction);
             client.npcs[serverIndex].currentRotation = client.npcs[serverIndex].turnDirection;
             client.npcs[serverIndex].npcDefinition = EntityDefinition.getDefinition(RSCConfig.RSC_TranslateNPC(id));
+            RSC_loadEntityAnimation(client.npcs[serverIndex], id);
         }
 
         NPC npc = client.npcs[serverIndex];
@@ -1760,7 +1788,16 @@ public class RSCConfig {
 
     public static void RSC_TurnEntityDir(Entity npc, int nextAnim)
     {
-        npc.RSC_turnDirection = RSC_ConvertDirection(nextAnim);
+        boolean wasCombat = npc.RSC_combatMode != -1;
+        if (nextAnim == 9) {
+            npc.RSC_combatMode = 1;
+        } else if (nextAnim == 8) {
+            npc.RSC_combatMode = 0;
+        } else {
+            npc.RSC_turnDirection = RSC_ConvertDirection(nextAnim);
+            npc.RSC_combatMode = -1;
+            npc.RSC_forceTurn = wasCombat;
+        }
     }
 
     public static void RSC_MoveEntityDir(Entity npc, int nextAnim)
@@ -1775,6 +1812,7 @@ public class RSCConfig {
             y += 1;
         if (nextAnim == 0 || nextAnim == 1 || nextAnim == 7)
             y -= 1;
+        npc.RSC_combatMode = -1;
         npc.setPos(x, y, false);
     }
 
@@ -2073,8 +2111,10 @@ public class RSCConfig {
                         if (updateType != 0)
                         {
                             int unk = buffer.readBits(2);
-                            if (unk == 3)
+                            if (unk == 3) {
+                                RSC_TurnEntityDir(npc, 8);
                                 continue;
+                            }
                             int nextAnim = buffer.readBits(2) + (unk << 2);
                             RSC_TurnEntityDir(npc, nextAnim);
                         }
@@ -2148,8 +2188,10 @@ public class RSCConfig {
                         if (updateType != 0)
                         {
                             int unk = buffer.readBits(2);
-                            if (unk == 3)
+                            if (unk == 3) {
+                                RSC_TurnEntityDir(player, 8);
                                 continue;
+                            }
                             int nextAnim = buffer.readBits(2) + (unk << 2);
                             RSC_TurnEntityDir(player, nextAnim);
                         }
@@ -2424,6 +2466,8 @@ public class RSCConfig {
                             player.bodyPartColour[2] = colorBottom;
                             player.bodyPartColour[4] = colorSkin;
 
+                            RSC_loadEntityAnimation(player, -1);
+
                             // Set animations
                             player.standAnimationId = 0x328;
                             player.standTurnAnimationId = 0x337;
@@ -2431,6 +2475,7 @@ public class RSCConfig {
                             player.turnAboutAnimationId = 0x334;
                             player.turnRightAnimationId = 0x335;
                             player.turnLeftAnimationId = 0x336;
+                            player.RSC_attackAnimationId = 451;
 
                             if (weaponID == -1)
                                 weaponID = 0;

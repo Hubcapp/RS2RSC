@@ -1812,6 +1812,8 @@ public final class Model extends Animable {
 	}
 
 	public void rotate(int degrees) {
+		degrees = (int)(((degrees % 360) / 360.0f) * 2048.0f);
+
 		final int sine = SINE[degrees];
 		final int cosine = COSINE[degrees];
 		for (int vertex = 0; vertex < this.vertexCount; vertex++) {

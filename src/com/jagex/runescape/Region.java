@@ -1274,7 +1274,7 @@ public final class Region {
 		{
 			if (diagonalWall > 12000)
 			{
-				int id = diagonalWall - 12001;
+				int id = diagonalWall - 12000;
 				int adjacent = JGameData.boundaryAdjacent[id];
 
 				if (decS != terrainDecoration && decW != terrainDecoration) {
@@ -1328,7 +1328,7 @@ public final class Region {
 		}
 
 		// Block water and diagonal walls
-		if (RSC_getDecoration(worldX, worldY) == 2 || diagonalWall > 0)
+		if (RSC_getDecoration(worldX, worldY) == 2)
 			renderRule |= 1;
 
 		if (RSC_getDecoration(worldX, worldY) == 4)

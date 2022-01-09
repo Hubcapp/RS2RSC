@@ -767,11 +767,12 @@ public final class WorldController {
 					face = 0;
 				} else if (diagonalWall > 0) {
 					if (diagonalWall > 12000) {
-						diagonalWall -= 12001;
-						face = 1;
+						diagonalWall -= 12000;
+						face = 3;
 					} else {
 						face = 1;
 					}
+					// TODO: Implement diagonal wall
 					wallID = RSCConfig.RSC_TranslateWall(diagonalWall);
 				}
 
@@ -793,7 +794,8 @@ public final class WorldController {
 								vertexHeightNW, definition.animationId, true);
 					}
 
-					addWall(x, y, RSCConfig.planeIndex, vertexHeightNW, Region.POWERS_OF_TWO[face], 0, hash, animable, null, config);
+					int minHeight = Math.max(Math.max(Math.max(vertexHeightNE, vertexHeightNW), vertexHeightSE), vertexHeightSW);
+					addWall(x, y, RSCConfig.planeIndex, minHeight, Region.POWERS_OF_TWO[face], 0, hash, animable, null, config);
 				}
 			}
 		}
