@@ -8307,6 +8307,18 @@ public final class Client extends RSApplet {
 							int id = Integer.parseInt(args[1]);
 							System.out.println("Spawn Obj: " + id + ", ");
 							this.RSC_spawnGameObject(0, 0, 0, id);
+						} else if (args[0].equals("::npc")) {
+							int id = -1;
+							try { id = Integer.parseInt(args[1]); } catch(Exception e) {}
+							if (id != -1)
+								localPlayer.npcAppearance = EntityDefinition.getDefinition(id);
+							else
+								localPlayer.npcAppearance = null;
+						} else if (args[0].equals("::anim")) {
+							int id = -1;
+							try { id = Integer.parseInt(args[1]); } catch(Exception e) {}
+							if (id != -1)
+								localPlayer.RSC_queuedAnimation = id;
 						}
 					}
 

@@ -7,11 +7,7 @@
     <list default="true" id="21491aa0-0eb7-4d56-9c39-3c7d87baa446" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/com/jagex/runescape/Client.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/jagex/runescape/Client.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/com/jagex/runescape/Entity.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/jagex/runescape/Entity.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/com/jagex/runescape/Model.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/jagex/runescape/Model.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/com/jagex/runescape/Region.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/jagex/runescape/Region.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/com/jagex/runescape/rs2rsc/RSCConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/jagex/runescape/rs2rsc/RSCConfig.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/com/jagex/runescape/scene/WorldController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/com/jagex/runescape/scene/WorldController.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

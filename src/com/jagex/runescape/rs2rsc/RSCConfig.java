@@ -1024,28 +1024,17 @@ public class RSCConfig {
 
     public static void RSC_loadEntityAnimation(Entity npc, int id)
     {
+        // Load default animation
+        npc.standAnimationId = 0x328;
+        npc.standTurnAnimationId = 0x337;
+        npc.walkAnimationId = 0x333;
+        npc.turnAboutAnimationId = 0x334;
+        npc.turnRightAnimationId = 0x335;
+        npc.turnLeftAnimationId = 0x336;
+        npc.RSC_attackAnimationId = 451;
+
         switch (id)
         {
-            // Humanoid animation set
-            case 63: // farmer
-            case -1: // Player
-                npc.standAnimationId = 0x328;
-                npc.standTurnAnimationId = 0x337;
-                npc.walkAnimationId = 0x333;
-                npc.turnAboutAnimationId = 0x334;
-                npc.turnRightAnimationId = 0x335;
-                npc.turnLeftAnimationId = 0x336;
-                npc.RSC_attackAnimationId = 451;
-                return;
-            default: // None
-                npc.standAnimationId = -1;
-                npc.standTurnAnimationId = -1;
-                npc.walkAnimationId = -1;
-                npc.turnAboutAnimationId = -1;
-                npc.turnRightAnimationId = -1;
-                npc.turnLeftAnimationId = -1;
-                npc.RSC_attackAnimationId = -1;
-                return;
         }
     }
 
@@ -1083,6 +1072,7 @@ public class RSCConfig {
             client.players[serverIndex].setPos(areaX, areaY, true);
             client.players[serverIndex].turnDirection = RSC_ConvertDirection(direction);
             client.players[serverIndex].currentRotation = client.players[serverIndex].turnDirection;
+            RSC_loadEntityAnimation(client.players[serverIndex], -1);
         }
 
         Player player = client.players[serverIndex];
@@ -2111,17 +2101,16 @@ public class RSCConfig {
                         if (updateType != 0)
                         {
                             int unk = buffer.readBits(2);
-                            if (unk == 3) {
-                                RSC_TurnEntityDir(npc, 8);
+                            if (unk == 3)
                                 continue;
-                            }
-                            int nextAnim = buffer.readBits(2) + (unk << 2);
+                            int nextAnim = (unk << 2) + buffer.readBits(2);
                             RSC_TurnEntityDir(npc, nextAnim);
                         }
                         else
                         {
                             int nextAnim = buffer.readBits(3);
                             RSC_MoveEntityDir(npc, nextAnim);
+                            RSC_TurnEntityDir(npc, nextAnim);
                         }
                     }
 
@@ -2144,6 +2133,7 @@ public class RSCConfig {
                     int npcY = localRegionY + areaY;
 
                     NPC npc = RSC_getNPC(client, serverIndex, npcX, npcY, otherAnim, type);
+                    RSC_TurnEntityDir(npc, otherAnim);
                 }
 
                 buffer.finishBitAccess();
@@ -2189,7 +2179,6 @@ public class RSCConfig {
                         {
                             int unk = buffer.readBits(2);
                             if (unk == 3) {
-                                RSC_TurnEntityDir(player, 8);
                                 continue;
                             }
                             int nextAnim = buffer.readBits(2) + (unk << 2);
@@ -2199,6 +2188,7 @@ public class RSCConfig {
                         {
                             int nextAnim = buffer.readBits(3);
                             RSC_MoveEntityDir(player, nextAnim);
+                            RSC_TurnEntityDir(player, nextAnim);
                         }
                     }
 
@@ -2220,6 +2210,7 @@ public class RSCConfig {
                     int playerY = localY + areaY;
 
                     Player otherPlayer = RSC_getPlayer(client, serverIndex, playerX, playerY, otherAnim);
+                    RSC_TurnEntityDir(otherPlayer, otherAnim);
                 }
 
                 buffer.finishBitAccess();
@@ -2465,17 +2456,6 @@ public class RSCConfig {
                             player.bodyPartColour[1] = colorTop;
                             player.bodyPartColour[2] = colorBottom;
                             player.bodyPartColour[4] = colorSkin;
-
-                            RSC_loadEntityAnimation(player, -1);
-
-                            // Set animations
-                            player.standAnimationId = 0x328;
-                            player.standTurnAnimationId = 0x337;
-                            player.walkAnimationId = 0x333;
-                            player.turnAboutAnimationId = 0x334;
-                            player.turnRightAnimationId = 0x335;
-                            player.turnLeftAnimationId = 0x336;
-                            player.RSC_attackAnimationId = 451;
 
                             if (weaponID == -1)
                                 weaponID = 0;
