@@ -2,12 +2,12 @@ package com.jagex.runescape.rs2rsc;
 
 import com.jagex.runescape.*;
 import com.jagex.runescape.definition.EntityDefinition;
+import com.jagex.runescape.Region;
 import rscminus.common.JGameData;
 import rscminus.game.constants.Game;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 public class RSCConfig {
     public static boolean rscProtocol = true;
@@ -71,8 +71,9 @@ public class RSCConfig {
     public static int planeHeight;
     public static int planeIndex;
 
-    private static BiMap<Integer, Integer> objectIDTable = new BiMap<Integer, Integer>();
+    public static BiMap<Integer, Integer> objectIDTable = new BiMap<Integer, Integer>();
     public static BiMap<Integer, Integer> objectWallIDTable = new BiMap<Integer, Integer>();
+    public static BiMap<Integer, Integer> objectWallDecorationIDTable = new BiMap<Integer, Integer>();
     private static Map<Integer, Integer> objectIDDirTable = new HashMap<Integer, Integer>();
     private static BiMap<Integer, Integer> npcIDTable = new BiMap<Integer, Integer>();
     private static BiMap<Integer, Integer> itemIDTable = new BiMap<Integer, Integer>();
@@ -565,8 +566,8 @@ public class RSCConfig {
         npcIDTable.put(227, 2536); // Niles
         npcIDTable.put(231, 805); // Master Crafter
 
-        // Setup wall object ids
-        objectWallIDTable.put(27, 891);
+        // Setup wall decoration object ids
+        objectWallDecorationIDTable.put(27, 891);
 
         // Setup object ids
         objectIDTable.put(0, 1279); // Tree
@@ -602,9 +603,15 @@ public class RSCConfig {
         objectIDTable.put(192, 42); // fish (Lure/Bait)
         objectIDTable.put(193, 44); // fish (Net/Bait)
 
+        // Setup wall object ids
+        objectWallIDTable.put(45, 2068);
+        objectWallIDTable.put(59, 1551);
+        objectWallIDTable.put(60, 1552);
+
         // Setup object ids directions
         objectIDDirTable.put(1097, 2); // Throne
         objectIDDirTable.put(400, 2);
+        objectIDDirTable.put(2068, 6);
         //objectIDDirTable.put(891, 3); // 0-3 rotation only!!!
 
         itemIDTable.put(0, 1420); // Iron mace
@@ -904,6 +911,8 @@ public class RSCConfig {
         // Initialize rsc state
         playerCount = 0;
         npcCount = 0;
+        regionX = -1000;
+        regionY = -1000;
 
         // Set settings
         client.sendConfig(166, Settings.getBrightness() + 1); // Brightness
@@ -932,6 +941,8 @@ public class RSCConfig {
         client.playerActionUnpinned[1] = true;
         client.playerActionUnpinned[2] = true;
         client.playerActionUnpinned[3] = true;
+
+        Region.POWERS_OF_TWO = new int[]{1, 16, 2, 32, 4, 64, 8, 128};
     }
 
     public static void RSC_HandleInterface(int actionID, Client client, Buffer buffer)
@@ -1070,11 +1081,14 @@ public class RSCConfig {
         Integer val = objectIDTable.get(objectID);
         if (val == null)
         {
-            val = objectWallIDTable.get(objectID);
+            val = objectWallDecorationIDTable.get(objectID);
             if (val == null)
             {
-                System.out.println("Unhandled object id: " + objectID);
-                return -1;
+                val = objectWallIDTable.get(objectID);
+                if (val == null) {
+                    System.out.println("Unhandled object id: " + objectID);
+                    return -1;
+                }
             }
         }
         return val.intValue();
@@ -1085,11 +1099,14 @@ public class RSCConfig {
         Integer val = objectIDTable.getKey(objectID);
         if (val == null)
         {
-            val = objectWallIDTable.getKey(objectID);
+            val = objectWallDecorationIDTable.getKey(objectID);
             if (val == null)
             {
-                System.out.println("Unhandled reverse object id: " + objectID);
-                return -1;
+                val = objectWallIDTable.getKey(objectID);
+                if (val == null) {
+                    System.out.println("Unhandled reverse object id: " + objectID);
+                    return -1;
+                }
             }
         }
         return val.intValue();
@@ -1121,14 +1138,16 @@ public class RSCConfig {
     {
         switch (id)
         {
-            case 1: // Stone Wall
-                return 1902;
-            case 4: // Stone Wall Window
-                return 1902;
-            case 15: // White Wall
-                return 2855;
-            case 16: // White Wall Window
-                return 2855;
+            //case 1: // Stone Wall
+            //    return 1902;
+            //case 4: // Stone Wall Window
+            //    return 1902;
+            case 5: // Wooden Fence
+                return 2618;
+            //case 15: // White Wall
+            //    return 2855;
+            //case 16: // White Wall Window
+            //    return 2855;
             default:
                 System.out.println("Unhandled wall conversion: " + id);
                 break;

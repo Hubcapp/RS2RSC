@@ -256,7 +256,7 @@ public final class OnDemandFetcher implements Runnable {
         this.uncompletedCount = 0;
         this.completedCount = 0;
 		for (OnDemandData onDemandData = (OnDemandData) this.requested
-				.peekFront(); onDemandData != null; onDemandData = (OnDemandData) this.requested.getPrevious()) {
+				.peekFront(); onDemandData != null; onDemandData = (OnDemandData) this.requested.getNext()) {
             if (onDemandData.incomplete) {
                 this.uncompletedCount++;
             } else {
@@ -403,7 +403,7 @@ public final class OnDemandFetcher implements Runnable {
 				final int i2 = this.payload[5] & 0xff;
                 this.current = null;
 				for (OnDemandData onDemandData = (OnDemandData) this.requested
-						.peekFront(); onDemandData != null; onDemandData = (OnDemandData) this.requested.getPrevious()) {
+						.peekFront(); onDemandData != null; onDemandData = (OnDemandData) this.requested.getNext()) {
 					if (onDemandData.dataType == l && onDemandData.id == j1) {
                         this.current = onDemandData;
                     }
@@ -543,7 +543,7 @@ public final class OnDemandFetcher implements Runnable {
 
 				boolean flag = false;
 				for (OnDemandData onDemandData = (OnDemandData) this.requested
-						.peekFront(); onDemandData != null; onDemandData = (OnDemandData) this.requested.getPrevious()) {
+						.peekFront(); onDemandData != null; onDemandData = (OnDemandData) this.requested.getNext()) {
                     if (onDemandData.incomplete) {
                         flag = true;
                         onDemandData.loopCycle++;

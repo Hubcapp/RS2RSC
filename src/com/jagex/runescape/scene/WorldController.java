@@ -711,7 +711,6 @@ public final class WorldController {
 				int srcX = x + moveX;
 				int srcY = y + moveY;
 				if (srcX >= 0 && srcY >= 0 && srcX < 104 && srcY < 104) {
-					System.out.println("cam: " + cameraPosX + ", " + cameraPosY + ", " + cameraPosZ);
 					Tile srcTile = copyArea[srcX][srcY];
 					if (srcTile.entityCount > 0) {
 						for (int i = 0; i < srcTile.entityCount; i++)
@@ -728,20 +727,45 @@ public final class WorldController {
 							obj.tileRight = x;
 							obj.tileBottom = y;
 						}
-						srcTile.x = x;
-						srcTile.y = y;
-						this.groundArray[RSCConfig.planeIndex][x][y] = srcTile;
 					}
+
+					if (srcTile.wall != null)
+					{
+						System.out.println("TRANSFER_WALL: " + srcTile.wall.x + ", " + srcTile.wall.y);
+						srcTile.wall.x -= moveX * 128;
+						srcTile.wall.y -= moveY * 128;
+					}
+
+					if (srcTile.wallDecoration != null)
+					{
+						System.out.println("TRANSFER_DEC: " + srcTile.wallDecoration.x + ", " + srcTile.wallDecoration.y);
+						srcTile.wallDecoration.x -= moveX * 128;
+						srcTile.wallDecoration.y -= moveY * 128;
+					}
+
+					srcTile.x = x;
+					srcTile.y = y;
+					this.groundArray[RSCConfig.planeIndex][x][y] = srcTile;
 				}
 			}
 		}
 
 		// TODO: We probably need to move culling clusters... for now, init to null
 		for (int l = 0; l < anInt472; l++) {
-			for (int j1 = 0; j1 < cullingClusterPointer[l]; j1++)
+			for (int j1 = 0; j1 < cullingClusterPointer[l]; j1++) {
 				cullingClusters[l][j1] = null;
+			}
 
 			cullingClusterPointer[l] = 0;
+		}
+
+		for (int k1 = 0; k1 < this.interactiveObjectCacheCurrentPos; k1++) {
+			this.interactiveObjectCache[k1] = null;
+		}
+
+		this.interactiveObjectCacheCurrentPos = 0;
+		for (int l1 = 0; l1 < interactiveObjects.length; l1++) {
+			interactiveObjects[l1] = null;
 		}
 	}
 

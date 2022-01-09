@@ -9,7 +9,7 @@ import rscminus.game.constants.Game;
 
 import java.awt.*;
 
-final class Region {
+public final class Region {
 
 	private static int calculateNoise(final int x, final int seed) {
 		int n = x + seed * 57;
@@ -433,7 +433,7 @@ final class Region {
 	private final byte[][][] overlayOrientations;
 	private final byte[][][] renderRuleFlags;
 	static boolean lowMemory = true;
-	public static final int[] POWERS_OF_TWO = {1, 2, 4, 8};
+	public static int[] POWERS_OF_TWO = {1, 2, 4, 8};
 
 	public Region(final byte[][][] renderRuleFlags, final int[][][] vertexHeights) {
 		lowestPlane = 99;
@@ -1272,14 +1272,14 @@ final class Region {
 		if (northSouthWall > 0)
 		{
 			int wallID = RSCConfig.RSC_TranslateWall(northSouthWall);
-			//if (wallID != -1)
-			//	client.RSC_spawnGameObject(tileX, tileY, 0, wallID);
+			if (wallID != -1)
+				client.RSC_spawnGameObject(tileX, tileY, 0, wallID);
 		}
 		else if (eastWestWall > 0)
 		{
 			int wallID = RSCConfig.RSC_TranslateWall(eastWestWall);
-			//if (wallID != -1)
-			//	client.RSC_spawnGameObject(tileX, tileY, 3, wallID);
+			if (wallID != -1)
+				client.RSC_spawnGameObject(tileX, tileY, 6, wallID);
 		}
 		else if (diagonalWall > 0)
 		{

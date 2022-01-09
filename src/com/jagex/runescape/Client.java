@@ -2157,7 +2157,7 @@ public final class Client extends RSApplet {
 
 	private void clearObjectSpawnRequests() {
 		GameObjectSpawnRequest spawnRequest = (GameObjectSpawnRequest) this.spawnObjectList.peekFront();
-		for (; spawnRequest != null; spawnRequest = (GameObjectSpawnRequest) this.spawnObjectList.getPrevious()) {
+		for (; spawnRequest != null; spawnRequest = (GameObjectSpawnRequest) this.spawnObjectList.getNext()) {
             if (spawnRequest.delayUntilRespawn == -1) {
                 spawnRequest.delayUntilSpawn = 0;
 				this.configureSpawnRequest(spawnRequest);
@@ -5557,15 +5557,17 @@ public final class Client extends RSApplet {
 				}
 			}
 		}
-		for (GameObjectSpawnRequest spawnRequest = (GameObjectSpawnRequest) this.spawnObjectList
+
+		// TODO: We shouldn't clear this, right?
+		/*for (GameObjectSpawnRequest spawnRequest = (GameObjectSpawnRequest) this.spawnObjectList
 				.peekFront(); spawnRequest != null; spawnRequest = (GameObjectSpawnRequest) this.spawnObjectList
-				.getPrevious()) {
+				.getNext()) {
 			spawnRequest.x -= _x;
 			spawnRequest.y -= _y;
 			if (spawnRequest.x < 0 || spawnRequest.y < 0 || spawnRequest.x >= 104 || spawnRequest.y >= 104) {
 				spawnRequest.unlink();
 			}
-		}
+		}*/
 
 		if (this.destinationX != 0) {
 			this.destinationX -= _x;
@@ -5761,7 +5763,7 @@ public final class Client extends RSApplet {
 
 				for (GameObjectSpawnRequest spawnRequest = (GameObjectSpawnRequest) this.spawnObjectList
 						.peekFront(); spawnRequest != null; spawnRequest = (GameObjectSpawnRequest) this.spawnObjectList
-								.getPrevious()) {
+								.getNext()) {
                     if (spawnRequest.x >= this.playerPositionX && spawnRequest.x < this.playerPositionX + 8
                             && spawnRequest.y >= this.playerPositionY && spawnRequest.y < this.playerPositionY + 8
                             && spawnRequest.z == this.plane) {
@@ -6084,7 +6086,7 @@ public final class Client extends RSApplet {
 				}
 				for (GameObjectSpawnRequest spawnRequest = (GameObjectSpawnRequest) this.spawnObjectList
 						.peekFront(); spawnRequest != null; spawnRequest = (GameObjectSpawnRequest) this.spawnObjectList
-								.getPrevious()) {
+								.getNext()) {
 					spawnRequest.x -= _x;
 					spawnRequest.y -= _y;
 					if (spawnRequest.x < 0 || spawnRequest.y < 0 || spawnRequest.x >= 104 || spawnRequest.y >= 104) {
@@ -8460,16 +8462,24 @@ public final class Client extends RSApplet {
 		} while (true);
 	}
 
-	public void RSC_spawnGameObject(int objectX, int objectY, int orientation, int objectId)
-	{
+	public void RSC_spawnGameObject(int objectX, int objectY, int orientation, int objectId) {
 		GameObjectDefinition def = GameObjectDefinition.getDefinition(objectId);
 		int x = objectX;
 		int y = objectY;
-		int objectType = 10;
-		if (RSCConfig.objectWallIDTable.containsValue(objectId))
+		int objectType = -1;
+
+		if (RSCConfig.objectWallDecorationIDTable.containsValue(objectId)) {
 			objectType = 4;
-		if (def.wall)
+		} else if (RSCConfig.objectIDTable.containsValue(objectId)) {
+			objectType = 10;
+		} else if (RSCConfig.objectWallIDTable.containsValue(objectId)) {
 			objectType = 0;
+		}
+
+		// TODO: Handle Wall spawning
+		if (objectType == -1)
+			return;
+
 		final int type = this.objectTypes[objectType];
 		if (x >= 0 && y >= 0 && x < 104 && y < 104) {
 			this.createObjectSpawnRequest(-1, objectId, orientation, type, y, objectType, RSCConfig.planeIndex, x, 0);
@@ -8540,7 +8550,7 @@ public final class Client extends RSApplet {
 				final DoubleEndedQueue groundItemArray = this.groundArray[this.plane][x][y];
 				if (groundItemArray != null) {
 					for (Item item = (Item) groundItemArray.peekFront(); item != null; item = (Item) groundItemArray
-							.getPrevious()) {
+							.getNext()) {
 						if (item.itemId != (targetItemId & 0x7FFF) || item.itemCount != targetItemAmount) {
                             continue;
                         }
@@ -8598,7 +8608,7 @@ public final class Client extends RSApplet {
 				final DoubleEndedQueue groundItems = this.groundArray[this.plane][x][y];
 				if (groundItems != null) {
 					for (Item item = (Item) groundItems.peekFront(); item != null; item = (Item) groundItems
-							.getPrevious()) {
+							.getNext()) {
 						if (item.itemId != (itemId & 0x7FFF)) {
                             continue;
                         }
@@ -10146,7 +10156,7 @@ public final class Client extends RSApplet {
 
 	private void renderProjectiles() {
 		for (Projectile projectile = (Projectile) this.projectileQueue
-				.peekFront(); projectile != null; projectile = (Projectile) this.projectileQueue.getPrevious()) {
+				.peekFront(); projectile != null; projectile = (Projectile) this.projectileQueue.getNext()) {
             if (projectile.plane != this.plane || tick > projectile.endCycle) {
                 projectile.unlink();
             } else if (tick >= projectile.delay) {
@@ -10181,7 +10191,7 @@ public final class Client extends RSApplet {
 	private void renderStationaryGraphics() {
 		StationaryGraphic stationaryGraphic = (StationaryGraphic) this.stationaryGraphicQueue.peekFront();
 		for (; stationaryGraphic != null; stationaryGraphic = (StationaryGraphic) this.stationaryGraphicQueue
-				.getPrevious()) {
+				.getNext()) {
             if (stationaryGraphic.z != this.plane || stationaryGraphic.transformationCompleted) {
                 stationaryGraphic.unlink();
             } else if (tick >= stationaryGraphic.stationaryGraphicLoopCycle) {
@@ -10762,7 +10772,7 @@ public final class Client extends RSApplet {
 		int highestValue = -99999999;
 		Object item = null;
 		for (Item currentItem = (Item) groundItemList
-				.peekFront(); currentItem != null; currentItem = (Item) groundItemList.getPrevious()) {
+				.peekFront(); currentItem != null; currentItem = (Item) groundItemList.getNext()) {
 			final ItemDefinition itemDef = ItemDefinition.getDefinition(currentItem.itemId);
 			int value = itemDef.value;
 			if (itemDef.stackable) {
@@ -10778,7 +10788,7 @@ public final class Client extends RSApplet {
 		Object secondItem = null;
 		Object thirdItem = null;
 		for (Item currentItem = (Item) groundItemList
-				.peekFront(); currentItem != null; currentItem = (Item) groundItemList.getPrevious()) {
+				.peekFront(); currentItem != null; currentItem = (Item) groundItemList.getNext()) {
 			if (currentItem.itemId != ((Item) (item)).itemId && secondItem == null) {
                 secondItem = currentItem;
             }
