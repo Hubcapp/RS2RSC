@@ -895,6 +895,18 @@ public class RSCConfig {
         client.resetChatInterface();
     }
 
+    public static void RSC_selectAttackStyle(Buffer buffer, int option)
+    {
+        if (option < 0)
+            option = 0;
+        else if (option > 3)
+            option = 3;
+
+        buffer.RSC_newPacket(29);
+        buffer.put(option);
+        buffer.RSC_finalizePacket();
+    }
+
     public static void RSC_HandleLogin(Client client)
     {
         if (!rscProtocol)
@@ -920,6 +932,7 @@ public class RSCConfig {
         client.sendConfig(171, 0); // Chat effects
 
         // Set sidebar interfaces
+        client.setSidebarID(0, 2423); // Combat Style
         client.setSidebarID(1, 3917); // Stats
         //client.setSidebarID(2, 638); // Quest
         client.setSidebarID(3, 3213); // Inventory
@@ -1014,6 +1027,18 @@ public class RSCConfig {
             case 2498: // Dialogue Option 5
                 RSC_selectDialogueOption(client, buffer, 4);
                 break;
+            case 2429: // Attack Style (Accurate)
+                RSC_selectAttackStyle(buffer, 2);
+                break;
+            case 2432: // Attack Style (Aggressive)
+                RSC_selectAttackStyle(buffer, 1);
+                break;
+            case 2431: // Attack Style (Controlled)
+                RSC_selectAttackStyle(buffer, 0);
+                break;
+            case 2430: // Attack Style (Defensive)
+                RSC_selectAttackStyle(buffer, 3);
+                break;
             default:
             {
                 System.out.println("Unhandled interface action id: " + actionID);
@@ -1032,10 +1057,6 @@ public class RSCConfig {
         npc.turnRightAnimationId = 0x335;
         npc.turnLeftAnimationId = 0x336;
         npc.RSC_attackAnimationId = 451;
-
-        switch (id)
-        {
-        }
     }
 
     public static NPC RSC_getNPC(Client client, int serverIndex, int areaX, int areaY, int direction, int id)
